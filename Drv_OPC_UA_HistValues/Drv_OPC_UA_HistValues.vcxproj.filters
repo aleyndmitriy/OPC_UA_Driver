@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Configurator">
+      <UniqueIdentifier>{0265eaab-21c2-4530-9afc-32d91d5f2b16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Configurator">
+      <UniqueIdentifier>{18d2c382-99a9-4b28-a101-d918ef501bd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pugixml">
+      <UniqueIdentifier>{4eaf0850-b93b-4c2c-91a8-ef0143a6690a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataAccessLayer">
+      <UniqueIdentifier>{c67a59a5-2dea-4dbf-95b7-6780912f9c51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataAccessLayer">
+      <UniqueIdentifier>{5fc54696-9b0d-4a8e-8513-a3d5ae53ff81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataAccessLayer\Environment">
+      <UniqueIdentifier>{00698bc0-6136-4079-a6e5-091d31c59c97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataAccessLayer\Environment">
+      <UniqueIdentifier>{0c2c476a-e6e9-41c0-bc59-0d4955a38045}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataAccessLayer\Connection">
+      <UniqueIdentifier>{bc7e9385-7cd5-4205-b8c9-753240b0d646}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataAccessLayer\Connection">
+      <UniqueIdentifier>{4bd232fb-1ad0-41a4-9b22-498ce609861d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataAccessLayer\Statement">
+      <UniqueIdentifier>{7d93be8c-d621-4142-9120-e85051ff5217}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataAccessLayer\Statement">
+      <UniqueIdentifier>{3a882f1c-860c-4caf-94fd-6d147d25a2c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataAccessLayer\DatabaseEngine">
+      <UniqueIdentifier>{03ef0c3e-a305-425a-889c-33acef9be201}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataAccessLayer\DatabaseEngine">
+      <UniqueIdentifier>{a3e8939e-d9f6-435a-858c-c0522a14fd5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DataAccessLayer\SettingsDataSource">
+      <UniqueIdentifier>{810b5d95-6e02-4521-8f93-8950ea1dedc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DataAccessLayer\SettingsDataSource">
+      <UniqueIdentifier>{1128b2fe-55cf-4e3f-a1ac-d87383de5a3b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Drv_OPC_UA_HistValues.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsDialog.cpp">
+      <Filter>Source Files\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionSettingsDialog.cpp">
+      <Filter>Source Files\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="FiltersDialog.cpp">
+      <Filter>Source Files\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="pugixml.cpp">
+      <Filter>Source Files\pugixml</Filter>
+    </ClCompile>
+    <ClCompile Include="SQLServerEnvironment.cpp">
+      <Filter>Source Files\DataAccessLayer\Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="Connection.cpp">
+      <Filter>Source Files\DataAccessLayer\Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionAttributes.cpp">
+      <Filter>Source Files\DataAccessLayer\Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="SQLServerConnection.cpp">
+      <Filter>Source Files\DataAccessLayer\Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Record.cpp">
+      <Filter>Source Files\DataAccessLayer\Statement</Filter>
+    </ClCompile>
+    <ClCompile Include="Statement.cpp">
+      <Filter>Source Files\DataAccessLayer\Statement</Filter>
+    </ClCompile>
+    <ClCompile Include="SQLServerStatement.cpp">
+      <Filter>Source Files\DataAccessLayer\Statement</Filter>
+    </ClCompile>
+    <ClCompile Include="SQLServerDatabaseEngine.cpp">
+      <Filter>Source Files\DataAccessLayer\DatabaseEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="StatementCondition.cpp">
+      <Filter>Source Files\DataAccessLayer\Statement</Filter>
+    </ClCompile>
+    <ClCompile Include="XMLSettingsDataSource.cpp">
+      <Filter>Source Files\DataAccessLayer\SettingsDataSource</Filter>
+    </ClCompile>
+    <ClCompile Include="DsConfigurator.cpp">
+      <Filter>Source Files\Configurator</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Drv_OPC_UA_HistValues.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="res\Drv_OPC_UA_HistValues.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Drv_OPC_UA_HistValues.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsDialog.h">
+      <Filter>Header Files\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionSettingsDialog.h">
+      <Filter>Header Files\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="FiltersDialog.h">
+      <Filter>Header Files\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="IEnvironment.h">
+      <Filter>Header Files\DataAccessLayer\Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLServerEnvironment.h">
+      <Filter>Header Files\DataAccessLayer\Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>Header Files\DataAccessLayer\Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionAttributes.h">
+      <Filter>Header Files\DataAccessLayer\Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLServerConnection.h">
+      <Filter>Header Files\DataAccessLayer\Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Record.h">
+      <Filter>Header Files\DataAccessLayer\Statement</Filter>
+    </ClInclude>
+    <ClInclude Include="Statement.h">
+      <Filter>Header Files\DataAccessLayer\Statement</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLServerStatement.h">
+      <Filter>Header Files\DataAccessLayer\Statement</Filter>
+    </ClInclude>
+    <ClInclude Include="DatabaseEngine.h">
+      <Filter>Header Files\DataAccessLayer\DatabaseEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLServerDatabaseEngine.h">
+      <Filter>Header Files\DataAccessLayer\DatabaseEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="StatementCondition.h">
+      <Filter>Header Files\DataAccessLayer\Statement</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsDataSource.h">
+      <Filter>Header Files\DataAccessLayer\SettingsDataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="XMLSettingsDataSource.h">
+      <Filter>Header Files\DataAccessLayer\SettingsDataSource</Filter>
+    </ClInclude>
+    <ClInclude Include="DsConfigurator.h">
+      <Filter>Header Files\Configurator</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Drv_OPC_UA_HistValues.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
