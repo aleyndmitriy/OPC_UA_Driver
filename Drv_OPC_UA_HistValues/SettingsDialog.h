@@ -1,9 +1,6 @@
 #pragma once
-#include<functional>
-#include"ConnectionAttributes.h"
-#include"StatementCondition.h"
-#include <Interface\IAbstractUIFacrory.h>
-#include<map>
+#include"ConnectionSettingsDialog.h"
+#include"FiltersDialog.h"
 // SettingsDialog dialog
 
 class SettingsDialog : public CDialogEx
@@ -22,7 +19,7 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
+	BOOL OnInitDialog() override;
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBtnClickedOk();
@@ -30,7 +27,7 @@ public:
 	afx_msg void OnTcnSelChangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnTcnSelChangingTabSettings(NMHDR* pNMHDR, LRESULT* pResult);
 private:
-	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
-	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectionAttributes;
-	std::shared_ptr<std::map<std::string, std::vector<DrvOPCUAHistValues::StatementCondition> > > m_conditionFilters;
+	std::unique_ptr<ConnectionSettingsDialog> m_connectionSettingsDlg;
+	std::unique_ptr<FiltersDialog> m_filtersDlg;
+	CTabCtrl m_tabSettings;
 };

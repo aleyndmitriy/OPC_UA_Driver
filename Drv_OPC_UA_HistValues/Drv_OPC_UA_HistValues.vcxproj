@@ -197,6 +197,8 @@
     <ClCompile Include="ConnectionSettingsDialog.cpp" />
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp" />
     <ClCompile Include="DsConfigurator.cpp" />
+    <ClCompile Include="DSource.cpp" />
+    <ClCompile Include="Export.cpp" />
     <ClCompile Include="FiltersDialog.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="pch.cpp">
@@ -205,8 +207,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PluginObjectFactory.cpp" />
+    <ClCompile Include="PropertySet.cpp" />
     <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="Record.cpp" />
+    <ClCompile Include="RegisterInfo.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
     <ClCompile Include="SQLServerConnection.cpp" />
     <ClCompile Include="SQLServerDatabaseEngine.cpp" />
@@ -229,12 +234,17 @@
     <ClInclude Include="DatabaseEngine.h" />
     <ClInclude Include="Drv_OPC_UA_HistValues.h" />
     <ClInclude Include="DsConfigurator.h" />
+    <ClInclude Include="DSource.h" />
+    <ClInclude Include="Export.h" />
     <ClInclude Include="FiltersDialog.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="IEnvironment.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PluginObjectFactory.h" />
+    <ClInclude Include="PropertySet.h" />
     <ClInclude Include="Record.h" />
+    <ClInclude Include="RegisterInfo.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SettingsDataSource.h" />
     <ClInclude Include="SettingsDialog.h" />

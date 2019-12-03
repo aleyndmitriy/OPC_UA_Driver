@@ -3,7 +3,7 @@
 #include<functional>
 #include <Interface\IAbstractUIFacrory.h>
 #include <CommonUI/IDbBrowser.h>
-
+#include"ConnectionAttributes.h"
 // ConnectionSettingsDialog dialog
 
 class ConnectionSettingsDialog : public CDialog
@@ -11,7 +11,7 @@ class ConnectionSettingsDialog : public CDialog
 	DECLARE_DYNAMIC(ConnectionSettingsDialog)
 
 public:
-	ConnectionSettingsDialog(CWnd* pParent = nullptr);   // standard constructor
+	ConnectionSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent);   // standard constructor
 	virtual ~ConnectionSettingsDialog();
 
 // Dialog Data
@@ -42,6 +42,8 @@ public:
 	afx_msg void OnCbnSelEndOkComboHistoricalDatabase();
 	afx_msg void OnBtnClickedButtonTestConnection();
 private:
+	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
+	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectionAttributes;
 	CComboBox m_cbServerName;
 	CComboBox m_cbAuthType;
 	CEdit m_editUserName;

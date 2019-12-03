@@ -11,8 +11,8 @@
 
 IMPLEMENT_DYNAMIC(FiltersDialog, CDialog)
 
-FiltersDialog::FiltersDialog(CWnd* pParent /*=nullptr*/)
-	: CDialog(IDD_FILTERS_DLG, pParent)
+FiltersDialog::FiltersDialog(std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, std::shared_ptr<std::map<std::string, std::vector<DrvOPCUAHistValues::StatementCondition> > > filters, CWnd* pParent)
+	: CDialog(IDD_FILTERS_DLG, pParent), m_connectionAttributes(attributes), m_conditionFilters(filters)
 {
 
 }

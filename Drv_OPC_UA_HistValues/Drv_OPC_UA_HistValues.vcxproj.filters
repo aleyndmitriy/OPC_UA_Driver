@@ -58,6 +58,12 @@
     <Filter Include="Header Files\DataAccessLayer\SettingsDataSource">
       <UniqueIdentifier>{1128b2fe-55cf-4e3f-a1ac-d87383de5a3b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Plugin">
+      <UniqueIdentifier>{26d83054-f945-4c91-bfa4-83fcee6a70c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Plugin">
+      <UniqueIdentifier>{95a82d3f-0cd3-42e5-b5c1-ef37a366b829}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp">
@@ -116,6 +122,21 @@
     </ClCompile>
     <ClCompile Include="DsConfigurator.cpp">
       <Filter>Source Files\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="Export.cpp">
+      <Filter>Source Files\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginObjectFactory.cpp">
+      <Filter>Source Files\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="RegisterInfo.cpp">
+      <Filter>Source Files\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="PropertySet.cpp">
+      <Filter>Source Files\Plugin</Filter>
+    </ClCompile>
+    <ClCompile Include="DSource.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +222,21 @@
     </ClInclude>
     <ClInclude Include="DsConfigurator.h">
       <Filter>Header Files\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="Export.h">
+      <Filter>Header Files\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginObjectFactory.h">
+      <Filter>Header Files\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="RegisterInfo.h">
+      <Filter>Header Files\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertySet.h">
+      <Filter>Header Files\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="DSource.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

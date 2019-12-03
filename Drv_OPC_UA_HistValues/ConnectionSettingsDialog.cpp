@@ -11,8 +11,8 @@
 
 IMPLEMENT_DYNAMIC(ConnectionSettingsDialog, CDialog)
 
-ConnectionSettingsDialog::ConnectionSettingsDialog(CWnd* pParent /*=nullptr*/)
-	: CDialog(IDD_CONNECTION_SETTINGS_DLG, pParent)
+ConnectionSettingsDialog::ConnectionSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent)
+	: CDialog(IDD_CONNECTION_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter),m_connectionAttributes(attributes)
 {
 
 }
