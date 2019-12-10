@@ -1,5 +1,8 @@
 ﻿#pragma once
-
+#include<memory>
+#include<functional>
+#include <Interface\IAbstractUIFacrory.h>
+#include <CommonUI/IDbBrowser.h>
 
 // Диалоговое окно CClientSettingsDialog
 

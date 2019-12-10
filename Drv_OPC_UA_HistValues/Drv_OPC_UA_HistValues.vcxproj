@@ -189,6 +189,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ClientSettingsDialog.cpp" />
+    <ClCompile Include="ConnectionAttributes.cpp" />
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp" />
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Log.cpp" />
@@ -209,6 +210,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientSettingsDialog.h" />
+    <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Drv_OPC_UA_HistValues.h" />
     <ClInclude Include="Export.h" />

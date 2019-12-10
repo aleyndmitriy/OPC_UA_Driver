@@ -54,6 +54,9 @@
     <ClCompile Include="ClientSettingsDialog.cpp">
       <Filter>Исходные файлы\Configurator</Filter>
     </ClCompile>
+    <ClCompile Include="ConnectionAttributes.cpp">
+      <Filter>Исходные файлы\Configurator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -101,6 +104,9 @@
       <Filter>Файлы заголовков\Plugin</Filter>
     </ClInclude>
     <ClInclude Include="ClientSettingsDialog.h">
+      <Filter>Файлы заголовков\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionAttributes.h">
       <Filter>Файлы заголовков\Configurator</Filter>
     </ClInclude>
   </ItemGroup>
