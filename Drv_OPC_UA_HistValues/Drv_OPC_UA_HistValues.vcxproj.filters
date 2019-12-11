@@ -25,6 +25,12 @@
     <Filter Include="Исходные файлы\Configurator">
       <UniqueIdentifier>{e206242e-6ad4-4921-b748-de1dcdc21d4b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\SettingsDataStore">
+      <UniqueIdentifier>{c1b7d435-1426-470c-a3b5-189280e052f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\SettingsDataStore">
+      <UniqueIdentifier>{88f8ee10-9766-41fc-86e6-ce6786ceb376}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp">
@@ -56,6 +62,15 @@
     </ClCompile>
     <ClCompile Include="ConnectionAttributes.cpp">
       <Filter>Исходные файлы\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="DConfigurator.cpp">
+      <Filter>Исходные файлы\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="XMLSettingsDataSource.cpp">
+      <Filter>Исходные файлы\SettingsDataStore</Filter>
+    </ClCompile>
+    <ClCompile Include="pugixml.cpp">
+      <Filter>Исходные файлы\SettingsDataStore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +123,15 @@
     </ClInclude>
     <ClInclude Include="ConnectionAttributes.h">
       <Filter>Файлы заголовков\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="DConfigurator.h">
+      <Filter>Файлы заголовков\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="ISettingsDataSource.h">
+      <Filter>Файлы заголовков\SettingsDataStore</Filter>
+    </ClInclude>
+    <ClInclude Include="XMLSettingsDataSource.h">
+      <Filter>Файлы заголовков\SettingsDataStore</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

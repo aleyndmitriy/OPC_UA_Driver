@@ -10,12 +10,20 @@ namespace DrvOPCUAHistValues
 		SIGN_AND_ENCRYPT = 3
 	};
 	
+	int GetIntFromSecurityMode(ConfigurationSecurityMode mode);
+	ConfigurationSecurityMode GetModeFromInt(int mode);
+
+
 	enum class ConfigurationSecurityType {
 		ANONYMOUS = 0,
 		USER_NAME = 1,
 		CERTIFICATE = 2,
 		ISSUED_TOKEN = 3
 	};
+
+	int GetIntFromSecurityType(ConfigurationSecurityType type);
+	ConfigurationSecurityType GetTypeFromInt(int type);
+
 
 	struct ServerConfiguration {
 		std::string computerName;

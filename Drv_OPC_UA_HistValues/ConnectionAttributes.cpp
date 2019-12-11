@@ -1,6 +1,71 @@
 #include"pch.h"
 #include"ConnectionAttributes.h"
 
+int DrvOPCUAHistValues::GetIntFromSecurityMode(ConfigurationSecurityMode mode)
+{
+	switch (mode) {
+	case ConfigurationSecurityMode::INVALID:
+		return 0;
+	case ConfigurationSecurityMode::NONE:
+		return 1;
+	case ConfigurationSecurityMode::SIGN:
+		return 2;
+	case  ConfigurationSecurityMode::SIGN_AND_ENCRYPT:
+		return 3;
+	}
+}
+
+DrvOPCUAHistValues::ConfigurationSecurityMode DrvOPCUAHistValues::GetModeFromInt(int mode)
+{
+	switch (mode) {
+	case 3:
+		return ConfigurationSecurityMode::SIGN_AND_ENCRYPT;
+		break;
+	case 2:
+		return ConfigurationSecurityMode::SIGN;
+		break;
+	case 1:
+		return ConfigurationSecurityMode::NONE;
+		break;
+	default:
+		return ConfigurationSecurityMode::INVALID;
+		break;
+	}
+}
+
+int DrvOPCUAHistValues::GetIntFromSecurityType(ConfigurationSecurityType type)
+{
+	switch (type) {
+	case ConfigurationSecurityType::ANONYMOUS:
+		return 0;
+	case ConfigurationSecurityType::USER_NAME:
+		return 1;
+	case ConfigurationSecurityType::CERTIFICATE:
+		return 2;
+	case  ConfigurationSecurityType::ISSUED_TOKEN:
+		return 3;
+	}
+}
+
+DrvOPCUAHistValues::ConfigurationSecurityType DrvOPCUAHistValues::GetTypeFromInt(int type)
+{
+	switch (type) {
+	case 3:
+		return ConfigurationSecurityType::ISSUED_TOKEN;
+		break;
+	case 2:
+		return ConfigurationSecurityType::CERTIFICATE;
+		break;
+	case 1:
+		return ConfigurationSecurityType::USER_NAME;
+		break;
+	default:
+		return ConfigurationSecurityType::ANONYMOUS;
+		break;
+	}
+}
+
+
 DrvOPCUAHistValues::ServerConfiguration::ServerConfiguration(const std::string& computer, const std::string& server, unsigned int number):
 	computerName(computer),serverName(server),port(number)
 {

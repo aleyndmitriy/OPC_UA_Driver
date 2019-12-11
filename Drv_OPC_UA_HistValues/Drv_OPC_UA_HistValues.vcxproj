@@ -190,6 +190,7 @@
   <ItemGroup>
     <ClCompile Include="ClientSettingsDialog.cpp" />
     <ClCompile Include="ConnectionAttributes.cpp" />
+    <ClCompile Include="DConfigurator.cpp" />
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp" />
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Log.cpp" />
@@ -201,8 +202,10 @@
     </ClCompile>
     <ClCompile Include="PluginObjectFactory.cpp" />
     <ClCompile Include="PropertySet.cpp" />
+    <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="RegisterInfo.cpp" />
     <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="XMLSettingsDataSource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def" />
@@ -212,9 +215,11 @@
     <ClInclude Include="ClientSettingsDialog.h" />
     <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="DConfigurator.h" />
     <ClInclude Include="Drv_OPC_UA_HistValues.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ISettingsDataSource.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PluginObjectFactory.h" />
@@ -223,6 +228,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="XMLSettingsDataSource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Drv_OPC_UA_HistValues.rc" />
