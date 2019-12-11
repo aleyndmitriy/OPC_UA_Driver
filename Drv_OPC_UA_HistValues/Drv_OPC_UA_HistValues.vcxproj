@@ -24,6 +24,7 @@
     <Keyword>MFCDLLProj</Keyword>
     <RootNamespace>DrvOPCUAHistValues</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Drv_OPC_UA_HdaItems</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -188,10 +189,12 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BrowserHdaItem.cpp" />
     <ClCompile Include="ClientSettingsDialog.cpp" />
     <ClCompile Include="ConnectionAttributes.cpp" />
     <ClCompile Include="DConfigurator.cpp" />
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp" />
+    <ClCompile Include="DSource.cpp" />
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="pch.cpp">
@@ -204,6 +207,7 @@
     <ClCompile Include="PropertySet.cpp" />
     <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="RegisterInfo.cpp" />
+    <ClCompile Include="ServerHdaItem.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="XMLSettingsDataSource.cpp" />
   </ItemGroup>
@@ -212,11 +216,13 @@
     <None Include="res\Drv_OPC_UA_HistValues.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BrowserHdaItem.h" />
     <ClInclude Include="ClientSettingsDialog.h" />
     <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DConfigurator.h" />
     <ClInclude Include="Drv_OPC_UA_HistValues.h" />
+    <ClInclude Include="DSource.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ISettingsDataSource.h" />
@@ -226,6 +232,7 @@
     <ClInclude Include="PropertySet.h" />
     <ClInclude Include="RegisterInfo.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ServerHdaItem.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="XMLSettingsDataSource.h" />

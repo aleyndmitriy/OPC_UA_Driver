@@ -31,6 +31,18 @@
     <Filter Include="Исходные файлы\SettingsDataStore">
       <UniqueIdentifier>{88f8ee10-9766-41fc-86e6-ce6786ceb376}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\Browser">
+      <UniqueIdentifier>{28b28b0e-2e3a-4582-8e28-3a688deb67cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Browser">
+      <UniqueIdentifier>{7ecce66f-3f96-4864-a6fe-48b8dfaba782}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\Server">
+      <UniqueIdentifier>{cd1a21ac-9587-40fd-b05f-e95b8851f16d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Server">
+      <UniqueIdentifier>{2e31dba9-141a-4667-aea5-c5110534e8a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp">
@@ -71,6 +83,15 @@
     </ClCompile>
     <ClCompile Include="pugixml.cpp">
       <Filter>Исходные файлы\SettingsDataStore</Filter>
+    </ClCompile>
+    <ClCompile Include="BrowserHdaItem.cpp">
+      <Filter>Исходные файлы\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerHdaItem.cpp">
+      <Filter>Исходные файлы\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="DSource.cpp">
+      <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +153,15 @@
     </ClInclude>
     <ClInclude Include="XMLSettingsDataSource.h">
       <Filter>Файлы заголовков\SettingsDataStore</Filter>
+    </ClInclude>
+    <ClInclude Include="BrowserHdaItem.h">
+      <Filter>Файлы заголовков\Browser</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerHdaItem.h">
+      <Filter>Файлы заголовков\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="DSource.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

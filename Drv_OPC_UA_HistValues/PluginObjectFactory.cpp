@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "PluginObjectFactory.h"
 #include <OdsErr.h>
-//#include "DSource.h"
+#include "DSource.h"
 #include"Constants.h"
 
 DrvOPCUAHistValues::PluginObjectFactory& DrvOPCUAHistValues::PluginObjectFactory::GetInstance()
@@ -21,7 +21,7 @@ int DrvOPCUAHistValues::PluginObjectFactory::CreateObject(const TCHAR* szObjKey,
 	if (_tcscmp(szObjKey, OPC_UA_HIST_VALUES)) {
 		return ODS::ERR::BAD_PARAM;
 	}
-	*ppPluginObj = NULL;//new CDSource();
+	*ppPluginObj = new CDSource();
 	if (*ppPluginObj)
 		return ODS::ERR::OK;
 	else
