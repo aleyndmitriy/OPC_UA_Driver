@@ -2,9 +2,8 @@
 #include<memory>
 #include<functional>
 #include <Interface\IAbstractUIFacrory.h>
-#include <CommonUI/IDbBrowser.h>
 #include"ConnectionAttributes.h"
-
+#include<Application.h>
 // Диалоговое окно CClientSettingsDialog
 
 class CClientSettingsDialog : public CDialogEx
@@ -27,6 +26,7 @@ protected:
 private:
 	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
+	SoftingOPCToolbox5::ApplicationPtr m_pApp;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
@@ -45,6 +45,8 @@ private:
 	void StartLoading();
 	void StopLoading();
 	void ReadAttributes();
+	void initApplicationDescription(SoftingOPCToolbox5::ApplicationDescription& appDesc);
+
 public:
 	afx_msg void OnEnChangeEditComputerName();
 	afx_msg void OnEnUpdateEditComputerName();

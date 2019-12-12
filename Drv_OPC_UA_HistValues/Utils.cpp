@@ -44,6 +44,20 @@ std::vector<std::string> split(const std::string& text, const std::string& delim
 	return tokens;
 }
 
+bool getComputerName(std::string& computerName)
+{
+	TCHAR buffer[256];
+	DWORD bufferSize = sizeof(buffer);
+	bool result = false;
+	computerName = std::string();
+	result = (GetComputerName(buffer, &bufferSize) != 0);
+	if (result)
+	{
+		computerName = buffer;
+	}
+	return result;
+}
+
 std::string EncryptPassword(const std::string& password)
 {
 	return std::string(password);

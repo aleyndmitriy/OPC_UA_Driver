@@ -5,21 +5,36 @@
 #include "Drv_OPC_UA_HistValues.h"
 #include "ClientSettingsDialog.h"
 #include "afxdialogex.h"
-
-
+#include"Log.h"
+#include "Utils.h"
 // Диалоговое окно CClientSettingsDialog
 
 IMPLEMENT_DYNAMIC(CClientSettingsDialog, CDialogEx)
 
 CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent)
-	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes)
+	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pApp()
 {
+	EnumStatusCode result;
+	// init the SDK to gain access to the SDK functions
+	result = SoftingOPCToolbox5::loadToolbox(NULL);
+	if (StatusCode::isBad(result))
+	{
+		_tprintf(_T("ERROR: Failed to load the SDK: %s\n"), getEnumStatusCodeString(result));
+		CDialogEx::OnCancel();
+	}
+	m_pApp = SoftingOPCToolbox5::Application::instance();
+	SoftingOPCToolbox5::ApplicationDescription appDesc;
 
 }
 
 CClientSettingsDialog::~CClientSettingsDialog()
 {
 	m_connectAttributes.reset();
+	EnumStatusCode result = SoftingOPCToolbox5::unloadToolbox();
+	if (StatusCode::isBad(result))
+	{
+		_tprintf(_T("ERROR: An error occurred while unloading the SDK: %s\n"), getEnumStatusCodeString(result));
+	}
 }
 
 void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
@@ -296,4 +311,19 @@ void CClientSettingsDialog::StopLoading()
 void CClientSettingsDialog::ReadAttributes()
 {
 
+}
+
+void CClientSettingsDialog::initApplicationDescription(SoftingOPCToolbox5::ApplicationDescription& appDesc)
+{
+	std::string hostName;
+	if (getComputerName(hostName) == false)
+	{
+		// use the default host name
+		hostName = std::string("localhost");
+	}
+
+	appDesc.setApplicationType(EnumApplicationType_Client);
+	appDesc.setApplicationName(SoftingOPCToolbox5::LocalizedText(_T("DreamReport OpcUa Histotical Items Client"), _T("en")));
+	appDesc.setApplicationUri(_T("urn:") + hostName + _T("/ODS/Dream Report/System"));	// The ApplicationUri should match with the URI in the application certificate
+	appDesc.setProductUri(_T("urn:/ODS/Dream Report/System")); 
 }
