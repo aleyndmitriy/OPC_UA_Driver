@@ -3,7 +3,7 @@
 #include "PluginObjectFactory.h"
 #include"Log.h"
 
-CDSource::CDSource() : m_Configurator([this]()->ODS::UI::IAbstractUIFacrory* {
+DrvOPCUAHistValues::CDSource::CDSource() : m_Configurator([this]()->ODS::UI::IAbstractUIFacrory* {
 	if (m_pHost)
 		return (ODS::UI::IAbstractUIFacrory*) (m_pHost->GetInterface(ODS::IPluginHost::IID_UI_FACTORY));
 	return 	nullptr;
@@ -12,32 +12,32 @@ CDSource::CDSource() : m_Configurator([this]()->ODS::UI::IAbstractUIFacrory* {
 
 }
 
-CDSource::~CDSource()
+DrvOPCUAHistValues::CDSource::~CDSource()
 {
 	m_pHost = nullptr;
 }
 
-void* CDSource::GetInterface(int nIfcID)
+void* DrvOPCUAHistValues::CDSource::GetInterface(int nIfcID)
 {
 	return this;
 }
 
-ODS::IDsConfigurator* CDSource::GetConfigurator()
+ODS::IDsConfigurator* DrvOPCUAHistValues::CDSource::GetConfigurator()
 {
 	return &m_Configurator;
 }
 
-ODS::IServerHda* CDSource::GetServer()
+ODS::IServerHda* DrvOPCUAHistValues::CDSource::GetServer()
 {
 	return &m_Server;
 }
 
-ODS::IBrowserItem* CDSource::GetBrowser()
+ODS::IBrowserItem* DrvOPCUAHistValues::CDSource::GetBrowser()
 {
 	return &m_Browser;
 }
 
-int CDSource::Attach(const ODS::IPluginHost* pHost)
+int DrvOPCUAHistValues::CDSource::Attach(const ODS::IPluginHost* pHost)
 {
 	if (!pHost)
 		return ODS::ERR::BAD_PARAM;
@@ -49,13 +49,13 @@ int CDSource::Attach(const ODS::IPluginHost* pHost)
 	return ODS::ERR::OK;
 }
 
-int CDSource::Detach()
+int DrvOPCUAHistValues::CDSource::Detach()
 {
 	m_pHost = 0;
 	return ODS::ERR::OK;
 }
 
-ODS::IPropertySet* CDSource::GetPropertySet()
+ODS::IPropertySet* DrvOPCUAHistValues::CDSource::GetPropertySet()
 {
 	ODS::RegisterInfo* pInfo = DrvOPCUAHistValues::PluginObjectFactory::GetInstance().GetRegisterInfo();
 	return pInfo->m_pPropertySet;

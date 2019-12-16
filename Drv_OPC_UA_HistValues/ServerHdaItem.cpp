@@ -6,14 +6,14 @@
 #include <HdaFunctionResult.h>
 #include<HdaCommand.h>
 
-void* ServerHdaItem::GetInterface(int nIfcId)
+void* DrvOPCUAHistValues::ServerHdaItem::GetInterface(int nIfcId)
 {
 	return this;
 }
 
-int ServerHdaItem::Init(TCHAR* szCfgString)
+int DrvOPCUAHistValues::ServerHdaItem::Init(TCHAR* szCfgString)
 {
-	DrvOPCUAHistValues::XMLSettingsDataSource settingSource;
+	XMLSettingsDataSource settingSource;
 	if (szCfgString != NULL)
 	{
 		size_t len = _tcslen(szCfgString);
@@ -25,13 +25,13 @@ int ServerHdaItem::Init(TCHAR* szCfgString)
 	return ODS::ERR::OK;
 }
 
-int ServerHdaItem::Shut()
+int DrvOPCUAHistValues::ServerHdaItem::Shut()
 {
 	//m_commandHandler.Shut();
 	return ODS::ERR::OK;
 }
 
-int ServerHdaItem::IsHdaFunctionSupported(int nFuncType)
+int DrvOPCUAHistValues::ServerHdaItem::IsHdaFunctionSupported(int nFuncType)
 {
 	switch (nFuncType)
 	{
@@ -54,7 +54,7 @@ int ServerHdaItem::IsHdaFunctionSupported(int nFuncType)
 	return 0;
 }
 
-int ServerHdaItem::Execute(ODS::HdaCommand* pCommand, ODS::HdaCommandResult** ppResult)
+int DrvOPCUAHistValues::ServerHdaItem::Execute(ODS::HdaCommand* pCommand, ODS::HdaCommandResult** ppResult)
 {
 	if (!ppResult)
 		return ODS::ERR::BAD_PARAM;
@@ -74,7 +74,7 @@ int ServerHdaItem::Execute(ODS::HdaCommand* pCommand, ODS::HdaCommandResult** pp
 	}
 }
 
-int ServerHdaItem::DestroyResult(ODS::HdaCommandResult* pResult)
+int DrvOPCUAHistValues::ServerHdaItem::DestroyResult(ODS::HdaCommandResult* pResult)
 {
 	delete pResult;
 	return ODS::ERR::OK;

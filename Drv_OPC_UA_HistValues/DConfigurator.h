@@ -3,21 +3,24 @@
 #include <Interface\IAbstractUIFacrory.h>
 #include <functional>
 
-class CDsConfigurator : public ODS::IDsConfigurator
+namespace DrvOPCUAHistValues
 {
-private:
-	std::function<ODS::UI::IAbstractUIFacrory * (void)>  m_uiFactoryGetter;
-	HWND m_hParentWindow;
-public:
+	class CDsConfigurator : public ODS::IDsConfigurator
+	{
+	private:
+		std::function<ODS::UI::IAbstractUIFacrory * (void)>  m_uiFactoryGetter;
+		HWND m_hParentWindow;
+	public:
 
-	CDsConfigurator(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactoryGetter);
-	~CDsConfigurator() = default;
+		CDsConfigurator(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactoryGetter);
+		~CDsConfigurator() = default;
 
-	void* GetInterface(int nIfcId) override;
+		void* GetInterface(int nIfcId) override;
 
-	int Configure(const TCHAR* szCfgInString, TCHAR** pszCfgOutString) override;
+		int Configure(const TCHAR* szCfgInString, TCHAR** pszCfgOutString) override;
 
-	int DestroyString(TCHAR* szCfgString) override;
+		int DestroyString(TCHAR* szCfgString) override;
 
-	void SetOwnerWnd(void* pOwnerWnd) override;
-};
+		void SetOwnerWnd(void* pOwnerWnd) override;
+	};
+}

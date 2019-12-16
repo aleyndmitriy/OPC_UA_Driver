@@ -11,6 +11,7 @@ namespace DrvOPCUAHistValues
 	};
 	
 	int GetIntFromSecurityMode(ConfigurationSecurityMode mode);
+	std::string GetStringFromSecurityMode(ConfigurationSecurityMode mode);
 	ConfigurationSecurityMode GetModeFromInt(int mode);
 
 
@@ -22,6 +23,7 @@ namespace DrvOPCUAHistValues
 	};
 
 	int GetIntFromSecurityType(ConfigurationSecurityType type);
+	std::string GetStringFromSecurityType(ConfigurationSecurityType type);
 	ConfigurationSecurityType GetTypeFromInt(int type);
 
 

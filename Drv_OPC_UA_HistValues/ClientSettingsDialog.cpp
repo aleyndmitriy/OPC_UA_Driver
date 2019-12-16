@@ -7,34 +7,21 @@
 #include "afxdialogex.h"
 #include"Log.h"
 #include "Utils.h"
+#include"Constants.h"
 // Диалоговое окно CClientSettingsDialog
 
 IMPLEMENT_DYNAMIC(CClientSettingsDialog, CDialogEx)
 
 CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent)
-	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pApp()
+	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pSoftingInteractor(nullptr)
 {
-	EnumStatusCode result;
-	// init the SDK to gain access to the SDK functions
-	result = SoftingOPCToolbox5::loadToolbox(NULL);
-	if (StatusCode::isBad(result))
-	{
-		_tprintf(_T("ERROR: Failed to load the SDK: %s\n"), getEnumStatusCodeString(result));
-		CDialogEx::OnCancel();
-	}
-	m_pApp = SoftingOPCToolbox5::Application::instance();
-	SoftingOPCToolbox5::ApplicationDescription appDesc;
-
+	
 }
 
 CClientSettingsDialog::~CClientSettingsDialog()
 {
 	m_connectAttributes.reset();
-	EnumStatusCode result = SoftingOPCToolbox5::unloadToolbox();
-	if (StatusCode::isBad(result))
-	{
-		_tprintf(_T("ERROR: An error occurred while unloading the SDK: %s\n"), getEnumStatusCodeString(result));
-	}
+	m_pSoftingInteractor.reset();
 }
 
 void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
@@ -84,10 +71,86 @@ END_MESSAGE_MAP()
 BOOL CClientSettingsDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+	SetUpInitialState();
+	//m_pSoftingInteractor = std::make_shared<SoftingServerInteractor>(shared_from_this());
+	if (!m_connectAttributes->configuration.computerName.empty()) {
+		m_editComputerName.SetWindowTextA(m_connectAttributes->configuration.computerName.c_str());
+	}
+	if (!m_connectAttributes->configuration.serverName.empty()) {
+		int ind = m_cmbServerName.AddString(m_connectAttributes->configuration.serverName.c_str());
+		m_cmbServerName.SetCurSel(ind);
+	}
+	if (m_connectAttributes->configuration.port > 0) {
+		std::string port = std::to_string(m_connectAttributes->configuration.port);
+		m_editPort.SetWindowTextA(port.c_str());
+	}
+	if (!m_connectAttributes->configurationMode.serverSecurityName.empty()) {
+		std::string config = m_connectAttributes->configurationMode.serverSecurityName + std::string(" - ") +
+			DrvOPCUAHistValues::GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode);
+		int ind = m_cmbConfiguration.AddString(config.c_str());
+		m_cmbConfiguration.SetCurSel(ind);
+	}
+	
+	switch (m_connectAttributes->configurationAccess.securityType) {
+	case DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME:
+		m_cmbServerName.SetCurSel(DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME));
+		m_editLogin.EnableWindow(TRUE);
+		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.login.c_str());
+		m_editPassword.EnableWindow(TRUE);
+		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.password.c_str());
+		break;
+	case DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE:
+		m_cmbServerName.SetCurSel(DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE));
+		m_editCertificate.EnableWindow(TRUE);
+		m_editCertificate.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
+		m_btnCertificate.EnableWindow(TRUE);
+		m_editPrivateKey.EnableWindow(TRUE);
+		m_editPrivateKey.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
+		m_btnPrivateKey.EnableWindow(TRUE);
+		break;
+	default:
+		break;
+	}
 	return TRUE;
 }
 
+void CClientSettingsDialog::SetUpInitialState()
+{
+	m_editComputerName.SetSel(0, -1);
+	m_editComputerName.Clear();
+	m_editPort.SetSel(0, -1);
+	m_editPort.Clear();
+	m_cmbServerName.ResetContent();
+	m_cmbConfiguration.ResetContent();
 
+	m_editLogin.SetSel(0, -1);
+	m_editLogin.Clear();
+	m_editLogin.EnableWindow(FALSE);
+
+	m_editPassword.SetSel(0, -1);
+	m_editPassword.Clear();
+	m_editPassword.EnableWindow(FALSE);
+
+	m_editCertificate.SetSel(0, -1);
+	m_editCertificate.Clear();
+	m_editCertificate.EnableWindow(FALSE);
+	m_btnCertificate.EnableWindow(FALSE);
+
+	m_editPrivateKey.SetSel(0, -1);
+	m_editPrivateKey.Clear();
+	m_editPrivateKey.EnableWindow(FALSE);
+	m_btnPrivateKey.EnableWindow(FALSE);
+
+	m_cmbPolicy.ResetContent();
+	int pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS).c_str());
+	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS));
+	pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME).c_str());
+	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME));
+	pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE).c_str());
+	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE));
+	pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN).c_str());
+	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN));
+}
 // Обработчики сообщений CClientSettingsDialog
 
 
@@ -115,7 +178,21 @@ void CClientSettingsDialog::OnEnUpdateEditComputerName()
 
 void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	/*if (StatusCode::isBad(m_enumResult))
+	{
+		return;
+	}
+	std::vector<SoftingOPCToolbox5::ApplicationDescription> applicationDescriptions;
+	std::vector<std::string> serverURIs;
+	EnumStatusCode result = EnumStatusCode_Good;
+	std::string discoveryServerUrl;
+	GetServerUrl(discoveryServerUrl);
+	result = m_pApp->findServers(discoveryServerUrl, serverURIs, applicationDescriptions, NULL, NULL, NULL, NULL, true);
+	if (StatusCode::isFAILED(result))
+	{
+		_tprintf(_T("Find Servers failed with status code %s"), getEnumStatusCodeString(result));
+		return;
+	}*/
 }
 
 
@@ -138,7 +215,10 @@ void CClientSettingsDialog::OnEnChangeEditPort()
 
 void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	std::string computerName;
+	if (getComputerName(computerName)) {
+		m_editComputerName.SetWindowTextA(computerName.c_str());
+	}
 }
 
 
@@ -150,7 +230,22 @@ void CClientSettingsDialog::OnBtnClickedButtonGetSeverProperties()
 
 void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	CString str;
+	m_editComputerName.GetWindowTextA(str);
+	std::string computerName = std::string(str.GetBuffer());
+	str.ReleaseBuffer();
+	str.Empty();
+	if(!m_pSoftingInteractor) {
+		m_pSoftingInteractor = std::make_shared<SoftingServerInteractor>(this, computerName);
+	}
+	std::vector<std::string> servers = m_pSoftingInteractor->GetServers();
+	m_cmbServerName.ResetContent();
+	size_t index = 0;
+	for (std::vector<std::string>::const_iterator itr = servers.cbegin(); itr != servers.cend(); ++itr)
+	{
+		int pos = m_cmbServerName.AddString(itr->c_str());
+		m_cmbServerName.SetItemData(pos, index++);
+	}
 }
 
 
@@ -313,7 +408,8 @@ void CClientSettingsDialog::ReadAttributes()
 
 }
 
-void CClientSettingsDialog::initApplicationDescription(SoftingOPCToolbox5::ApplicationDescription& appDesc)
+
+void CClientSettingsDialog::GetServerUrl(std::string& url)
 {
 	std::string hostName;
 	if (getComputerName(hostName) == false)
@@ -321,9 +417,11 @@ void CClientSettingsDialog::initApplicationDescription(SoftingOPCToolbox5::Appli
 		// use the default host name
 		hostName = std::string("localhost");
 	}
+	std::string server = std::string(":51510/UA/DemoServer");
+	url = std::string("opc.tcp://") + hostName + server;
+}
 
-	appDesc.setApplicationType(EnumApplicationType_Client);
-	appDesc.setApplicationName(SoftingOPCToolbox5::LocalizedText(_T("DreamReport OpcUa Histotical Items Client"), _T("en")));
-	appDesc.setApplicationUri(_T("urn:") + hostName + _T("/ODS/Dream Report/System"));	// The ApplicationUri should match with the URI in the application certificate
-	appDesc.setProductUri(_T("urn:/ODS/Dream Report/System")); 
+void CClientSettingsDialog::SendMessageError(std::string&& message)
+{
+	ErrorMessage(message);
 }

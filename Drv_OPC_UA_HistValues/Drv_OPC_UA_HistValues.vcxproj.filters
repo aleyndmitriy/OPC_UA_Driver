@@ -43,6 +43,12 @@
     <Filter Include="Исходные файлы\Server">
       <UniqueIdentifier>{2e31dba9-141a-4667-aea5-c5110534e8a2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\SoftingService">
+      <UniqueIdentifier>{28791640-ebf5-41b2-ad18-c91c4350e833}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\SoftingService">
+      <UniqueIdentifier>{b55a7ba8-f477-4efd-a1cb-2608605fff3b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Drv_OPC_UA_HistValues.cpp">
@@ -92,6 +98,9 @@
     </ClCompile>
     <ClCompile Include="DSource.cpp">
       <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftingServerInteractor.cpp">
+      <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -162,6 +171,12 @@
     </ClInclude>
     <ClInclude Include="DSource.h">
       <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftingServerInteractorOutput.h">
+      <Filter>Файлы заголовков\SoftingService</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftingServerInteractor.h">
+      <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

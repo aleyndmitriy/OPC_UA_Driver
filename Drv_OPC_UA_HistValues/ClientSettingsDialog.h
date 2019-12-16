@@ -3,10 +3,11 @@
 #include<functional>
 #include <Interface\IAbstractUIFacrory.h>
 #include"ConnectionAttributes.h"
-#include<Application.h>
+#include"SoftingServerInteractorOutput.h"
+#include"SoftingServerInteractor.h"
 // Диалоговое окно CClientSettingsDialog
 
-class CClientSettingsDialog : public CDialogEx
+class CClientSettingsDialog : public CDialogEx, public SoftingServerInteractorOutput
 {
 	DECLARE_DYNAMIC(CClientSettingsDialog)
 
@@ -26,7 +27,7 @@ protected:
 private:
 	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
-	SoftingOPCToolbox5::ApplicationPtr m_pApp;
+	std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
@@ -40,12 +41,13 @@ private:
 	CButton m_btnPrivateKey;
 	
 	BOOL OnInitDialog() override;
+	void SetUpInitialState();
 	void WarningMessage(std::string message);
 	void ErrorMessage(std::string message);
 	void StartLoading();
 	void StopLoading();
 	void ReadAttributes();
-	void initApplicationDescription(SoftingOPCToolbox5::ApplicationDescription& appDesc);
+	void GetServerUrl(std::string& url);
 
 public:
 	afx_msg void OnEnChangeEditComputerName();
@@ -71,4 +73,5 @@ public:
 	afx_msg void OnBtnClickedButtonTestConnection();
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();
+	void SendMessageError(std::string&& message) override;
 };

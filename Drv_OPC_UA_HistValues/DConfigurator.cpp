@@ -8,17 +8,17 @@
 #include "ClientSettingsDialog.h"
 #include"Constants.h"
 
-CDsConfigurator::CDsConfigurator(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactoryGetter) :m_uiFactoryGetter(uiFactoryGetter), m_hParentWindow(nullptr)
+DrvOPCUAHistValues::CDsConfigurator::CDsConfigurator(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactoryGetter) :m_uiFactoryGetter(uiFactoryGetter), m_hParentWindow(nullptr)
 {
 
 }
 
-void* CDsConfigurator::GetInterface(int nIfcId)
+void* DrvOPCUAHistValues::CDsConfigurator::GetInterface(int nIfcId)
 {
 	return NULL;
 }
 
-int CDsConfigurator::Configure(const TCHAR* szCfgInString, TCHAR** pszCfgOutString)
+int DrvOPCUAHistValues::CDsConfigurator::Configure(const TCHAR* szCfgInString, TCHAR** pszCfgOutString)
 {
 	int iRes = ODS::ERR::FILE;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes = std::make_shared<DrvOPCUAHistValues::ConnectionAttributes>();
@@ -58,14 +58,14 @@ int CDsConfigurator::Configure(const TCHAR* szCfgInString, TCHAR** pszCfgOutStri
 	return iRes;
 }
 
-int CDsConfigurator::DestroyString(TCHAR* szCfgString)
+int DrvOPCUAHistValues::CDsConfigurator::DestroyString(TCHAR* szCfgString)
 {
 	delete[] szCfgString;
 
 	return ODS::ERR::OK;
 }
 
-void CDsConfigurator::SetOwnerWnd(void* pOwnerWnd)
+void DrvOPCUAHistValues::CDsConfigurator::SetOwnerWnd(void* pOwnerWnd)
 {
 	m_hParentWindow = reinterpret_cast<HWND>(pOwnerWnd);
 }

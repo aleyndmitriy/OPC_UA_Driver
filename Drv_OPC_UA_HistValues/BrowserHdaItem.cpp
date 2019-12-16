@@ -7,17 +7,17 @@
 #include"XMLSettingsDataSource.h"
 #include"Log.h"
 
-BrowserHdaItem::BrowserHdaItem() :m_attributes(), m_TagList()
+DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem() :m_attributes(), m_TagList()
 {
 
 }
 
-void* BrowserHdaItem::GetInterface(int nIfcId)
+void* DrvOPCUAHistValues::BrowserHdaItem::GetInterface(int nIfcId)
 {
 	return this;
 }
 
-int BrowserHdaItem::Init(TCHAR* szCfgString)
+int DrvOPCUAHistValues::BrowserHdaItem::Init(TCHAR* szCfgString)
 {
 	DrvOPCUAHistValues::XMLSettingsDataSource settingSource;
 	if (szCfgString != NULL)
@@ -31,12 +31,12 @@ int BrowserHdaItem::Init(TCHAR* szCfgString)
 	return ODS::ERR::OK;
 }
 
-int BrowserHdaItem::Shut()
+int DrvOPCUAHistValues::BrowserHdaItem::Shut()
 {
 	return ODS::ERR::OK;
 }
 
-ODS::OdsString BrowserHdaItem::GetAddressOld(const ODS::ItemAddress& rAddress)
+ODS::OdsString DrvOPCUAHistValues::BrowserHdaItem::GetAddressOld(const ODS::ItemAddress& rAddress)
 {
 	ODS::AddressComponent* addrComp = nullptr;
 	int nCount = 0;
@@ -67,7 +67,7 @@ ODS::OdsString BrowserHdaItem::GetAddressOld(const ODS::ItemAddress& rAddress)
 }
 
 
-int BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress* pAddress, ODS::BrowseItem** ppList, ULONG* pulCount)
+int DrvOPCUAHistValues::BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress* pAddress, ODS::BrowseItem** ppList, ULONG* pulCount)
 {
 	int iRes = ODS::ERR::OK;
 
@@ -162,7 +162,7 @@ int BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress* pAddress, ODS::Bro
 	return iRes;
 }
 
-int BrowserHdaItem::DestroyBrowseItemList(ODS::BrowseItem* pList, ULONG ulCount)
+int DrvOPCUAHistValues::BrowserHdaItem::DestroyBrowseItemList(ODS::BrowseItem* pList, ULONG ulCount)
 {
 	if (pList)
 	{
@@ -171,7 +171,7 @@ int BrowserHdaItem::DestroyBrowseItemList(ODS::BrowseItem* pList, ULONG ulCount)
 	return ODS::ERR::OK;
 }
 
-int BrowserHdaItem::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
+int DrvOPCUAHistValues::BrowserHdaItem::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
 {
 	pTagList->clear();
 	/*std::string key = m_database->OpenConnection();

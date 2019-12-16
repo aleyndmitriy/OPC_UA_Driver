@@ -6,12 +6,36 @@ int DrvOPCUAHistValues::GetIntFromSecurityMode(ConfigurationSecurityMode mode)
 	switch (mode) {
 	case ConfigurationSecurityMode::INVALID:
 		return 0;
+		break;
 	case ConfigurationSecurityMode::NONE:
 		return 1;
+		break;
 	case ConfigurationSecurityMode::SIGN:
 		return 2;
+		break;
 	case  ConfigurationSecurityMode::SIGN_AND_ENCRYPT:
 		return 3;
+		break;
+	default:
+		return 0;
+		break;
+	}
+}
+
+std::string DrvOPCUAHistValues::GetStringFromSecurityMode(ConfigurationSecurityMode mode)
+{
+	switch (mode) {
+	case ConfigurationSecurityMode::NONE:
+		return std::string("None");
+		break;
+	case ConfigurationSecurityMode::SIGN:
+		return std::string("Sign");
+		break;
+	case  ConfigurationSecurityMode::SIGN_AND_ENCRYPT:
+		return std::string("Sign and Encrypt");
+		break;
+	default:
+		return std::string("Invalid");
 	}
 }
 
@@ -44,6 +68,24 @@ int DrvOPCUAHistValues::GetIntFromSecurityType(ConfigurationSecurityType type)
 		return 2;
 	case  ConfigurationSecurityType::ISSUED_TOKEN:
 		return 3;
+	}
+}
+
+std::string DrvOPCUAHistValues::GetStringFromSecurityType(ConfigurationSecurityType type)
+{
+	switch (type) {
+	case ConfigurationSecurityType::ANONYMOUS:
+		return std::string("Anonymous");
+		break;
+	case ConfigurationSecurityType::USER_NAME:
+		return std::string("User Name");
+		break;
+	case ConfigurationSecurityType::CERTIFICATE:
+		return std::string("Certificate");
+		break;
+	case  ConfigurationSecurityType::ISSUED_TOKEN:
+		return std::string("Issued Token");
+		break;
 	}
 }
 
