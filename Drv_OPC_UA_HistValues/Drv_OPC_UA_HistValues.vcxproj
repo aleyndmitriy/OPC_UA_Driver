@@ -99,12 +99,15 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)Include;$(Solution)pugixml;$(Solution)api\include;$(Solution)Core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CallingConvention>Cdecl</CallingConvention>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>.\Drv_OPC_UA_HistValues.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>..\Drv_OPC_UA_HistValues\Libd;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OdsCoreLib.lib;TB5CPP.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -198,7 +201,6 @@
     <ClCompile Include="ClientSettingsDialog.cpp" />
     <ClCompile Include="ConnectionAttributes.cpp" />
     <ClCompile Include="DConfigurator.cpp" />
-    <ClCompile Include="Drv_OPC_UA_HistValues.cpp" />
     <ClCompile Include="DSource.cpp" />
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Log.cpp" />
@@ -227,7 +229,6 @@
     <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DConfigurator.h" />
-    <ClInclude Include="Drv_OPC_UA_HistValues.h" />
     <ClInclude Include="DSource.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="framework.h" />

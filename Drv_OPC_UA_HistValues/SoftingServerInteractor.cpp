@@ -5,7 +5,7 @@
 #include<algorithm>
 
 SoftingServerInteractor::SoftingServerInteractor(SoftingServerInteractorOutput* output, const std::string& compName):
-	m_strCompServName(compName), m_pOutput(output), m_pApp(), m_AppDesc(), m_enumResult(), m_serversList()
+	m_strCompServName(compName), m_pOutput(output), m_pApp(), m_AppDesc(), m_enumResult(), m_serversList(), m_selectedUrlEndpointDescriptions()
 {
 	m_enumResult = SoftingOPCToolbox5::loadToolbox(NULL);
 	if (StatusCode::isBad(m_enumResult))
@@ -72,6 +72,7 @@ SoftingServerInteractor::~SoftingServerInteractor()
 		}
 	}
 	m_enumResult = SoftingOPCToolbox5::unloadToolbox();
+	
 	if (StatusCode::isBad(m_enumResult))
 	{
 		std::string message = std::string("An error occurred while unloading the SDK: ") + std::string(getEnumStatusCodeString(m_enumResult));
@@ -132,7 +133,7 @@ bool SoftingServerInteractor::findServersDescription()
 	if (m_strCompServName.empty()) {
 		return false;
 	}
-	std::string discoveryServerUrl = std::string("opc.tcp://") + m_strCompServName;// +std::string(":51510/UA/DemoServer");
+	std::string discoveryServerUrl = std::string("opc.tcp://") + m_strCompServName; //+ std::string(":51510/");
 	result = m_pApp->findServers(discoveryServerUrl, serverURIs, m_serversList);
 	if (StatusCode::isBad(result))
 	{
@@ -145,16 +146,67 @@ bool SoftingServerInteractor::findServersDescription()
 	return true;
 }
 
-std::vector<std::string> SoftingServerInteractor::GetServers()
+void SoftingServerInteractor::GetServers()
 {
 	std::vector<std::string> vec;
 	if (m_serversList.empty()) {
 		if (findServersDescription() == false) {
-			return vec;
+			return ;
 		}
 	}
 	std::transform(m_serversList.cbegin(), m_serversList.cend(), std::back_inserter(vec), [](const SoftingOPCToolbox5::ApplicationDescription& desc) {
-		return desc.getApplicationUri(); });
+		std::string name(desc.getApplicationUri());
+		::Sleep(1000);
+		return name; });
 
-	return vec;
+	if (m_pOutput) {
+		m_pOutput->GetServers(std::move(vec));
+	}
+}
+
+void SoftingServerInteractor::ChooseCurrentServer(int index) {
+	if (index < 0) {
+		std::string message("Select sever!");
+		if (m_pOutput) {
+			m_pOutput->SendWarning(std::move(message));
+		}
+		return;
+	}
+	std::vector<tstring> discoveryUrls;
+	discoveryUrls = m_serversList[index].getDiscoveryUrls();
+	if (discoveryUrls.empty())
+	{
+		if (m_pOutput) {
+			std::string message("Invalid endpoint URL!");
+			m_pOutput->SendWarning(std::move(message));
+		}
+		return;
+	}
+	for (std::vector<std::string>::const_iterator itr = discoveryUrls.cbegin(); itr != discoveryUrls.cend(); itr++) {
+		if (itr->length() > 0) {
+			std::vector<tstring> transportProfileList;
+			std::vector<tstring> endpointDescriptionsString;
+			EnumStatusCode result = EnumStatusCode_Good;
+			result = m_pApp->getEndpointsFromServer(*itr, transportProfileList, m_selectedUrlEndpointDescriptions);
+			if (StatusCode::isBad(result))
+			{
+				if (m_pOutput) {
+					std::string message = std::string("Failed to get endpoint descriptions: ") + std::string(getEnumStatusCodeString(m_enumResult));
+					m_pOutput->SendWarning(std::move(message));
+				}
+			}
+			std::transform(m_selectedUrlEndpointDescriptions.cbegin(), m_selectedUrlEndpointDescriptions.cend(), std::back_inserter(endpointDescriptionsString), [](const SoftingOPCToolbox5::EndpointDescription& desc) {
+				std::string name(desc.getEndpointUrl());
+				std::string policy = desc.getSecurityPolicy();
+				EnumMessageSecurityMode mode = desc.getMessageSecurityMode();
+				std::string modeStr = std::to_string(mode);
+				std::string endDesc = name + std::string("-") + policy + std::string("-") + modeStr;
+				Sleep(1000);
+				return endDesc; });
+			if (m_pOutput) {
+				m_pOutput->GetEndPoints(std::move(endpointDescriptionsString));
+			}
+			break;
+		}
+	}
 }

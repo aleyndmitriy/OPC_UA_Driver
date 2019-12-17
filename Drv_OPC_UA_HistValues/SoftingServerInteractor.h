@@ -9,7 +9,8 @@ public:
 	explicit SoftingServerInteractor(const std::string& compName);
 	SoftingServerInteractor() = delete;
 	~SoftingServerInteractor();
-	std::vector<std::string> GetServers();
+	void GetServers();
+	void ChooseCurrentServer(int index);
 	bool OpenConnectionWithUUID(const std::string& connectionID);
 	std::string OpenConnection();
 private:
@@ -19,6 +20,7 @@ private:
 	SoftingOPCToolbox5::ApplicationDescription m_AppDesc;
 	EnumStatusCode m_enumResult;
 	std::vector<SoftingOPCToolbox5::ApplicationDescription> m_serversList;
+	std::vector<SoftingOPCToolbox5::EndpointDescription> m_selectedUrlEndpointDescriptions;
 	void InitApplicationDescription();
 	bool findServersDescription();
 };

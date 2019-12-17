@@ -51,9 +51,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Drv_OPC_UA_HistValues.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -119,9 +116,6 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Drv_OPC_UA_HistValues.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">

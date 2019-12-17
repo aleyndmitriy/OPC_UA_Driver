@@ -74,4 +74,7 @@ public:
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();
 	void SendMessageError(std::string&& message) override;
+	void SendWarning(std::string&& message) override;
+	void GetServers(std::vector<std::string>&& servers) override;
+	void GetEndPoints(std::vector<std::string>&& endPoints) override;
 };

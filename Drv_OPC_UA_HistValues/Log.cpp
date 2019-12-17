@@ -59,7 +59,7 @@ namespace DrvOPCUAHistValues
 
 		msgPrefix += msg;
 
-		m_pBody->m_pILog->Write(nLevel, nMsgType, _T("%s"), msgPrefix);
+		m_pBody->m_pILog->Write(nLevel, nMsgType, _T("%s"), msgPrefix.GetBuffer());
 	}
 
 	void Log::WriteInfo(const TCHAR* szFormat, ...)

@@ -2,7 +2,7 @@
 //
 
 #include "pch.h"
-#include "Drv_OPC_UA_HistValues.h"
+#include "resource.h"	
 #include "ClientSettingsDialog.h"
 #include "afxdialogex.h"
 #include"Log.h"
@@ -178,27 +178,14 @@ void CClientSettingsDialog::OnEnUpdateEditComputerName()
 
 void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
 {
-	/*if (StatusCode::isBad(m_enumResult))
-	{
-		return;
-	}
-	std::vector<SoftingOPCToolbox5::ApplicationDescription> applicationDescriptions;
-	std::vector<std::string> serverURIs;
-	EnumStatusCode result = EnumStatusCode_Good;
-	std::string discoveryServerUrl;
-	GetServerUrl(discoveryServerUrl);
-	result = m_pApp->findServers(discoveryServerUrl, serverURIs, applicationDescriptions, NULL, NULL, NULL, NULL, true);
-	if (StatusCode::isFAILED(result))
-	{
-		_tprintf(_T("Find Servers failed with status code %s"), getEnumStatusCodeString(result));
-		return;
-	}*/
+	int index = m_cmbConfiguration.GetCurSel();
 }
 
 
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	int index = m_cmbServerName.GetCurSel();
+	m_pSoftingInteractor->ChooseCurrentServer(index);
 }
 
 
@@ -235,17 +222,11 @@ void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 	std::string computerName = std::string(str.GetBuffer());
 	str.ReleaseBuffer();
 	str.Empty();
+	m_cmbServerName.ResetContent();
 	if(!m_pSoftingInteractor) {
 		m_pSoftingInteractor = std::make_shared<SoftingServerInteractor>(this, computerName);
 	}
-	std::vector<std::string> servers = m_pSoftingInteractor->GetServers();
-	m_cmbServerName.ResetContent();
-	size_t index = 0;
-	for (std::vector<std::string>::const_iterator itr = servers.cbegin(); itr != servers.cend(); ++itr)
-	{
-		int pos = m_cmbServerName.AddString(itr->c_str());
-		m_cmbServerName.SetItemData(pos, index++);
-	}
+	m_pSoftingInteractor->GetServers();
 }
 
 
@@ -424,4 +405,29 @@ void CClientSettingsDialog::GetServerUrl(std::string& url)
 void CClientSettingsDialog::SendMessageError(std::string&& message)
 {
 	ErrorMessage(message);
+}
+
+void CClientSettingsDialog::SendWarning(std::string&& message)
+{
+	WarningMessage(message);
+}
+
+void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
+{
+	size_t index = 0;
+	for (std::vector<std::string>::const_iterator itr = servers.cbegin(); itr != servers.cend(); ++itr)
+	{
+		int pos = m_cmbServerName.AddString(itr->c_str());
+		m_cmbServerName.SetItemData(pos, index++);
+	}
+}
+
+void CClientSettingsDialog::GetEndPoints(std::vector<std::string>&& endPoints)
+{
+	size_t index = 0;
+	for (std::vector<std::string>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
+	{
+		int pos = m_cmbConfiguration.AddString(itr->c_str());
+		m_cmbConfiguration.SetItemData(pos, index++);
+	}
 }
