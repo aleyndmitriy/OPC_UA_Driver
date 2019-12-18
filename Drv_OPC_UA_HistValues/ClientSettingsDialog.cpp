@@ -13,7 +13,7 @@
 IMPLEMENT_DYNAMIC(CClientSettingsDialog, CDialogEx)
 
 CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent)
-	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pSoftingInteractor(nullptr)
+	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pSoftingInteractor(nullptr), m_endPointsConfigurations()
 {
 	
 }
@@ -344,7 +344,13 @@ void CClientSettingsDialog::OnBtnClickedButtonPrivateKeyPath()
 
 void CClientSettingsDialog::OnBtnClickedButtonTestConnection()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	CString str;
+	int len = m_cmbServerName.GetWindowTextLengthA();
+	m_cmbServerName.GetWindowTextA(str);
+	int index = m_cmbConfiguration.GetCurSel();
+	if (index >= 0) {
+
+	}
 }
 
 
@@ -422,12 +428,17 @@ void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
 	}
 }
 
-void CClientSettingsDialog::GetEndPoints(std::vector<std::string>&& endPoints)
+void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints)
 {
+	m_endPointsConfigurations.clear();
+	m_endPointsConfigurations.assign(endPoints.cbegin(), endPoints.cend());
 	size_t index = 0;
-	for (std::vector<std::string>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
+	for (std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
 	{
-		int pos = m_cmbConfiguration.AddString(itr->c_str());
+		std::string desc = itr->m_endPointDesc.serverSecurityName + std::string("-") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->m_endPointDesc.securityMode) +
+			std::string("-") + DrvOPCUAHistValues::GetStringFromSecurityType(itr->m_endPointPolicy.securityType);
+		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, index++);
 	}
+
 }

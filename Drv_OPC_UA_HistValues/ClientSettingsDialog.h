@@ -28,6 +28,7 @@ private:
 	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
 	std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
+	std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> m_endPointsConfigurations;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
@@ -76,5 +77,5 @@ public:
 	void SendMessageError(std::string&& message) override;
 	void SendWarning(std::string&& message) override;
 	void GetServers(std::vector<std::string>&& servers) override;
-	void GetEndPoints(std::vector<std::string>&& endPoints) override;
+	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints) override;
 };

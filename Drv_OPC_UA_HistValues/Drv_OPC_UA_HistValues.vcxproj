@@ -215,6 +215,7 @@
     <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="RegisterInfo.cpp" />
     <ClCompile Include="ServerHdaItem.cpp" />
+    <ClCompile Include="SoftingServerEndPointDescription.cpp" />
     <ClCompile Include="SoftingServerInteractor.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="XMLSettingsDataSource.cpp" />
@@ -240,6 +241,7 @@
     <ClInclude Include="RegisterInfo.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ServerHdaItem.h" />
+    <ClInclude Include="SoftingServerEndPointDescription.h" />
     <ClInclude Include="SoftingServerInteractor.h" />
     <ClInclude Include="SoftingServerInteractorOutput.h" />
     <ClInclude Include="targetver.h" />

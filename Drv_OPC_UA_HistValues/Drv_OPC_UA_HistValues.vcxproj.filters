@@ -99,6 +99,9 @@
     <ClCompile Include="SoftingServerInteractor.cpp">
       <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
+    <ClCompile Include="SoftingServerEndPointDescription.cpp">
+      <Filter>Исходные файлы\SoftingService</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -170,6 +173,9 @@
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
     <ClInclude Include="SoftingServerInteractor.h">
+      <Filter>Файлы заголовков\SoftingService</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftingServerEndPointDescription.h">
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
   </ItemGroup>
