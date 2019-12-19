@@ -33,7 +33,7 @@ private:
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
 	CComboBox m_cmbConfiguration;
-	CComboBox m_cmbPolicy;
+	CListCtrl m_lstPolicyType;
 	CEdit m_editLogin;
 	CEdit m_editPassword;
 	CEdit m_editCertificate;
@@ -78,4 +78,5 @@ public:
 	void SendWarning(std::string&& message) override;
 	void GetServers(std::vector<std::string>&& servers) override;
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints) override;
+	
 };

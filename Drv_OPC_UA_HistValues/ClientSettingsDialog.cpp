@@ -31,13 +31,13 @@ void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_SELECT_SERVER, m_cmbServerName);
 	DDX_Control(pDX, IDC_EDIT_PORT, m_editPort);
 	DDX_Control(pDX, IDC_COMBO_CONFIGURATION, m_cmbConfiguration);
-	DDX_Control(pDX, IDC_COMBO_LOGIN_TYPE, m_cmbPolicy);
 	DDX_Control(pDX, IDC_EDIT_LOGIN, m_editLogin);
 	DDX_Control(pDX, IDC_EDIT_PASSWORD, m_editPassword);
 	DDX_Control(pDX, IDC_EDIT_CERTIFICATE, m_editCertificate);
 	DDX_Control(pDX, IDC_BUTTON_CERTIFICATE_PATH, m_btnCertificate);
 	DDX_Control(pDX, IDC_EDIT_PRIVATE_KEY, m_editPrivateKey);
 	DDX_Control(pDX, IDC_BUTTON_PRIVATE_KEY_PATH, m_btnPrivateKey);
+	DDX_Control(pDX, IDC_LIST_LOGIN_TYPE, m_lstPolicyType);
 }
 
 
@@ -51,7 +51,6 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_GET_SEVER_PROPERTIES, &CClientSettingsDialog::OnBtnClickedButtonGetSeverProperties)
 	ON_BN_CLICKED(IDC_BUTTON_DISCOVER_SERVERS, &CClientSettingsDialog::OnBtnClickedButtonDiscoverServers)
 	ON_CBN_SELCHANGE(IDC_COMBO_CONFIGURATION, &CClientSettingsDialog::OnCbnSelChangeComboConfiguration)
-	ON_CBN_SELCHANGE(IDC_COMBO_LOGIN_TYPE, &CClientSettingsDialog::OnCbnSelChangeComboLoginType)
 	ON_EN_CHANGE(IDC_EDIT_LOGIN, &CClientSettingsDialog::OnEnChangeEditLogin)
 	ON_EN_UPDATE(IDC_EDIT_LOGIN, &CClientSettingsDialog::OnEnUpdateEditLogin)
 	ON_EN_CHANGE(IDC_EDIT_PASSWORD, &CClientSettingsDialog::OnEnChangeEditPassword)
@@ -72,7 +71,6 @@ BOOL CClientSettingsDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	SetUpInitialState();
-	//m_pSoftingInteractor = std::make_shared<SoftingServerInteractor>(shared_from_this());
 	if (!m_connectAttributes->configuration.computerName.empty()) {
 		m_editComputerName.SetWindowTextA(m_connectAttributes->configuration.computerName.c_str());
 	}
@@ -90,7 +88,7 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		int ind = m_cmbConfiguration.AddString(config.c_str());
 		m_cmbConfiguration.SetCurSel(ind);
 	}
-	
+	LPARAM l = MAKELPARAM(1, 2);
 	switch (m_connectAttributes->configurationAccess.securityType) {
 	case DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME:
 		m_cmbServerName.SetCurSel(DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME));
@@ -110,6 +108,10 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		break;
 	default:
 		break;
+	}
+
+	if (!m_pSoftingInteractor) {
+		m_pSoftingInteractor = std::make_shared<SoftingServerInteractor>(this,*m_connectAttributes);
 	}
 	return TRUE;
 }
@@ -141,7 +143,7 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editPrivateKey.EnableWindow(FALSE);
 	m_btnPrivateKey.EnableWindow(FALSE);
 
-	m_cmbPolicy.ResetContent();
+	/*m_cmbPolicy.ResetContent();
 	int pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS).c_str());
 	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS));
 	pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME).c_str());
@@ -149,7 +151,7 @@ void CClientSettingsDialog::SetUpInitialState()
 	pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE).c_str());
 	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE));
 	pos = m_cmbPolicy.AddString(DrvOPCUAHistValues::GetStringFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN).c_str());
-	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN));
+	m_cmbPolicy.SetItemData(pos, DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN));*/
 }
 // Обработчики сообщений CClientSettingsDialog
 
@@ -178,14 +180,17 @@ void CClientSettingsDialog::OnEnUpdateEditComputerName()
 
 void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
 {
-	int index = m_cmbConfiguration.GetCurSel();
+	
 }
 
 
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
-	int index = m_cmbServerName.GetCurSel();
-	m_pSoftingInteractor->ChooseCurrentServer(index);
+	ReadAttributes();
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->SetServerConfiguration(*m_connectAttributes);
+		m_pSoftingInteractor->ChooseCurrentServer();
+	}
 }
 
 
@@ -222,11 +227,13 @@ void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 	std::string computerName = std::string(str.GetBuffer());
 	str.ReleaseBuffer();
 	str.Empty();
-	m_cmbServerName.ResetContent();
+	
+
 	if(!m_pSoftingInteractor) {
-		m_pSoftingInteractor = std::make_shared<SoftingServerInteractor>(this, computerName);
+		m_pSoftingInteractor->SetServerConfiguration(*m_connectAttributes);
+		m_pSoftingInteractor->GetServers();
 	}
-	m_pSoftingInteractor->GetServers();
+	
 }
 
 
@@ -348,7 +355,7 @@ void CClientSettingsDialog::OnBtnClickedButtonTestConnection()
 	int len = m_cmbServerName.GetWindowTextLengthA();
 	m_cmbServerName.GetWindowTextA(str);
 	int index = m_cmbConfiguration.GetCurSel();
-	if (index >= 0) {
+	if (index >= 0 && index < m_endPointsConfigurations.size()) {
 
 	}
 }
@@ -420,6 +427,7 @@ void CClientSettingsDialog::SendWarning(std::string&& message)
 
 void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
 {
+	m_cmbServerName.ResetContent();
 	size_t index = 0;
 	for (std::vector<std::string>::const_iterator itr = servers.cbegin(); itr != servers.cend(); ++itr)
 	{
@@ -432,6 +440,7 @@ void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::Softing
 {
 	m_endPointsConfigurations.clear();
 	m_endPointsConfigurations.assign(endPoints.cbegin(), endPoints.cend());
+	m_cmbConfiguration.ResetContent();
 	size_t index = 0;
 	for (std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
 	{
@@ -442,3 +451,4 @@ void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::Softing
 	}
 
 }
+
