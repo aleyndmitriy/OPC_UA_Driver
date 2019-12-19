@@ -8,17 +8,20 @@
 
 class SoftingServerInteractor {
 public:
-	SoftingServerInteractor(SoftingServerInteractorOutput* output, const DrvOPCUAHistValues::ConnectionAttributes& attributes);
+	SoftingServerInteractor(SoftingServerInteractorOutput* output, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes);
 	SoftingServerInteractor() = delete;
+	SoftingServerInteractor(const SoftingServerInteractor& src) = delete;
+	SoftingServerInteractor& operator=(const SoftingServerInteractor& src) = delete;
+	SoftingServerInteractor(SoftingServerInteractor&& src) = delete;
+	SoftingServerInteractor& operator=(SoftingServerInteractor&& src) = delete;
 	~SoftingServerInteractor();
 	void GetServers();
 	void ChooseCurrentServer();
 	void ChooseCurrentEndPoint();
 	bool OpenConnectionWithUUID(const std::string& connectionID);
 	std::string OpenConnection();
-	void SetServerConfiguration(const DrvOPCUAHistValues::ConnectionAttributes& attributes);
 private:
-	DrvOPCUAHistValues::ConnectionAttributes m_serverAttributes;
+	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pServerAttributes;
 	SoftingServerInteractorOutput* m_pOutput;
 	SoftingOPCToolbox5::ApplicationPtr m_pApp;
 	SoftingOPCToolbox5::ApplicationDescription m_AppDesc;
@@ -26,6 +29,7 @@ private:
 	SoftingOPCToolbox5::EndpointDescription m_selectedEndPointDescription;
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 	void initApplicationDescription();
-	DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc) const;
-	bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes) const;
 };
+
+bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes);
+DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc);

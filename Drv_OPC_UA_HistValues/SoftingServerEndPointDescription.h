@@ -5,6 +5,7 @@ namespace DrvOPCUAHistValues
 {
 	struct SoftingServerEndPointDescription {
 		SoftingServerEndPointDescription(const std::string& endPoinUrl, int mode, const std::string& certificate, const std::string& privateKey, int type);
+		SoftingServerEndPointDescription(const ServerSecurityModeConfiguration& config, const SecurityAccessConfiguration& policy);
 		SoftingServerEndPointDescription() = default;
 		SoftingServerEndPointDescription(const SoftingServerEndPointDescription& src) = default;
 		SoftingServerEndPointDescription& operator=(const SoftingServerEndPointDescription& src) = default;

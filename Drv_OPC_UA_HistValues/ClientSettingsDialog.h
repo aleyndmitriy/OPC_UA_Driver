@@ -48,7 +48,6 @@ private:
 	void StartLoading();
 	void StopLoading();
 	void ReadAttributes();
-	void GetServerUrl(std::string& url);
 
 public:
 	afx_msg void OnEnChangeEditComputerName();
@@ -60,7 +59,6 @@ public:
 	afx_msg void OnBtnClickedButtonGetSeverProperties();
 	afx_msg void OnBtnClickedButtonDiscoverServers();
 	afx_msg void OnCbnSelChangeComboConfiguration();
-	afx_msg void OnCbnSelChangeComboLoginType();
 	afx_msg void OnEnChangeEditLogin();
 	afx_msg void OnEnUpdateEditLogin();
 	afx_msg void OnEnChangeEditPassword();

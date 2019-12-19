@@ -7,6 +7,12 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescr
 
 }
 
+DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const ServerSecurityModeConfiguration& config, const SecurityAccessConfiguration& policy):
+	m_endPointDesc(config), m_endPointPolicy(policy)
+{
+
+}
+
 DrvOPCUAHistValues::SoftingServerEndPointDescription::~SoftingServerEndPointDescription()
 {
 
