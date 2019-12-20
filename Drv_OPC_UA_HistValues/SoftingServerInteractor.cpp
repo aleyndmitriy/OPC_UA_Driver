@@ -4,9 +4,10 @@
 #include"Constants.h"
 #include<algorithm>
 #include<functional>
+#include <UserIdentityToken.h>
 
 SoftingServerInteractor::SoftingServerInteractor(SoftingServerInteractorOutput* output, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes):
-m_pOutput(output), m_pServerAttributes(attributes), m_pApp(), m_AppDesc(), m_enumResult(), m_selectedEndPointDescription(), m_sessionsList()
+m_pOutput(output), m_pServerAttributes(attributes), m_pApp(), m_AppDesc(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_sessionsList()
 {
 	m_enumResult = SoftingOPCToolbox5::loadToolbox(NULL);
 	if (StatusCode::isBad(m_enumResult))
@@ -92,39 +93,138 @@ void SoftingServerInteractor::initApplicationDescription()
 	m_AppDesc.setProductUri(_T("urn:") + folder + std::string(OPC_UA_LIBRARY_NAME));
 }
 
-std::string SoftingServerInteractor::OpenConnection()
+void SoftingServerInteractor::OpenConnection()
 {
 	GUID guid;
 	if (CoCreateGuid(&guid) != S_OK) {
-		return std::string();
+		if (m_pOutput) {
+			std::string message("Can not create Guide!");
+			m_pOutput->SendMessageError(std::move(message));
+			m_pOutput->GetNewConnectionGuide(std::string());
+		}
+		return;
 	}
 	WCHAR strGuide[MAX_UUID_LENGTH];
 	int res = StringFromGUID2(guid, strGuide, MAX_UUID_LENGTH);
 	std::string key = std::string(Wstr2Str(std::wstring(strGuide)));
-	if (OpenConnectionWithUUID(key)) {
-		return key;
+	OpenConnectionWithUUID(key);
+}
+
+void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connectionID)
+{
+	if (connectionID.empty()) {
+		return;
 	}
-	else {
-		return std::string();
+	if (!m_selectedEndPointDescription) {
+		if (m_pOutput) {
+			std::string message("Server is not configured!");
+			m_pOutput->SendMessageError(std::move(message));
+			m_pOutput->GetNewConnectionGuide(std::string());
+		}
+	}
+	EnumStatusCode result = EnumStatusCode_Good;
+	std::string endpointUrl = m_selectedEndPointDescription->getEndpointUrl();
+	if (endpointUrl.length() <= 0)
+	{
+		if (m_pOutput) {
+			std::string message("Invalid endpoint URL!");
+			m_pOutput->SendMessageError(std::move(message));
+			m_pOutput->GetNewConnectionGuide(std::string());
+		}
+	}
+	SoftingOPCToolbox5::Client::SessionPtr session = SoftingOPCToolbox5::Client::Session::create();
+
+	result = session->setUrl(endpointUrl);
+	if (StatusCode::isBad(result))
+	{
+		if (m_pOutput) {
+			std::string message = std::string("Set URL to the session failed: ") + std::string(getEnumStatusCodeString(result));
+			m_pOutput->SendMessageError(std::move(message));
+			m_pOutput->GetNewConnectionGuide(std::string());
+		}
+		return;
+	}
+	if (StatusCode::isGood(result))
+	{
+		session->setServerCertificate(m_selectedEndPointDescription->getServerCertificate());
+		EnumMessageSecurityMode mode = m_selectedEndPointDescription->getMessageSecurityMode();
+		std::string policy = m_selectedEndPointDescription->getSecurityPolicy();
+		session->setSecurityConfiguration(mode,policy);
+		// and the first (only one) user identity token
+		SoftingOPCToolbox5::UserIdentityToken userIdentityToken;
+		userIdentityToken.setAnonymousIdentityToken(m_selectedEndPointDescription->getUserIdentityToken(0)->getPolicyId());
+		session->setUserSecurityPolicy(m_selectedEndPointDescription->getUserIdentityToken(0)->getSecurityPolicyUri());
+		session->setUserIdentityToken(&userIdentityToken);
+		result = m_pApp->addSession(session);
+		if (StatusCode::isBad(result))
+		{
+			if (m_pOutput) {
+				std::string message = std::string("Adding session failed: ") + std::string(getEnumStatusCodeString(result));
+				m_pOutput->SendMessageError(std::move(message));
+				m_pOutput->GetNewConnectionGuide(std::string());
+			}
+			return;
+		}
+		if (StatusCode::isGood(result))
+		{
+			result = session->connect(false);
+			if (StatusCode::isBad(result))
+			{
+				if (m_pOutput) {
+					std::string message = std::string("Connecting to the server failed: ") + std::string(getEnumStatusCodeString(result));
+					m_pOutput->SendMessageError(std::move(message));
+					m_pOutput->GetNewConnectionGuide(std::string());
+				}
+				return;
+			}
+			if (StatusCode::isGood(result))
+			{
+				std::pair<std::string, SoftingOPCToolbox5::Client::SessionPtr> pair =
+					std::make_pair<std::string, SoftingOPCToolbox5::Client::SessionPtr>(std::string(connectionID), SoftingOPCToolbox5::Client::SessionPtr(session));
+				m_sessionsList.insert(pair);
+				if (m_pOutput) {
+					m_pOutput->GetNewConnectionGuide(std::string(connectionID));
+				}
+			}
+		}
 	}
 }
 
-bool SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connectionID)
+void SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connectionID)
 {
-	if (connectionID.empty()) {
-		return false;
-	}
-	else {
-		return true;
+	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
+	if (iter != m_sessionsList.end()) {
+		EnumStatusCode result = EnumStatusCode_Good;
+		result = iter->second->disconnect();
+		if (StatusCode::isBad(result))
+		{
+			if (m_pOutput) {
+				std::string message = std::string("Can not disconnect session: ") + std::string(getEnumStatusCodeString(result));
+				m_pOutput->SendMessageError(std::move(message));
+				m_pOutput->GetNewConnectionGuide(std::string());
+			}
+		}
+		m_pApp->removeSession(iter->second);
+		if (StatusCode::isBad(result))
+		{
+			if (m_pOutput) {
+				std::string message = std::string("Can not remove session: ") + std::string(getEnumStatusCodeString(result));
+				m_pOutput->SendMessageError(std::move(message));
+				m_pOutput->GetNewConnectionGuide(std::string());
+			}
+		}
+		m_sessionsList.erase(iter);
 	}
 }
 
 void SoftingServerInteractor::GetServers()
 {
+	std::vector<std::string> vec;
 	if (m_pServerAttributes->configuration.computerName.empty()) {
 		if (m_pOutput) {
 			std::string message("Computer name is empty!");
 			m_pOutput->SendWarning(std::move(message));
+			m_pOutput->GetServers(std::move(vec));
 		}
 		return;
 	}
@@ -143,14 +243,13 @@ void SoftingServerInteractor::GetServers()
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(m_enumResult));
 		if (m_pOutput) {
 			m_pOutput->SendMessageError(std::move(message));
+			m_pOutput->GetServers(std::move(vec));
 		}
 		return;
 	}
 	
-	std::vector<std::string> vec;
 	std::transform(serversList.cbegin(), serversList.cend(), std::back_inserter(vec), [](const SoftingOPCToolbox5::ApplicationDescription& desc) {
 		std::string name(desc.getApplicationUri());
-		name.erase(0, 4);
 		::Sleep(1000);
 		return name; });
 
@@ -161,10 +260,12 @@ void SoftingServerInteractor::GetServers()
 
 void SoftingServerInteractor::ChooseCurrentServer() {
 
+	std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> endpointDescriptionsString;
 	if (m_pServerAttributes->configuration.computerName.empty()) {
 		if (m_pOutput) {
 			std::string message("Computer name is empty!");
 			m_pOutput->SendWarning(std::move(message));
+			m_pOutput->GetEndPoints(std::move(endpointDescriptionsString));
 		}
 		return;
 	}
@@ -172,12 +273,13 @@ void SoftingServerInteractor::ChooseCurrentServer() {
 		std::string message("Select sever!");
 		if (m_pOutput) {
 			m_pOutput->SendWarning(std::move(message));
+			m_pOutput->GetEndPoints(std::move(endpointDescriptionsString));
 		}
 		return;
 	}
 	EnumStatusCode result = EnumStatusCode_Good;
 	std::vector<std::string> serverURIs;
-	serverURIs.push_back(std::string("opc.tcp://") + m_pServerAttributes->configuration.serverName);
+	serverURIs.push_back(m_pServerAttributes->configuration.serverName);
 	std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
 	std::vector<SoftingOPCToolbox5::ApplicationDescription> serversList;
 
@@ -191,6 +293,7 @@ void SoftingServerInteractor::ChooseCurrentServer() {
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(m_enumResult));
 		if (m_pOutput) {
 			m_pOutput->SendMessageError(std::move(message));
+			m_pOutput->GetEndPoints(std::move(endpointDescriptionsString));
 		}
 		return;
 	}
@@ -201,13 +304,13 @@ void SoftingServerInteractor::ChooseCurrentServer() {
 		if (m_pOutput) {
 			std::string message("Invalid endpoint URL!");
 			m_pOutput->SendWarning(std::move(message));
+			m_pOutput->GetEndPoints(std::move(endpointDescriptionsString));
 		}
 		return;
 	}
 	for (std::vector<std::string>::const_iterator itr = discoveryUrls.cbegin(); itr != discoveryUrls.cend(); itr++) {
 		if (itr->length() > 0) {
 			std::vector<tstring> transportProfileList;
-			std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> endpointDescriptionsString;
 			std::vector<SoftingOPCToolbox5::EndpointDescription> selectedUrlEndpointDescriptions;
 			result = EnumStatusCode_Good;
 			result = m_pApp->getEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
@@ -216,6 +319,7 @@ void SoftingServerInteractor::ChooseCurrentServer() {
 				if (m_pOutput) {
 					std::string message = std::string("Failed to get endpoint descriptions: ") + std::string(getEnumStatusCodeString(m_enumResult));
 					m_pOutput->SendWarning(std::move(message));
+					m_pOutput->GetEndPoints(std::move(endpointDescriptionsString));
 				}
 			}
 			std::transform(selectedUrlEndpointDescriptions.cbegin(), selectedUrlEndpointDescriptions.cend(), std::back_inserter(endpointDescriptionsString),mapEndPointDescription);
@@ -229,7 +333,10 @@ void SoftingServerInteractor::ChooseCurrentServer() {
 
 void SoftingServerInteractor::ChooseCurrentEndPoint()
 {
-	m_selectedEndPointDescription.clear();
+	if(m_selectedEndPointDescription) {
+		m_selectedEndPointDescription->clear();
+	}
+	m_selectedEndPointDescription.reset();
 	if (m_pServerAttributes->configuration.computerName.empty()) {
 		if (m_pOutput) {
 			std::string message("Computer name is empty!");
@@ -293,12 +400,20 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 				}
 				return;
 			}
-			m_selectedEndPointDescription = *itrFound;
+			m_selectedEndPointDescription = std::make_unique<SoftingOPCToolbox5::EndpointDescription>(SoftingOPCToolbox5::EndpointDescription(*itrFound));
 			break;
 		}
 	}
 }
 
+void SoftingServerInteractor::TestConnection()
+{
+	OpenConnection();
+	if (!m_sessionsList.empty()) {
+		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::const_iterator iter = m_sessionsList.cbegin();
+		CloseConnectionWithUUID(iter->first);
+	}
+}
 
 DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc)
 {
@@ -317,6 +432,7 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(cons
 	}
 	
 	DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, mode, certificate, token, type);
+	Sleep(1000);
 	return endPointDesc;
 }
 
@@ -327,6 +443,7 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	fdSofting = name.find(attributes.configurationMode.serverSecurityName);
 	if (fdSofting == tstring::npos)
 	{
+		Sleep(1000);
 		return false;
 	}
 	fdSofting = std::string::npos;
@@ -347,5 +464,6 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	if (type != DrvOPCUAHistValues::GetIntFromSecurityMode(attributes.configurationMode.securityMode)) {
 		return false;
 	}
+	Sleep(1000);
 	return true;
 }

@@ -18,15 +18,17 @@ public:
 	void GetServers();
 	void ChooseCurrentServer();
 	void ChooseCurrentEndPoint();
-	bool OpenConnectionWithUUID(const std::string& connectionID);
-	std::string OpenConnection();
+	void OpenConnectionWithUUID(const std::string& connectionID);
+	void CloseConnectionWithUUID(const std::string& connectionID);
+	void OpenConnection();
+	void TestConnection();
 private:
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pServerAttributes;
 	SoftingServerInteractorOutput* m_pOutput;
 	SoftingOPCToolbox5::ApplicationPtr m_pApp;
 	SoftingOPCToolbox5::ApplicationDescription m_AppDesc;
 	EnumStatusCode m_enumResult;
-	SoftingOPCToolbox5::EndpointDescription m_selectedEndPointDescription;
+	std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 	void initApplicationDescription();
 };

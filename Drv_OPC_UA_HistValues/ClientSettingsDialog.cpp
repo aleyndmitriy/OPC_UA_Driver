@@ -83,26 +83,31 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		m_editPort.SetWindowTextA(port.c_str());
 	}
 	if (!m_connectAttributes->configurationMode.serverSecurityName.empty()) {
-		int ind = m_cmbConfiguration.AddString(m_connectAttributes->configurationMode.serverSecurityName.c_str());
-		m_cmbConfiguration.SetCurSel(ind);
+		std::string desc = m_connectAttributes->configurationMode.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) +
+			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType);
+		int pos = m_cmbConfiguration.AddString(desc.c_str());
+		m_cmbConfiguration.SetItemData(pos, 0);
 	}
 	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode, m_connectAttributes->configurationAccess));
+	
 	LVITEM item;
+	memset(&item, 0, sizeof(item));
 	TCHAR modeStr[20];
+	TCHAR typeStr[15];
 	StringCchCopy(modeStr, 20, GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode).c_str());
 	item.pszText = modeStr;
-	item.mask = LVIF_TEXT;
+	item.mask = LVIF_TEXT | LVIF_STATE;
 	item.stateMask = (UINT)-1;
-	item.cchTextMax = STR_LENGTH;
+	item.cchTextMax = 20;
 	item.iSubItem = 0;
 	item.state = 0;// LVIS_FOCUSED | LVIS_SELECTED;
 	item.iItem = 0;
 	item.cColumns = 2;
 	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.securityType));
-	m_lstPolicyType.InsertItem(&item);
+	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
 	item.iSubItem = 1;
-	StringCchCopy(modeStr, 20, GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType).c_str());
-	item.pszText = modeStr;
+	StringCchCopy(typeStr, 15, GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType).c_str());
+	item.pszText = typeStr;
 	::SendMessage(m_lstPolicyType.m_hWnd, LVM_SETITEM, 0, (LPARAM)&item);
 	switch (m_connectAttributes->configurationAccess.securityType) {
 	case DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME:
@@ -136,7 +141,9 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editComputerName.Clear();
 	m_editPort.SetSel(0, -1);
 	m_editPort.Clear();
-	m_cmbServerName.ResetContent();
+	m_lstPolicyType.InsertColumn(0, "", LVCFMT_LEFT, 100);
+	m_lstPolicyType.InsertColumn(1, "", LVCFMT_LEFT, 100);
+	m_lstPolicyType.SetExtendedStyle(LVS_EX_FULLROWSELECT);
 	m_cmbConfiguration.ResetContent();
 	m_lstPolicyType.DeleteAllItems();
 	m_endPointsConfigurations.clear();
@@ -192,6 +199,7 @@ void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
 
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
+	StartLoading();
 	ReadAttributes();
 	if (m_pSoftingInteractor) {
 		m_pSoftingInteractor->ChooseCurrentServer();
@@ -227,6 +235,7 @@ void CClientSettingsDialog::OnBtnClickedButtonGetSeverProperties()
 
 void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 {
+	StartLoading();
 	ReadAttributes();
 	if(m_pSoftingInteractor) {
 		m_pSoftingInteractor->GetServers();
@@ -240,9 +249,11 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	if (index < 0 || index >= m_endPointsConfigurations.size()) {
 		return;
 	}
+	StartLoading();
 	m_lstPolicyType.DeleteAllItems();
 	LVITEM item;
 	TCHAR modeStr[20];
+	TCHAR typeStr[15];
 	StringCchCopy(modeStr, 20, DrvOPCUAHistValues::GetStringFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode).c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT;
@@ -255,8 +266,8 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType));
 	m_lstPolicyType.InsertItem(&item);
 	item.iSubItem = 1;
-	StringCchCopy(modeStr, 20, DrvOPCUAHistValues::GetStringFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType).c_str());
-	item.pszText = modeStr;
+	StringCchCopy(typeStr, 15, DrvOPCUAHistValues::GetStringFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType).c_str());
+	item.pszText = typeStr;
 	::SendMessage(m_lstPolicyType.m_hWnd, LVM_SETITEM, 0, (LPARAM)&item);
 	ReadAttributes();
 	if (m_pSoftingInteractor) {
@@ -366,7 +377,11 @@ void CClientSettingsDialog::OnBtnClickedButtonPrivateKeyPath()
 
 void CClientSettingsDialog::OnBtnClickedButtonTestConnection()
 {
-	
+	StartLoading();
+	ReadAttributes();
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->TestConnection();
+	}
 }
 
 
@@ -429,7 +444,10 @@ void CClientSettingsDialog::ReadAttributes()
 	str.Empty();
 	len = m_cmbConfiguration.GetWindowTextLengthA();
 	m_cmbConfiguration.GetWindowTextA(str);
-	m_connectAttributes->configurationMode.serverSecurityName = std::string(str.GetBuffer(len));
+	size_t posPartOfName = std::string::npos;
+	std::string fullName = std::string(str.GetBuffer(len));
+	fullName = fullName.substr(0, fullName.find_first_of('#'));
+	m_connectAttributes->configurationMode.serverSecurityName = fullName;
 	str.ReleaseBuffer();
 	str.Empty();
 	DWORD_PTR lParam = m_lstPolicyType.GetItemData(0);
@@ -480,6 +498,7 @@ void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
 		int pos = m_cmbServerName.AddString(itr->c_str());
 		m_cmbServerName.SetItemData(pos, index++);
 	}
+	StopLoading();
 }
 
 void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints)
@@ -490,11 +509,18 @@ void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::Softing
 	size_t index = 0;
 	for (std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
 	{
-		std::string desc = itr->m_endPointDesc.serverSecurityName + std::string("-") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->m_endPointDesc.securityMode) +
-			std::string("-") + DrvOPCUAHistValues::GetStringFromSecurityType(itr->m_endPointPolicy.securityType);
+		std::string desc = itr->m_endPointDesc.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->m_endPointDesc.securityMode) +
+			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(itr->m_endPointPolicy.securityType);
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, index++);
 	}
-
+	StopLoading();
 }
 
+void CClientSettingsDialog::GetNewConnectionGuide(std::string&& uuid)
+{
+	StopLoading();
+	if (!uuid.empty()) {
+		WarningMessage(std::string("Connection Test Succeed!"));
+	}
+}

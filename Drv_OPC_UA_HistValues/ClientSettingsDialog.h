@@ -76,5 +76,5 @@ public:
 	void SendWarning(std::string&& message) override;
 	void GetServers(std::vector<std::string>&& servers) override;
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints) override;
-	
+	void GetNewConnectionGuide(std::string&& uuid) override;
 };
