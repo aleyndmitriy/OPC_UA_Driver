@@ -74,6 +74,7 @@ public:
 	afx_msg void OnBtnClickedOk();
 	void SendMessageError(std::string&& message) override;
 	void SendWarning(std::string&& message) override;
+	void SendMessageInfo(std::string&& message) override;
 	void GetServers(std::vector<std::string>&& servers) override;
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints) override;
 	void GetNewConnectionGuide(std::string&& uuid) override;

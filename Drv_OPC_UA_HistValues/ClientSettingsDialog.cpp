@@ -489,6 +489,11 @@ void CClientSettingsDialog::SendWarning(std::string&& message)
 	WarningMessage(message);
 }
 
+void CClientSettingsDialog::SendMessageInfo(std::string&& message)
+{
+	
+}
+
 void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
 {
 	m_cmbServerName.ResetContent();

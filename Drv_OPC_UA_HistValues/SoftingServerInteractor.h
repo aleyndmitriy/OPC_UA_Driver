@@ -22,6 +22,7 @@ public:
 	void CloseConnectionWithUUID(const std::string& connectionID);
 	void OpenConnection();
 	void TestConnection();
+	void BrowseSession(const std::string& connectionID);
 private:
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pServerAttributes;
 	SoftingServerInteractorOutput* m_pOutput;
@@ -31,6 +32,8 @@ private:
 	std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 	void initApplicationDescription();
+	EnumNodeClass getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
+	void nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 };
 
 bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes);
