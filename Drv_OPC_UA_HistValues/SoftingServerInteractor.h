@@ -23,6 +23,7 @@ public:
 	void OpenConnection();
 	void TestConnection();
 	void BrowseSession(const std::string& connectionID);
+	bool FindNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session);
 private:
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pServerAttributes;
 	SoftingServerInteractorOutput* m_pOutput;
@@ -34,6 +35,8 @@ private:
 	void initApplicationDescription();
 	EnumNodeClass getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 	void nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
+	void readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
+	bool findNode(const SoftingOPCToolbox5::NodeId& originNodeId, SoftingOPCToolbox5::NodeId& finalNodeId, const std::string& path, SoftingOPCToolbox5::Client::SessionPtr session);
 };
 
 bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes);

@@ -204,7 +204,6 @@ void SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connect
 				m_pOutput->GetNewConnectionGuide(std::string());
 			}
 		}
-		iter->second.reset();
 		m_pApp->removeSession(iter->second);
 		if (StatusCode::isBad(result))
 		{
@@ -214,6 +213,7 @@ void SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connect
 				m_pOutput->GetNewConnectionGuide(std::string());
 			}
 		}
+		iter->second.reset();
 		m_sessionsList.erase(iter);
 	}
 }
@@ -444,34 +444,19 @@ void SoftingServerInteractor::BrowseSession(const std::string& connectionID)
 void SoftingServerInteractor::nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	EnumStatusCode result = EnumStatusCode_Good;
-	SoftingOPCToolbox5::BrowseDescription bd;	// that defines what we want to browse (direction / reference type etc.)
-	SoftingOPCToolbox5::ViewDescription vd;	// we do not use a view description in this simple sample so we pass an empty instance as parameter
+	SoftingOPCToolbox5::BrowseDescription bd;	
+	SoftingOPCToolbox5::ViewDescription vd;
 	std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;	// result array for function call.
 	EnumResultMask resultMask = 0;
 	SoftingOPCToolbox5::NodeId devicesNode;
-
-	// 1. browse:
-	// the first start node we use is the standard object folder
 	bd.setNodeId(nodeId);
-	// we check for all hierarchical references, since it is a folder a organize reference (Statics::ReferenceTypeId_Organizes) would also work but it is more specific
 	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
-	// if true all subtypes of the given reference type are also considered
-	// if false only the concrete given type is used
-	// a false does not allow an abstract ReferenceTypeId used for browsing (abstract references can not be used to define a concrete reference)
 	bd.setIncludeSubtypes(true);
-	// let's look only for forward direction...
 	bd.setBrowseDirection(EnumBrowseDirection_Forward);
-
-	// we specify only the NodeClass Node to select all Node types
-	// otherwise a mask for the desired Node classes can be specified
-	// e.g. 'EnumNodeClass_Object | EnumNodeClass_Variable'
 	bd.setNodeClassMask(EnumNodeClass_Node);
-
-	// we also want some additional data to the standard results
-	// (every EnumResultMask value defines only one bit so several values can be set together by combining them with bit operations)
 	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
 	bd.setResultMask(resultMask);
-	// call the browse service (browseNode is a convenient call for single calls with internal handling for continuation points)
+
 	result = session->browseNode(&vd, &bd, refDescriptions);
 	if (StatusCode::isGood(result)) // the call itself succeeded
 	{
@@ -479,21 +464,57 @@ void SoftingServerInteractor::nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId,
 			std::string message = std::string("Number of references: ") + std::to_string(refDescriptions.size());
 			m_pOutput->SendMessageInfo(std::move(message));
 		}
-		// (from the first browse call we know that the object folder contains two nodes:
-		// The standard server object (we are not interested in) and the other one is our Devices folder)
 		for (size_t i = 0; i < refDescriptions.size(); i++)
 		{
 			std::string name = refDescriptions[i].getDisplayName()->getText();
 			EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
 			devicesNode = refDescriptions[i].getNodeId();
 			if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
-				
+				Sleep(1000);
+				readNode(devicesNode, session);
 			}
 			else {
+				Sleep(1000);
 				nodeWalk(devicesNode, session);
 			}
 		}
 	}
+}
+
+void SoftingServerInteractor::readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	EnumStatusCode result = EnumStatusCode_Good;
+	std::vector<SoftingOPCToolbox5::ReadValueId> readIds;
+	SoftingOPCToolbox5::ReadValueId rvid;
+	rvid.setNodeId(nodeId);
+	rvid.setAttributeId(EnumAttributeId_Value);
+	readIds.push_back(rvid);
+	std::vector<SoftingOPCToolbox5::DataValue> readResults;
+	result = session->read(EnumTimestampsToReturn_Both, readIds, 0, readResults);
+	if (StatusCode::isGood(result)) 
+	{
+		for (std::vector<SoftingOPCToolbox5::DataValue>::const_iterator itr = readResults.cbegin(); itr != readResults.cend(); ++itr) {
+			if (StatusCode::isGood(itr->getStatusCode())) {
+				EnumDataTypeId type = itr->getValue()->getDataType();
+				std::string val = std::string(itr->getValue()->toString());
+				Sleep(1000);
+			}
+		}
+	}
+	else {
+		result = session->read(EnumTimestampsToReturn_Both, readIds, 200, readResults);
+		if (StatusCode::isGood(result))
+		{
+			for (std::vector<SoftingOPCToolbox5::DataValue>::const_iterator itr = readResults.cbegin(); itr != readResults.cend(); ++itr) {
+				if (StatusCode::isGood(itr->getStatusCode())) {
+					EnumDataTypeId type = itr->getValue()->getDataType();
+					std::string val = std::string(itr->getValue()->toString());
+					Sleep(1000);
+				}
+			}
+		}
+	}
+	Sleep(500);
 }
 
 EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
@@ -505,7 +526,7 @@ EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::Nod
 	std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;
 	EnumResultMask resultMask = 0;
 	bd.setNodeId(nodeId);
-	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HasTypeDefinition);
+	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_NonHierarchicalReferences);
 	bd.setIncludeSubtypes(true);
 	bd.setBrowseDirection(EnumBrowseDirection_Forward);
 	bd.setNodeClassMask(EnumNodeClass_Node);
@@ -520,11 +541,72 @@ EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::Nod
 		}
 		for (size_t i = 0; i < refDescriptions.size(); i++)
 		{
-			std::string name = refDescriptions[i].getDisplayName()->getText();
 			nodeClass = refDescriptions[i].getNodeClass();
+			Sleep(1000);
 		}
 	}
 	return nodeClass;
+}
+
+bool SoftingServerInteractor::FindNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	nodeId.clear();
+	SoftingOPCToolbox5::NodeId originNodeId = SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder);
+	for (std::vector<std::string>::const_iterator iter = fullPath.cbegin(); iter != fullPath.cend(); ++iter) {
+		if (findNode(originNodeId, nodeId, *iter, session)){
+			originNodeId.clear();
+			originNodeId = nodeId;
+		}
+		else {
+			return false;
+		}
+	}
+	return true;
+}
+
+
+bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originNodeId, SoftingOPCToolbox5::NodeId& finalNodeId, const std::string& path, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	finalNodeId.clear();
+	EnumStatusCode result = EnumStatusCode_Good;
+	SoftingOPCToolbox5::BrowseDescription bd;
+	SoftingOPCToolbox5::ViewDescription vd;
+	std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;	// result array for function call.
+	EnumResultMask resultMask = 0;
+	bd.setNodeId(originNodeId);
+	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
+	bd.setIncludeSubtypes(true);
+	bd.setBrowseDirection(EnumBrowseDirection_Forward);
+	bd.setNodeClassMask(EnumNodeClass_Node);
+	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	bd.setResultMask(resultMask);
+
+	result = session->browseNode(&vd, &bd, refDescriptions);
+	if (StatusCode::isGood(result)) 
+	{
+		if (m_pOutput) {
+			std::string message = std::string("Number of references: ") + std::to_string(refDescriptions.size());
+			m_pOutput->SendMessageInfo(std::move(message));
+		}
+
+		std::vector<SoftingOPCToolbox5::ReferenceDescription>::const_iterator findIterator =
+			std::find_if(refDescriptions.cbegin(), refDescriptions.cend(), [&](const SoftingOPCToolbox5::ReferenceDescription& desc) {
+			std::string name(desc.getDisplayName()->getText());
+			return name == path; });
+		if (findIterator != refDescriptions.cend()) {
+			finalNodeId = findIterator->getNodeId();
+			return true;
+		}
+		else {
+			finalNodeId.clear();
+			if (m_pOutput) {
+				std::string message = std::string("Can not find node with name ") + path;
+				m_pOutput->SendMessageInfo(std::move(message));
+			}
+			return false;
+		}
+	}
+	return false;
 }
 
 DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc)

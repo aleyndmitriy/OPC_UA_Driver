@@ -394,7 +394,7 @@ void CClientSettingsDialog::OnBtnClickedCancel()
 
 void CClientSettingsDialog::OnBtnClickedOk()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	ReadAttributes();
 	CDialogEx::OnOK();
 }
 
