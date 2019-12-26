@@ -7,9 +7,10 @@
 #include"XMLSettingsDataSource.h"
 #include"Log.h"
 
-DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem() :m_attributes(), m_TagList()
+DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem() :m_pAttributes(nullptr), m_pSoftingInteractor(nullptr), m_TagList(), m_ConnectionId()
 {
-
+	m_pAttributes = std::make_shared<ConnectionAttributes>();
+	m_pSoftingInteractor = std::make_unique<SoftingServerInteractor>(this, m_pAttributes);
 }
 
 void* DrvOPCUAHistValues::BrowserHdaItem::GetInterface(int nIfcId)
@@ -24,7 +25,7 @@ int DrvOPCUAHistValues::BrowserHdaItem::Init(TCHAR* szCfgString)
 	{
 		size_t len = _tcslen(szCfgString);
 		if (len > 0) {
-			settingSource.LoadAttributesString(szCfgString, len, m_attributes);
+			settingSource.LoadAttributesString(szCfgString, len, *m_pAttributes);
 		}
 	}
 
@@ -57,7 +58,6 @@ ODS::OdsString DrvOPCUAHistValues::BrowserHdaItem::GetAddressOld(const ODS::Item
 						rAddress.DestroyAddress(addrComp, nCount);
 						return strAddress;
 					}
-
 				}
 			}
 		}
@@ -174,34 +174,60 @@ int DrvOPCUAHistValues::BrowserHdaItem::DestroyBrowseItemList(ODS::BrowseItem* p
 int DrvOPCUAHistValues::BrowserHdaItem::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
 {
 	pTagList->clear();
-	/*std::string key = m_database->OpenConnection();
-	if (key.empty()) {
+	m_pSoftingInteractor->OpenConnection();
+	if (m_ConnectionId.empty()) {
 		return ODS::ERR::DB_CONNECTION_FAILED;
 	}
-	std::vector<std::string> tagsName;
-	for (std::vector<ODS::OdsString>::const_iterator itr = rEntry.cbegin(); itr != rEntry.cend(); ++itr) {
-		tagsName.push_back(itr->GetString());
+	std::vector<std::pair<std::string, bool> > tagsName;
+	std::queue<std::string> pathQueue;
+	for (std::vector<ODS::OdsString>::const_iterator iter = rEntry.cbegin(); iter != rEntry.cend(); ++iter) {
+		std::string name(iter->GetString());
+		pathQueue.push(name);
 	}
-	std::map<std::string, TagItemRecord> tags = m_database->GetTags(key, tagsName);
-	m_database->CloseConnectionWithUUID(key);
-	if (tagsName.empty()) {
-		for (std::map<std::string, TagItemRecord>::const_iterator itr = tags.cbegin(); itr != tags.cend(); ++itr) {
-			STagItem item;
-			item.m_vAddress.push_back(ODS::OdsString(itr->second.GetTegName().c_str()));
-			item.m_szDescription = ODS::OdsString(itr->second.GetTegName().c_str());
-			pTagList->push_back(item);
+	m_pSoftingInteractor->GetTags(tagsName, pathQueue, m_ConnectionId);
+	
+	for (std::vector<std::pair<std::string, bool> >::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
+		ODS::OdsString szAddress(itr->first.c_str());
+		STagItem sItem;
+		sItem.m_vAddress.assign(rEntry.cbegin(),rEntry.cend());
+		sItem.m_vAddress.push_back(szAddress);
+		if (itr->second == false) {
+			sItem.m_nType = ODS::BrowseItem::TYPE_BRANCH;
 		}
-		return ODS::ERR::OK;
+		pTagList->push_back(sItem);
 	}
-	else {
-		for (std::vector<std::string>::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
-			std::map<std::string, TagItemRecord >::const_iterator tagsItr = tags.find(*itr);
-			if (tagsItr == tags.cend()) {
-				Log::GetInstance()->WriteInfo(_T("There is now tag with name: %s ...."), (LPCTSTR)itr->c_str());
-				return ODS::ERR::DB_NO_DATA;
-			}
-		}
-		return ODS::ERR::OK;
-	}*/
+	m_pSoftingInteractor->CloseConnectionWithUUID(m_ConnectionId);
+	
 	return ODS::ERR::OK;
+}
+
+
+void DrvOPCUAHistValues::BrowserHdaItem::SendMessageError(std::string&& message)
+{
+	Log::GetInstance()->WriteInfo(_T(message.c_str()));
+}
+
+void DrvOPCUAHistValues::BrowserHdaItem::SendWarning(std::string&& message)
+{
+	Log::GetInstance()->WriteInfo(_T(message.c_str()));
+}
+
+void DrvOPCUAHistValues::BrowserHdaItem::SendMessageInfo(std::string&& message)
+{
+	Log::GetInstance()->WriteInfo(_T(message.c_str()));
+}
+
+void DrvOPCUAHistValues::BrowserHdaItem::GetServers(std::vector<std::string>&& servers)
+{
+
+}
+
+void DrvOPCUAHistValues::BrowserHdaItem::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers)
+{
+
+}
+
+void DrvOPCUAHistValues::BrowserHdaItem::GetNewConnectionGuide(std::string&& uuid)
+{
+	m_ConnectionId = uuid;
 }

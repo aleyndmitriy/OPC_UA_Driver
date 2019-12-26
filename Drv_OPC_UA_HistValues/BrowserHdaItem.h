@@ -4,6 +4,8 @@
 #include<OdsString.h>
 #include<vector>
 #include"ConnectionAttributes.h"
+#include"SoftingServerInteractorOutput.h"
+#include"SoftingServerInteractor.h"
 
 namespace DrvOPCUAHistValues
 {
@@ -19,7 +21,7 @@ namespace DrvOPCUAHistValues
 		}
 	};
 
-	class BrowserHdaItem : public ODS::IBrowserItem
+	class BrowserHdaItem : public ODS::IBrowserItem, public SoftingServerInteractorOutput
 	{
 	public:
 		BrowserHdaItem();
@@ -28,9 +30,17 @@ namespace DrvOPCUAHistValues
 		int Shut() override;
 		int GetBrowseItemList(const ODS::ItemAddress* pAddress, ODS::BrowseItem** ppList, ULONG* pulCount) override;
 		int DestroyBrowseItemList(ODS::BrowseItem* pList, ULONG ulCount) override;
+		void SendMessageError(std::string&& message) override;
+		void SendWarning(std::string&& message) override;
+		void SendMessageInfo(std::string&& message) override;
+		void GetServers(std::vector<std::string>&& servers) override;
+		void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers) override;
+		void GetNewConnectionGuide(std::string&& uuid) override;
 	private:
-		DrvOPCUAHistValues::ConnectionAttributes m_attributes;
+		std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pAttributes;
+		std::unique_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 		std::vector<STagItem> m_TagList;
+		std::string m_ConnectionId;
 		int GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList);
 		ODS::OdsString GetAddressOld(const ODS::ItemAddress& rAddress);
 	};

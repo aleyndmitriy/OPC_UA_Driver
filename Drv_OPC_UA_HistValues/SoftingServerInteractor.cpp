@@ -548,7 +548,7 @@ EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::Nod
 	return nodeClass;
 }
 
-bool SoftingServerInteractor::FindNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session)
+bool SoftingServerInteractor::findNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	nodeId.clear();
 	SoftingOPCToolbox5::NodeId originNodeId = SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder);
@@ -607,6 +607,96 @@ bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originN
 		}
 	}
 	return false;
+}
+
+void SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
+{
+	tags.clear();
+	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
+	if (iter != m_sessionsList.end()) {
+		if (iter->second.isNull() || iter->second->isConnected() == false)
+		{
+			if (m_pOutput) {
+				std::string message("The session is not connected... connect it before calling this function!");
+				m_pOutput->SendWarning(std::move(message));
+			}
+			return;
+		}
+		SoftingOPCToolbox5::NodeId devicesNode;
+		devicesNode.setNull();
+		getTags(devicesNode, tags, receivedTags, iter->second);
+	}
+	else {
+		if (m_pOutput) {
+			std::string message("There is no any sessions with such ID!");
+			m_pOutput->SendWarning(std::move(message));
+		}
+	}
+}
+
+void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	EnumStatusCode result = EnumStatusCode_Good;
+	SoftingOPCToolbox5::BrowseDescription bd;
+	SoftingOPCToolbox5::ViewDescription vd;
+	SoftingOPCToolbox5::NodeId devicesNode;
+	std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;
+	EnumResultMask resultMask = 0;
+	if (nodeId.isNull()) {
+		bd.setNodeId(SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder));
+	}
+	else {
+		bd.setNodeId(nodeId);
+	}
+	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
+	bd.setIncludeSubtypes(true);
+	bd.setBrowseDirection(EnumBrowseDirection_Forward);
+	bd.setNodeClassMask(EnumNodeClass_Node);
+	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	bd.setResultMask(resultMask);
+	result = session->browseNode(&vd, &bd, refDescriptions);
+	if (StatusCode::isGood(result)) {
+		if (m_pOutput) {
+			std::string message = std::string("Number of references: ") + std::to_string(refDescriptions.size());
+			m_pOutput->SendMessageInfo(std::move(message));
+		}
+		std::string findingName;
+		if (receivedTags.empty() == false) {
+			findingName = receivedTags.front();
+			receivedTags.pop();
+		}
+		for (size_t i = 0; i < refDescriptions.size(); i++)
+		{
+			std::string name = refDescriptions[i].getDisplayName()->getText();
+			if (findingName.empty()) {
+				EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
+				std::pair<std::string, bool> pair;
+				if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
+					pair = std::make_pair<std::string, bool>(std::string(name), true);
+				}
+				else {
+					pair = std::make_pair<std::string, bool>(std::string(name), false);
+				}
+				tags.push_back(pair);
+				Sleep(1000);
+			}
+			else {
+				if (name == findingName) {
+					EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
+					std::pair<std::string, bool> pair;
+					if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
+						pair = std::make_pair<std::string, bool>(std::string(name), true);
+						tags.push_back(pair);
+					}
+					else {
+						devicesNode = refDescriptions[i].getNodeId();
+						getTags(devicesNode, tags, receivedTags, session);
+					}
+					
+				}
+			}
+		}
+	}
 }
 
 DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc)
