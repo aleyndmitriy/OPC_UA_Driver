@@ -9,8 +9,7 @@
 
 DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem() :m_pAttributes(nullptr), m_pSoftingInteractor(nullptr), m_TagList(), m_ConnectionId()
 {
-	m_pAttributes = std::make_shared<ConnectionAttributes>();
-	m_pSoftingInteractor = std::make_unique<SoftingServerInteractor>(this, m_pAttributes);
+	
 }
 
 void* DrvOPCUAHistValues::BrowserHdaItem::GetInterface(int nIfcId)
@@ -21,10 +20,13 @@ void* DrvOPCUAHistValues::BrowserHdaItem::GetInterface(int nIfcId)
 int DrvOPCUAHistValues::BrowserHdaItem::Init(TCHAR* szCfgString)
 {
 	DrvOPCUAHistValues::XMLSettingsDataSource settingSource;
+
 	if (szCfgString != NULL)
 	{
 		size_t len = _tcslen(szCfgString);
 		if (len > 0) {
+			m_pAttributes = std::make_shared<ConnectionAttributes>();
+			m_pSoftingInteractor = std::make_unique<SoftingServerInteractor>(this, m_pAttributes);
 			settingSource.LoadAttributesString(szCfgString, len, *m_pAttributes);
 		}
 	}

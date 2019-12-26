@@ -54,7 +54,11 @@ SoftingServerInteractor::~SoftingServerInteractor()
 				m_pOutput->SendMessageError(std::move(message));
 			}
 		}
-
+		m_AppDesc.clear();
+		if (m_selectedEndPointDescription) {
+			m_selectedEndPointDescription->clear();
+		}
+		
 		m_enumResult = m_pApp->uninitialize();
 		if (StatusCode::isBad(m_enumResult))
 		{
@@ -63,8 +67,7 @@ SoftingServerInteractor::~SoftingServerInteractor()
 				m_pOutput->SendMessageError(std::move(message));
 			}
 		}
-		m_AppDesc.clear();
-
+		
 		m_pApp.reset();
 	}
 	m_enumResult = SoftingOPCToolbox5::unloadToolbox();
@@ -121,6 +124,7 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 			m_pOutput->SendMessageError(std::move(message));
 			m_pOutput->GetNewConnectionGuide(std::string());
 		}
+		ChooseCurrentEndPoint();
 	}
 	EnumStatusCode result = EnumStatusCode_Good;
 	std::string endpointUrl = m_selectedEndPointDescription->getEndpointUrl();
@@ -412,7 +416,7 @@ void SoftingServerInteractor::TestConnection()
 	OpenConnection();
 	if (!m_sessionsList.empty()) {
 		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::const_iterator iter = m_sessionsList.cbegin();
-		BrowseSession(iter->first);
+		//BrowseSession(iter->first);
 		CloseConnectionWithUUID(iter->first);
 	}
 }
@@ -470,11 +474,9 @@ void SoftingServerInteractor::nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId,
 			EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
 			devicesNode = refDescriptions[i].getNodeId();
 			if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
-				Sleep(1000);
 				readNode(devicesNode, session);
 			}
 			else {
-				Sleep(1000);
 				nodeWalk(devicesNode, session);
 			}
 		}
@@ -497,7 +499,6 @@ void SoftingServerInteractor::readNode(const SoftingOPCToolbox5::NodeId& nodeId,
 			if (StatusCode::isGood(itr->getStatusCode())) {
 				EnumDataTypeId type = itr->getValue()->getDataType();
 				std::string val = std::string(itr->getValue()->toString());
-				Sleep(1000);
 			}
 		}
 	}
@@ -509,12 +510,10 @@ void SoftingServerInteractor::readNode(const SoftingOPCToolbox5::NodeId& nodeId,
 				if (StatusCode::isGood(itr->getStatusCode())) {
 					EnumDataTypeId type = itr->getValue()->getDataType();
 					std::string val = std::string(itr->getValue()->toString());
-					Sleep(1000);
 				}
 			}
 		}
 	}
-	Sleep(500);
 }
 
 EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
@@ -636,6 +635,7 @@ void SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >
 
 void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
 {
+	bool isFounded = false;
 	EnumStatusCode result = EnumStatusCode_Good;
 	SoftingOPCToolbox5::BrowseDescription bd;
 	SoftingOPCToolbox5::ViewDescription vd;
@@ -665,10 +665,10 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 			findingName = receivedTags.front();
 			receivedTags.pop();
 		}
-		for (size_t i = 0; i < refDescriptions.size(); i++)
-		{
-			std::string name = refDescriptions[i].getDisplayName()->getText();
-			if (findingName.empty()) {
+		if (findingName.empty()) {
+			for (size_t i = 0; i < refDescriptions.size(); i++)
+			{
+				std::string name = refDescriptions[i].getDisplayName()->getText();
 				EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
 				std::pair<std::string, bool> pair;
 				if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
@@ -677,23 +677,22 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 				else {
 					pair = std::make_pair<std::string, bool>(std::string(name), false);
 				}
-				tags.push_back(pair);
-				Sleep(1000);
-			}
-			else {
-				if (name == findingName) {
-					EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
-					std::pair<std::string, bool> pair;
-					if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
-						pair = std::make_pair<std::string, bool>(std::string(name), true);
-						tags.push_back(pair);
-					}
-					else {
-						devicesNode = refDescriptions[i].getNodeId();
-						getTags(devicesNode, tags, receivedTags, session);
-					}
-					
+				std::vector<std::pair<std::string, bool> >::const_iterator findIterator =
+					std::find_if(tags.cbegin(), tags.cend(), [&](const std::pair<std::string, bool>& existingPair) {
+					return (existingPair.first == pair.first) && (existingPair.second == pair.second); });
+				if (findIterator == tags.cend()) {
+					tags.push_back(pair);
 				}
+			}
+		}
+		else {
+			std::vector<SoftingOPCToolbox5::ReferenceDescription>::const_iterator findIterator = 
+				std::find_if(refDescriptions.cbegin(), refDescriptions.cend(), [&](const SoftingOPCToolbox5::ReferenceDescription& desc) {
+				std::string name(desc.getDisplayName()->getText());
+				return name == findingName; });
+			if (findIterator != refDescriptions.cend()) {
+				devicesNode = findIterator->getNodeId();
+				getTags(devicesNode, tags, receivedTags, session);
 			}
 		}
 	}
@@ -712,11 +711,9 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(cons
 		EnumUserTokenType identityToken = pPolicy->getTokenType();
 		type = identityToken;
 		//token = pPolicy->getPolicyId();
-		Sleep(1000);
 	}
 	
 	DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, mode, certificate, token, type);
-	Sleep(1000);
 	return endPointDesc;
 }
 
@@ -727,7 +724,6 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	fdSofting = name.find(attributes.configurationMode.serverSecurityName);
 	if (fdSofting == tstring::npos)
 	{
-		Sleep(1000);
 		return false;
 	}
 	fdSofting = std::string::npos;
@@ -748,6 +744,5 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	if (type != DrvOPCUAHistValues::GetIntFromSecurityMode(attributes.configurationMode.securityMode)) {
 		return false;
 	}
-	Sleep(1000);
 	return true;
 }
