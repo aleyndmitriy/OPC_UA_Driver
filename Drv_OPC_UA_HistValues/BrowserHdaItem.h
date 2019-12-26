@@ -34,10 +34,10 @@ namespace DrvOPCUAHistValues
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
 		void GetServers(std::vector<std::string>&& servers) override;
-		void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers) override;
+		void GetEndPoints(std::vector<SoftingServerEndPointDescription>&& servers) override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
 	private:
-		std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pAttributes;
+		std::shared_ptr<ConnectionAttributes> m_pAttributes;
 		std::unique_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 		std::vector<STagItem> m_TagList;
 		std::string m_ConnectionId;

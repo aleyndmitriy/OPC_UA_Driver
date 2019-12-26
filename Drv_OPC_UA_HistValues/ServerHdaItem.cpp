@@ -18,10 +18,11 @@ int DrvOPCUAHistValues::ServerHdaItem::Init(TCHAR* szCfgString)
 	{
 		size_t len = _tcslen(szCfgString);
 		if (len > 0) {
-			settingSource.LoadAttributesString(szCfgString, len, m_attributes);
+			m_pAttributes = std::make_shared<ConnectionAttributes>();
+			settingSource.LoadAttributesString(szCfgString, len, *m_pAttributes);
 		}
+		m_commandHandler.Init(m_pAttributes);
 	}
-	//m_commandHandler.Init(m_attributes);
 	return ODS::ERR::OK;
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include<IServerHda.h>
 #include"ConnectionAttributes.h"
+#include"HdaCommandHandler.h"
 
 namespace DrvOPCUAHistValues
 {
@@ -15,7 +16,7 @@ namespace DrvOPCUAHistValues
 		int Execute(ODS::HdaCommand* pCommand, ODS::HdaCommandResult** ppResult) override;
 		int DestroyResult(ODS::HdaCommandResult* pResult) override;
 	private:
-		DrvOPCUAHistValues::ConnectionAttributes m_attributes;
-		//HdaCommandHandler m_commandHandler;
+		std::shared_ptr<ConnectionAttributes> m_pAttributes;
+		HdaCommandHandler m_commandHandler;
 	};
 }
