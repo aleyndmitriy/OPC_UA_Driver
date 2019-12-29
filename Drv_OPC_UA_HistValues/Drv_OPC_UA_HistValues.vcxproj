@@ -204,10 +204,13 @@
   <ItemGroup>
     <ClCompile Include="BrowserHdaItem.cpp" />
     <ClCompile Include="ClientSettingsDialog.cpp" />
+    <ClCompile Include="ClientSettingsDialogWrapper.cpp" />
     <ClCompile Include="ConnectionAttributes.cpp" />
+    <ClCompile Include="DataAccessAssembly.cpp" />
     <ClCompile Include="DConfigurator.cpp" />
     <ClCompile Include="DSource.cpp" />
     <ClCompile Include="Export.cpp" />
+    <ClCompile Include="HdaBrowserHandler.cpp" />
     <ClCompile Include="HdaCommandHandler.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="pch.cpp">
@@ -233,12 +236,15 @@
   <ItemGroup>
     <ClInclude Include="BrowserHdaItem.h" />
     <ClInclude Include="ClientSettingsDialog.h" />
+    <ClInclude Include="ClientSettingsDialogWrapper.h" />
     <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="DataAccessAssembly.h" />
     <ClInclude Include="DConfigurator.h" />
     <ClInclude Include="DSource.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="HdaBrowserHandler.h" />
     <ClInclude Include="HdaCommandHandler.h" />
     <ClInclude Include="ISettingsDataSource.h" />
     <ClInclude Include="Log.h" />

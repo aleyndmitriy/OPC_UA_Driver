@@ -8,7 +8,8 @@ namespace DrvOPCUAHistValues
 	class ServerHdaItem : public ODS::IServerHda
 	{
 	public:
-		ServerHdaItem() = default;
+		ServerHdaItem(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore);
+		ServerHdaItem() = delete;
 		void* GetInterface(int nIfcId) override;
 		int Init(TCHAR* szCfgString) override;
 		int Shut() override;
@@ -17,6 +18,7 @@ namespace DrvOPCUAHistValues
 		int DestroyResult(ODS::HdaCommandResult* pResult) override;
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pAttributes;
-		HdaCommandHandler m_commandHandler;
+		std::shared_ptr<ISettingsDataSource> m_settingsDataStore;
+		std::shared_ptr<HdaCommandHandler> m_commandHandler;
 	};
 }

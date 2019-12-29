@@ -21,7 +21,7 @@ int DrvOPCUAHistValues::PluginObjectFactory::CreateObject(const TCHAR* szObjKey,
 	if (_tcscmp(szObjKey, OPC_UA_HIST_VALUES)) {
 		return ODS::ERR::BAD_PARAM;
 	}
-	*ppPluginObj = new CDSource();
+	*ppPluginObj = new CDSource(DataAccessAssembly::Instance().GetSettingDataSource(), DataAccessAssembly::Instance().GetSoftingDataSource());
 	if (*ppPluginObj)
 		return ODS::ERR::OK;
 	else

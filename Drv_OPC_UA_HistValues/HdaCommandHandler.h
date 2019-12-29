@@ -5,20 +5,22 @@
 #include"SoftingServerInteractorOutput.h"
 #include"SoftingServerInteractor.h"
 #include<Tvq.h>
+#include"ISettingsDataSource.h"
 
 namespace DrvOPCUAHistValues
 {
-	class HdaCommandHandler: public SoftingServerInteractorOutput
+	class HdaCommandHandler: public SoftingServerInteractorOutput, public std::enable_shared_from_this<HdaCommandHandler>
 	{
 	public:
-		HdaCommandHandler();
+		HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore);
+		HdaCommandHandler() = delete;
 		~HdaCommandHandler();
 		int Init(std::shared_ptr<ConnectionAttributes> attributes);
 		int Shut();
 		int HandleCommand(ODS::HdaCommand* pCommand, ODS::HdaCommandResult* pResult);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pAttributes;
-		std::unique_ptr<SoftingServerInteractor> m_pSoftingInteractor;
+		std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 		std::vector<std::string> m_connectionsList;
 		int ExecuteCommand(ODS::HdaCommand* pCommand, ODS::HdaFunction* funcList, int listSize, std::vector<ODS::HdaFunctionResult*>* pResultList);
 		int AnalyzeCommand(ODS::HdaCommand* pCommand, ODS::HdaFunction* funcList, int listSize, std::map<int, std::vector<ODS::HdaFunction*> >& requestMap);
@@ -30,6 +32,7 @@ namespace DrvOPCUAHistValues
 		void GetServers(std::vector<std::string>&& servers) override;
 		void GetEndPoints(std::vector<SoftingServerEndPointDescription>&& servers) override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
+		void CloseConnectionWithGuide(std::string&& uuid) override;
 		/*std::vector<std::string> BuildCmdValueList(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);
 		std::vector<std::string> BuildCmdValueListConditions(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);
 		std::vector<std::string> BuildCmdFirstValue(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);

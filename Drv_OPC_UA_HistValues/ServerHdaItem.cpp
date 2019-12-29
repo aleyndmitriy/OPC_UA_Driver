@@ -6,6 +6,12 @@
 #include <HdaFunctionResult.h>
 #include<HdaCommand.h>
 
+DrvOPCUAHistValues::ServerHdaItem::ServerHdaItem(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore):
+	m_pAttributes(nullptr), m_settingsDataStore(settingsDataStore), m_commandHandler(std::make_shared<HdaCommandHandler>(softingDataStore))
+{
+
+}
+
 void* DrvOPCUAHistValues::ServerHdaItem::GetInterface(int nIfcId)
 {
 	return this;
@@ -13,15 +19,14 @@ void* DrvOPCUAHistValues::ServerHdaItem::GetInterface(int nIfcId)
 
 int DrvOPCUAHistValues::ServerHdaItem::Init(TCHAR* szCfgString)
 {
-	XMLSettingsDataSource settingSource;
 	if (szCfgString != NULL)
 	{
 		size_t len = _tcslen(szCfgString);
 		if (len > 0) {
 			m_pAttributes = std::make_shared<ConnectionAttributes>();
-			settingSource.LoadAttributesString(szCfgString, len, *m_pAttributes);
+			m_settingsDataStore->LoadAttributesString(szCfgString, len, *m_pAttributes);
 		}
-		m_commandHandler.Init(m_pAttributes);
+		m_commandHandler->Init(m_pAttributes);
 	}
 	return ODS::ERR::OK;
 }
@@ -63,7 +68,7 @@ int DrvOPCUAHistValues::ServerHdaItem::Execute(ODS::HdaCommand* pCommand, ODS::H
 	if (!pResult)
 		return ODS::ERR::MEMORY_ALLOCATION_ERR;
 
-	int rc = ODS::ERR::OK;//m_commandHandler.HandleCommand(pCommand, pResult);
+	int rc = m_commandHandler->HandleCommand(pCommand, pResult);
 	if (ODS::ERR::OK == rc)
 	{
 		*ppResult = pResult;

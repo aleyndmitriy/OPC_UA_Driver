@@ -3,11 +3,11 @@
 #include "PluginObjectFactory.h"
 #include"Log.h"
 
-DrvOPCUAHistValues::CDSource::CDSource() : m_Configurator([this]()->ODS::UI::IAbstractUIFacrory* {
+DrvOPCUAHistValues::CDSource::CDSource(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore) : m_Configurator([this]()->ODS::UI::IAbstractUIFacrory* {
 	if (m_pHost)
 		return (ODS::UI::IAbstractUIFacrory*) (m_pHost->GetInterface(ODS::IPluginHost::IID_UI_FACTORY));
 	return 	nullptr;
-	}), m_Browser(), m_Server(), m_pHost(nullptr)
+	}, settingsDataStore, softingDataStore), m_Browser(settingsDataStore, softingDataStore), m_Server(settingsDataStore, softingDataStore), m_pHost(nullptr)
 {
 
 }

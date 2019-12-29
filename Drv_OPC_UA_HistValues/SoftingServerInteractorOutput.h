@@ -10,5 +10,6 @@ public:
 	virtual void GetServers(std::vector<std::string>&& servers) = 0;
 	virtual void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers) = 0;
 	virtual void GetNewConnectionGuide(std::string&& uuid) = 0;
+	virtual void CloseConnectionWithGuide(std::string&& uuid) = 0;
 	virtual ~SoftingServerInteractorOutput() {};
 };

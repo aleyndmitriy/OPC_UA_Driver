@@ -7,12 +7,12 @@
 #include"SoftingServerInteractor.h"
 // Диалоговое окно CClientSettingsDialog
 
-class CClientSettingsDialog : public CDialogEx, public SoftingServerInteractorOutput
+class CClientSettingsDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CClientSettingsDialog)
 
 public:
-	CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent);
+	CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent);
 	virtual ~CClientSettingsDialog();
 
 // Данные диалогового окна
@@ -43,11 +43,11 @@ private:
 	
 	BOOL OnInitDialog() override;
 	void SetUpInitialState();
-	void WarningMessage(std::string message);
-	void ErrorMessage(std::string message);
 	void StartLoading();
 	void StopLoading();
 	void ReadAttributes();
+	void WarningMessage(std::string message);
+	void ErrorMessage(std::string message);
 
 public:
 	afx_msg void OnEnChangeEditComputerName();
@@ -72,10 +72,12 @@ public:
 	afx_msg void OnBtnClickedButtonTestConnection();
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();
-	void SendMessageError(std::string&& message) override;
-	void SendWarning(std::string&& message) override;
-	void SendMessageInfo(std::string&& message) override;
-	void GetServers(std::vector<std::string>&& servers) override;
-	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints) override;
-	void GetNewConnectionGuide(std::string&& uuid) override;
+
+	void SendMessageError(std::string&& message);
+	void SendWarning(std::string&& message);
+	void SendMessageInfo(std::string&& message);
+	void GetServers(std::vector<std::string>&& servers);
+	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints);
+	void GetNewConnectionGuide(std::string&& uuid);
+	void CloseConnectionWithGuide(std::string&& uuid);
 };

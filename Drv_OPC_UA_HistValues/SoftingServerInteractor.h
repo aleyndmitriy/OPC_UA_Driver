@@ -9,13 +9,14 @@
 
 class SoftingServerInteractor {
 public:
-	SoftingServerInteractor(SoftingServerInteractorOutput* output, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes);
-	SoftingServerInteractor() = delete;
+	SoftingServerInteractor();
 	SoftingServerInteractor(const SoftingServerInteractor& src) = delete;
 	SoftingServerInteractor& operator=(const SoftingServerInteractor& src) = delete;
 	SoftingServerInteractor(SoftingServerInteractor&& src) = delete;
 	SoftingServerInteractor& operator=(SoftingServerInteractor&& src) = delete;
 	~SoftingServerInteractor();
+	void SetAttributes(std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes);
+	void SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output);
 	void GetServers();
 	void ChooseCurrentServer();
 	void ChooseCurrentEndPoint();
@@ -27,7 +28,7 @@ public:
 	void GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& tagsPath, const std::string& connectionID);
 private:
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pServerAttributes;
-	SoftingServerInteractorOutput* m_pOutput;
+	std::weak_ptr<SoftingServerInteractorOutput> m_pOutput;
 	SoftingOPCToolbox5::ApplicationPtr m_pApp;
 	SoftingOPCToolbox5::ApplicationDescription m_AppDesc;
 	EnumStatusCode m_enumResult;

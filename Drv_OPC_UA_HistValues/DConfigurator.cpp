@@ -5,10 +5,10 @@
 #include "OdsString.h"
 #include"ConnectionAttributes.h"
 #include"XMLSettingsDataSource.h"
-#include "ClientSettingsDialog.h"
+#include "ClientSettingsDialogWrapper.h"
 #include"Constants.h"
 
-DrvOPCUAHistValues::CDsConfigurator::CDsConfigurator(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactoryGetter) :m_uiFactoryGetter(uiFactoryGetter), m_hParentWindow(nullptr)
+DrvOPCUAHistValues::CDsConfigurator::CDsConfigurator(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactoryGetter, std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingInteractor) :m_uiFactoryGetter(uiFactoryGetter), m_settingsDataStore(settingsDataStore), m_pSoftingInteractor(softingInteractor),m_hParentWindow(nullptr)
 {
 
 }
@@ -22,23 +22,22 @@ int DrvOPCUAHistValues::CDsConfigurator::Configure(const TCHAR* szCfgInString, T
 {
 	int iRes = ODS::ERR::FILE;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes = std::make_shared<DrvOPCUAHistValues::ConnectionAttributes>();
-	DrvOPCUAHistValues::XMLSettingsDataSource settingSource;
+	
 	if (szCfgInString != NULL)
 	{
 		size_t len = _tcslen(szCfgInString);
 		if (len > 0) {
-			settingSource.LoadAttributesString(szCfgInString, len, *attributes);
+			m_settingsDataStore->LoadAttributesString(szCfgInString, len, *attributes);
 		}
 	}
 	HINSTANCE hOld = AfxGetResourceHandle();
 	HMODULE hModule = GetModuleHandle(OPC_UA_LIBRARY_NAME);
 	AfxSetResourceHandle(hModule);
-	CWnd* parent = CWnd::FromHandle(m_hParentWindow);
-	CClientSettingsDialog dlg(m_uiFactoryGetter, attributes, parent);
-	int response = dlg.DoModal();
+	std::shared_ptr<ClientSettingsDialogWrapper> dlg = std::make_shared<ClientSettingsDialogWrapper>(m_uiFactoryGetter, m_pSoftingInteractor, attributes, m_hParentWindow);
+	int response = dlg->DoModal();
 	if (response == IDOK) {
 		std::ostringstream outStream;
-		settingSource.Save(*attributes, outStream);
+		m_settingsDataStore->Save(*attributes, outStream);
 		std::string outString = outStream.str();
 		char* outStr = new char[outString.length() + 1];
 		_tcscpy_s(outStr, outString.length() + 1, outString.c_str());

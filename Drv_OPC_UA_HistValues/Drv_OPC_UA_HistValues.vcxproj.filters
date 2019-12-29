@@ -49,6 +49,12 @@
     <Filter Include="Исходные файлы\SoftingService">
       <UniqueIdentifier>{b55a7ba8-f477-4efd-a1cb-2608605fff3b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\Assemblies">
+      <UniqueIdentifier>{ed9cbbcd-fa0c-4ea4-badf-dc7fc3857eaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Assemblies">
+      <UniqueIdentifier>{507c4f29-0ff2-459e-941c-384b437d34df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -104,6 +110,15 @@
     </ClCompile>
     <ClCompile Include="HdaCommandHandler.cpp">
       <Filter>Исходные файлы\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="DataAccessAssembly.cpp">
+      <Filter>Исходные файлы\Assemblies</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSettingsDialogWrapper.cpp">
+      <Filter>Исходные файлы\Configurator</Filter>
+    </ClCompile>
+    <ClCompile Include="HdaBrowserHandler.cpp">
+      <Filter>Исходные файлы\Browser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -183,6 +198,15 @@
     </ClInclude>
     <ClInclude Include="HdaCommandHandler.h">
       <Filter>Файлы заголовков\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="DataAccessAssembly.h">
+      <Filter>Файлы заголовков\Assemblies</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientSettingsDialogWrapper.h">
+      <Filter>Файлы заголовков\Configurator</Filter>
+    </ClInclude>
+    <ClInclude Include="HdaBrowserHandler.h">
+      <Filter>Файлы заголовков\Browser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

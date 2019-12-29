@@ -10,7 +10,7 @@
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
 
-DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(): m_pAttributes(nullptr), m_pSoftingInteractor(nullptr), m_connectionsList()
+DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
 {
 
 }
@@ -23,7 +23,7 @@ DrvOPCUAHistValues::HdaCommandHandler::~HdaCommandHandler()
 int DrvOPCUAHistValues::HdaCommandHandler::Init(std::shared_ptr<ConnectionAttributes> attributes)
 {
 	m_pAttributes = attributes;
-	m_pSoftingInteractor = std::make_unique<SoftingServerInteractor>(this, m_pAttributes);
+	m_pSoftingInteractor->SetAttributes(attributes);
 	return ODS::ERR::OK;
 }
 
@@ -35,6 +35,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::Shut()
 
 int DrvOPCUAHistValues::HdaCommandHandler::HandleCommand(ODS::HdaCommand* pCommand, ODS::HdaCommandResult* pResult)
 {
+	m_pSoftingInteractor->SetOutput(shared_from_this());
 	std::vector<ODS::HdaFunctionResult*> resultList;
 	ODS::HdaFunction** pList = nullptr;
 	int nCount = 0;
@@ -257,6 +258,18 @@ void DrvOPCUAHistValues::HdaCommandHandler::GetNewConnectionGuide(std::string&& 
 			return existingUuid == uuid; });
 		if (findIterator == m_connectionsList.cend()) {
 			m_connectionsList.push_back(uuid);
+		}
+	}
+}
+
+void DrvOPCUAHistValues::HdaCommandHandler::CloseConnectionWithGuide(std::string&& uuid)
+{
+	if (uuid.empty() == false) {
+		std::vector<std::string>::const_iterator findIterator =
+			std::find_if(m_connectionsList.cbegin(), m_connectionsList.cend(), [&](const std::string& existingUuid) {
+			return existingUuid == uuid; });
+		if (findIterator != m_connectionsList.cend()) {
+			m_connectionsList.erase(findIterator);
 		}
 	}
 }

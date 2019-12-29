@@ -4,13 +4,15 @@
 #include "DConfigurator.h"
 #include "BrowserHdaItem.h"
 #include "ServerHdaItem.h"
+#include"DataAccessAssembly.h"
 
 namespace DrvOPCUAHistValues
 {
 	class CDSource : public ODS::ISourceHdaItem
 	{
 	public:
-		CDSource();
+		CDSource(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore);
+		CDSource() = delete;
 		~CDSource();
 		CDSource(const CDSource& src) = delete;
 		CDSource& operator=(const CDSource& src) = delete;

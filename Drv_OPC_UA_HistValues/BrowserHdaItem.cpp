@@ -7,7 +7,8 @@
 #include"XMLSettingsDataSource.h"
 #include"Log.h"
 
-DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem() :m_pAttributes(nullptr), m_pSoftingInteractor(nullptr), m_TagList(), m_ConnectionId()
+DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore):
+	m_pAttributes(nullptr), m_settingsDataStore(settingsDataStore), m_pBrowserHandler(std::make_shared<HdaBrowserHandler>(softingDataStore))
 {
 	
 }
@@ -19,18 +20,15 @@ void* DrvOPCUAHistValues::BrowserHdaItem::GetInterface(int nIfcId)
 
 int DrvOPCUAHistValues::BrowserHdaItem::Init(TCHAR* szCfgString)
 {
-	DrvOPCUAHistValues::XMLSettingsDataSource settingSource;
-
 	if (szCfgString != NULL)
 	{
 		size_t len = _tcslen(szCfgString);
 		if (len > 0) {
 			m_pAttributes = std::make_shared<ConnectionAttributes>();
-			settingSource.LoadAttributesString(szCfgString, len, *m_pAttributes);
-			m_pSoftingInteractor = std::make_unique<SoftingServerInteractor>(this, m_pAttributes);
+			m_settingsDataStore->LoadAttributesString(szCfgString, len, *m_pAttributes);
+			m_pBrowserHandler->Init(m_pAttributes);
 		}
 	}
-
 	return ODS::ERR::OK;
 }
 
@@ -114,7 +112,7 @@ int DrvOPCUAHistValues::BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress
 			pAddr->DestroyAddress(pAddrComponent, nCount);
 		}
 
-		iRes = GetTagList(entry, &tagList);
+		iRes = m_pBrowserHandler->GetTagList(entry, &tagList);
 		if (iRes != ODS::ERR::OK)
 			return iRes;
 
@@ -173,63 +171,3 @@ int DrvOPCUAHistValues::BrowserHdaItem::DestroyBrowseItemList(ODS::BrowseItem* p
 	return ODS::ERR::OK;
 }
 
-int DrvOPCUAHistValues::BrowserHdaItem::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
-{
-	pTagList->clear();
-	m_pSoftingInteractor->OpenConnection();
-	if (m_ConnectionId.empty()) {
-		return ODS::ERR::DB_CONNECTION_FAILED;
-	}
-	std::vector<std::pair<std::string, bool> > tagsName;
-	std::queue<std::string> pathQueue;
-	for (std::vector<ODS::OdsString>::const_iterator iter = rEntry.cbegin(); iter != rEntry.cend(); ++iter) {
-		std::string name(iter->GetString());
-		pathQueue.push(name);
-	}
-	m_pSoftingInteractor->GetTags(tagsName, pathQueue, m_ConnectionId);
-	
-	for (std::vector<std::pair<std::string, bool> >::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
-		ODS::OdsString szAddress(itr->first.c_str());
-		STagItem sItem;
-		sItem.m_vAddress.assign(rEntry.cbegin(),rEntry.cend());
-		sItem.m_vAddress.push_back(szAddress);
-		if (itr->second == false) {
-			sItem.m_nType = ODS::BrowseItem::TYPE_BRANCH;
-		}
-		pTagList->push_back(sItem);
-	}
-	m_pSoftingInteractor->CloseConnectionWithUUID(m_ConnectionId);
-	
-	return ODS::ERR::OK;
-}
-
-
-void DrvOPCUAHistValues::BrowserHdaItem::SendMessageError(std::string&& message)
-{
-	Log::GetInstance()->WriteInfo(_T(message.c_str()));
-}
-
-void DrvOPCUAHistValues::BrowserHdaItem::SendWarning(std::string&& message)
-{
-	Log::GetInstance()->WriteInfo(_T(message.c_str()));
-}
-
-void DrvOPCUAHistValues::BrowserHdaItem::SendMessageInfo(std::string&& message)
-{
-	Log::GetInstance()->WriteInfo(_T(message.c_str()));
-}
-
-void DrvOPCUAHistValues::BrowserHdaItem::GetServers(std::vector<std::string>&& servers)
-{
-
-}
-
-void DrvOPCUAHistValues::BrowserHdaItem::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers)
-{
-
-}
-
-void DrvOPCUAHistValues::BrowserHdaItem::GetNewConnectionGuide(std::string&& uuid)
-{
-	m_ConnectionId = uuid;
-}
