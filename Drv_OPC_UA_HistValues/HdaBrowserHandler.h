@@ -21,12 +21,12 @@ namespace DrvOPCUAHistValues
 		}
 	};
 	
-	class HdaBrowserHandler : public SoftingServerInteractorOutput, public std::enable_shared_from_this<HdaBrowserHandler>
+	class BrowserHandler : public SoftingServerInteractorOutput, public std::enable_shared_from_this<BrowserHandler>
 	{
 	public:
-		HdaBrowserHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore);
-		HdaBrowserHandler() = delete;
-		~HdaBrowserHandler();
+		BrowserHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore);
+		BrowserHandler() = delete;
+		~BrowserHandler();
 		int Init(std::shared_ptr<ConnectionAttributes> attributes);
 		int GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList);
 		void SendMessageError(std::string&& message) override;

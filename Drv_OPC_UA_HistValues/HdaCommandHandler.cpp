@@ -129,7 +129,6 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleCloseSession(ODS::HdaFunction* 
 		return existingUuid == uuid; });
 	if (findIterator != m_connectionsList.cend()) {
 		m_pSoftingInteractor->CloseConnectionWithUUID(uuid);
-		m_connectionsList.erase(findIterator);
 		Log::GetInstance()->WriteInfoDebug(_T("CloseSession ok,  session id %s"), (LPCTSTR)sessionId.ToString());
 		ODS::HdaFunctionResultSession* pSession = new ODS::HdaFunctionResultSession;
 		pSession->SetContext(pFunc->GetContext());
@@ -211,12 +210,6 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		//ExecuteQueriesList(requestMap, queriesList, pResultList, startUtc, endUtc, sessionID);
 		
 		m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
-		std::vector<std::string>::const_iterator findIterator =
-			std::find_if(m_connectionsList.cbegin(), m_connectionsList.cend(), [&](const std::string& existingUuid) {
-			return existingUuid == sessionID; });
-		if (findIterator != m_connectionsList.cend()) {
-			m_connectionsList.erase(findIterator);
-		}
 		return ODS::ERR::OK;
 	}
 	else {

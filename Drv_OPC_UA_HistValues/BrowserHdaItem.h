@@ -18,7 +18,7 @@ namespace DrvOPCUAHistValues
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pAttributes;
 		std::shared_ptr<ISettingsDataSource> m_settingsDataStore;
-		std::shared_ptr<HdaBrowserHandler> m_pBrowserHandler;
+		std::shared_ptr<BrowserHandler> m_pBrowserHandler;
 		ODS::OdsString GetAddressOld(const ODS::ItemAddress& rAddress);
 	};
 }

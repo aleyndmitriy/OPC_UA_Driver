@@ -8,7 +8,7 @@
 #include"Log.h"
 
 DrvOPCUAHistValues::BrowserHdaItem::BrowserHdaItem(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore):
-	m_pAttributes(nullptr), m_settingsDataStore(settingsDataStore), m_pBrowserHandler(std::make_shared<HdaBrowserHandler>(softingDataStore))
+	m_pAttributes(nullptr), m_settingsDataStore(settingsDataStore)//, m_pBrowserHandler(std::make_shared<HdaBrowserHandler>(softingDataStore))
 {
 	
 }
@@ -26,7 +26,7 @@ int DrvOPCUAHistValues::BrowserHdaItem::Init(TCHAR* szCfgString)
 		if (len > 0) {
 			m_pAttributes = std::make_shared<ConnectionAttributes>();
 			m_settingsDataStore->LoadAttributesString(szCfgString, len, *m_pAttributes);
-			m_pBrowserHandler->Init(m_pAttributes);
+			//m_pBrowserHandler->Init(m_pAttributes);
 		}
 	}
 	return ODS::ERR::OK;
@@ -112,7 +112,7 @@ int DrvOPCUAHistValues::BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress
 			pAddr->DestroyAddress(pAddrComponent, nCount);
 		}
 
-		iRes = m_pBrowserHandler->GetTagList(entry, &tagList);
+		//iRes = m_pBrowserHandler->GetTagList(entry, &tagList);
 		if (iRes != ODS::ERR::OK)
 			return iRes;
 

@@ -5,24 +5,24 @@
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
 
-DrvOPCUAHistValues::HdaBrowserHandler::HdaBrowserHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore) : m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_ConnectionId()
+DrvOPCUAHistValues::BrowserHandler::BrowserHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore) : m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_ConnectionId()
 {
 
 }
 
-DrvOPCUAHistValues::HdaBrowserHandler::~HdaBrowserHandler()
+DrvOPCUAHistValues::BrowserHandler::~BrowserHandler()
 {
 
 }
 
-int DrvOPCUAHistValues::HdaBrowserHandler::Init(std::shared_ptr<ConnectionAttributes> attributes)
+int DrvOPCUAHistValues::BrowserHandler::Init(std::shared_ptr<ConnectionAttributes> attributes)
 {
 	m_pAttributes = attributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
 	return ODS::ERR::OK;
 }
 
-int DrvOPCUAHistValues::HdaBrowserHandler::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
+int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
 {
 	m_pSoftingInteractor->SetOutput(shared_from_this());
 	pTagList->clear();
@@ -54,37 +54,37 @@ int DrvOPCUAHistValues::HdaBrowserHandler::GetTagList(std::vector<ODS::OdsString
 }
 
 
-void DrvOPCUAHistValues::HdaBrowserHandler::SendMessageError(std::string&& message)
+void DrvOPCUAHistValues::BrowserHandler::SendMessageError(std::string&& message)
 {
 	Log::GetInstance()->WriteInfo(_T(message.c_str()));
 }
 
-void DrvOPCUAHistValues::HdaBrowserHandler::SendWarning(std::string&& message)
+void DrvOPCUAHistValues::BrowserHandler::SendWarning(std::string&& message)
 {
 	Log::GetInstance()->WriteInfo(_T(message.c_str()));
 }
 
-void DrvOPCUAHistValues::HdaBrowserHandler::SendMessageInfo(std::string&& message)
+void DrvOPCUAHistValues::BrowserHandler::SendMessageInfo(std::string&& message)
 {
 	Log::GetInstance()->WriteInfo(_T(message.c_str()));
 }
 
-void DrvOPCUAHistValues::HdaBrowserHandler::GetServers(std::vector<std::string>&& servers)
+void DrvOPCUAHistValues::BrowserHandler::GetServers(std::vector<std::string>&& servers)
 {
 
 }
 
-void DrvOPCUAHistValues::HdaBrowserHandler::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers)
+void DrvOPCUAHistValues::BrowserHandler::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers)
 {
 
 }
 
-void DrvOPCUAHistValues::HdaBrowserHandler::GetNewConnectionGuide(std::string&& uuid)
+void DrvOPCUAHistValues::BrowserHandler::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_ConnectionId = uuid;
 }
 
-void DrvOPCUAHistValues::HdaBrowserHandler::CloseConnectionWithGuide(std::string&& uuid)
+void DrvOPCUAHistValues::BrowserHandler::CloseConnectionWithGuide(std::string&& uuid)
 {
 	m_ConnectionId.clear();
 }

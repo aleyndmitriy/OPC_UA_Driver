@@ -25,15 +25,16 @@ int DrvOPCUAHistValues::ServerHdaItem::Init(TCHAR* szCfgString)
 		if (len > 0) {
 			m_pAttributes = std::make_shared<ConnectionAttributes>();
 			m_settingsDataStore->LoadAttributesString(szCfgString, len, *m_pAttributes);
+			m_commandHandler->Init(m_pAttributes);
 		}
-		m_commandHandler->Init(m_pAttributes);
+		
 	}
 	return ODS::ERR::OK;
 }
 
 int DrvOPCUAHistValues::ServerHdaItem::Shut()
 {
-	//m_commandHandler.Shut();
+	m_commandHandler->Shut();
 	return ODS::ERR::OK;
 }
 
