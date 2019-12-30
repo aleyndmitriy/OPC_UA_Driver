@@ -72,7 +72,6 @@ public:
 	afx_msg void OnBtnClickedButtonTestConnection();
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();
-
 	void SendMessageError(std::string&& message);
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);

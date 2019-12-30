@@ -5,6 +5,7 @@ DrvOPCUAHistValues::ClientSettingsDialogWrapper::ClientSettingsDialogWrapper(std
 {
 	CWnd* parent = CWnd::FromHandle(parentWindow);
 	m_softingDataStore = softingDataStore;
+	m_softingDataStore->SetAttributes(attributes);
 	m_pMFCdialog = new CClientSettingsDialog(uiFactiryGetter, softingDataStore, attributes, parent);
 }
 

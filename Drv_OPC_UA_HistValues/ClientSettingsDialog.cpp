@@ -87,6 +87,7 @@ BOOL CClientSettingsDialog::OnInitDialog()
 			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType);
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, 0);
+		m_cmbConfiguration.SetCurSel(pos);
 	}
 	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode, m_connectAttributes->configurationAccess));
 	
@@ -98,14 +99,16 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	StringCchCopy(modeStr, attr.size()+1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
-	item.stateMask = (UINT)-1;
+	item.stateMask = UINT(-1);
 	item.cchTextMax = 40;
 	item.iSubItem = 0;
-	item.state = 0;// LVIS_FOCUSED | LVIS_SELECTED;
+	item.state = 0;
 	item.iItem = 0;
-	item.cColumns = 1;
+	item.cColumns = 0;
+	item.puColumns = NULL;
 	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.securityType));
 	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
+	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
 	switch (m_connectAttributes->configurationAccess.securityType) {
 	case DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME:
 		m_cmbServerName.SetCurSel(DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME));
@@ -192,6 +195,8 @@ void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
 	StartLoading();
+	m_endPointsConfigurations.clear();
+	m_lstPolicyType.DeleteAllItems();
 	ReadAttributes();
 	if (m_pSoftingInteractor) {
 		m_pSoftingInteractor->ChooseCurrentServer();
@@ -243,10 +248,11 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	}
 	StartLoading();
 	m_lstPolicyType.DeleteAllItems();
+	
 	LVITEM item;
 	TCHAR modeStr[40];
-	std::string attr = GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) + std::string("/") +
-		GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType);
+	std::string attr = GetStringFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode) + std::string("/") +
+		GetStringFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType);
 	StringCchCopy(modeStr, attr.size() + 1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
@@ -258,6 +264,7 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	item.cColumns = 1;
 	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType));
 	m_lstPolicyType.InsertItem(&item);
+	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
 	ReadAttributes();
 	if (m_pSoftingInteractor) {
 		m_pSoftingInteractor->ChooseCurrentEndPoint();
@@ -523,3 +530,4 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 {
 	
 }
+

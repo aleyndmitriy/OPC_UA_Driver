@@ -117,6 +117,9 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 	if (!m_selectedEndPointDescription) {
 		ChooseCurrentEndPoint();
 	}
+	if (!m_selectedEndPointDescription) {
+		return;
+	}
 	EnumStatusCode result = EnumStatusCode_Good;
 	std::string endpointUrl = m_selectedEndPointDescription->getEndpointUrl();
 	if (endpointUrl.length() <= 0)
@@ -748,6 +751,29 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	{
 		return false;
 	}
+	int mode = -1;
+	EnumMessageSecurityMode descMode = desc.getMessageSecurityMode();
+	switch (descMode)
+	{
+	case EnumMessageSecurityMode::EnumMessageSecurityMode_SignAndEncrypt:
+		mode = 3;
+		break;
+	case EnumMessageSecurityMode::EnumMessageSecurityMode_Sign:
+		mode = 2;
+		break;
+	case EnumMessageSecurityMode::EnumMessageSecurityMode_None:
+		mode = 1;
+		break;
+	default:
+		mode = -1;
+		break;
+	}
+	if (mode < 0) {
+		return false;
+	}
+	if (mode != DrvOPCUAHistValues::GetIntFromSecurityMode(attributes.configurationMode.securityMode)) {
+		return false;
+	}
 	int type = 0;
 	unsigned int tokenCount = desc.getUserIdentityTokenCount();
 	if (tokenCount == 0) {
@@ -755,9 +781,26 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	}
 	const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(0);
 	EnumUserTokenType identityToken = pPolicy->getTokenType();
-	type = identityToken;
-	if (type != DrvOPCUAHistValues::GetIntFromSecurityMode(attributes.configurationMode.securityMode)) {
+	switch (identityToken) {
+	case EnumUserTokenType_Anonymous:
+		type = 0;
+		break;
+	case EnumUserTokenType_UserName:
+		type = 1;
+		break;
+	case EnumUserTokenType_Certificate:
+		type = 2;
+		break;
+	case EnumUserTokenType_IssuedToken:
+		type = 3;
+		break;
+	default:
+		type = -1;
+		break;
+	}
+	if (type != DrvOPCUAHistValues::GetIntFromSecurityType(attributes.configurationAccess.securityType)) {
 		return false;
 	}
+	
 	return true;
 }
