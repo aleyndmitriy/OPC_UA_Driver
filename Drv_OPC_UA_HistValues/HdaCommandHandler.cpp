@@ -7,6 +7,7 @@
 #include<HdaFunctionTypes.h>
 #include"Constants.h"
 #include"Log.h"
+#include"ParamUtils.h"
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
 
@@ -196,7 +197,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 			sessionID = std::string(sessionId.ToString().GetString());
 			m_pSoftingInteractor->OpenConnectionWithUUID(sessionID);
 		}
-		//CreateQueriesList(requestMap, queriesList, startUtc, endUtc, sessionID);
+		CreateQueriesList(requestMap, queriesList, startUtc, endUtc, sessionID);
 		if (queriesList.empty()) {
 			m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
 			std::vector<std::string>::const_iterator findIterator =
@@ -217,7 +218,123 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 	}
 }
 
+void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::string& sessionId)
+{
+	queriesList.clear();
+	
+	std::pair<int, std::vector<std::string> > pair;
+	std::pair<std::map<int, std::vector<std::string> >::iterator, bool > insertedPair;
+	for (std::map<int, std::vector<ODS::HdaFunction*> >::const_iterator itr = requestFunctions.cbegin(); itr != requestFunctions.cend(); ++itr) {
+		switch (itr->first) {
+		case ODS::HdaFunctionType::VALUE_LIST:
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST), BuildCmdValueList(startTime, endTime, itr->second));
+			break;
+		case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST_CONDITION), BuildCmdValueListConditions(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::LAST_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::LAST_VALUE), BuildCmdLastValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::FIRST_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::FIRST_VALUE), BuildCmdFirstValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE), BuildCmdTimeStampLastValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE), BuildCmdTimeStampFirstValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::AVG_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::AVG_VALUE), BuildCmdAvgValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::SUM_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::SUM_VALUE), BuildCmdSumValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::MIN_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MIN_VALUE), BuildCmdMinValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::MAX_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MAX_VALUE), BuildCmdMaxValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE), BuildCmdTimeStampMinValue(startUtc, endUtc, itr->second, tags));
+			break;
+		case ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE:
+			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE), BuildCmdTimeStampMaxValue(startUtc, endUtc, itr->second, tags));
+			break;
+		default:
+			break;
+		}
+		insertedPair = queriesList.insert(pair);
+	}
+}
 
+std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList)
+{
+	std::vector<std::string> vec;
+	for (std::vector<ODS::HdaFunction*>::const_iterator itr = rFuncList.cbegin(); itr != rFuncList.cend(); ++itr) {
+		ParamValueList paramList = GetParameterValueList(*itr);
+		vec.push_back(paramList.GetFullAddress());
+		//TestCase_HistoryReadRaw_IndexRange
+	}
+	return vec;
+}
+
+DrvOPCUAHistValues::ParamValueList DrvOPCUAHistValues::HdaCommandHandler::GetParameterValueList(const ODS::HdaFunction* pHdaFunc)
+{
+
+	std::vector<ODS::HdaFunctionParam*> paramList;
+	ODS::HdaFunctionParam** pParam = nullptr;
+	int nCount = 0;
+	int res = pHdaFunc->GetParameterList(&pParam, &nCount);
+	for (int i = 0; i < nCount; i++) {
+		paramList.push_back(pParam[i]);
+	}
+	ODS::OdsString address;
+	ODS::OdsString fullAddress;
+	ODS::OdsString sql;
+	bool prevPoint = false;
+	bool postPoint = false;
+	ODS::HdaFunctionParamLimit::LimitParam limit;
+	limit.m_nLimitCount = 0;
+	limit.m_nLimitOffset = 0;
+	limit.m_nLimitSide = 0;
+	int nSpecPoint = 0;
+	int valueType = 0;
+	for (std::vector<ODS::HdaFunctionParam*>::const_iterator itr = paramList.cbegin(); itr != paramList.cend(); ++itr) {
+		int nParamType = (*itr)->GetType();
+
+		switch (nParamType)
+		{
+		case ODS::HdaFunctionParam::TYPE_ITEM_ADDRESS:
+			ParamUtils::GetAddress(address, fullAddress, *itr);
+			break;
+		case ODS::HdaFunctionParam::TYPE_LIMIT:
+			((ODS::HdaFunctionParamLimit*) * itr)->GetLimit(&limit);
+			break;
+		case ODS::HdaFunctionParam::TYPE_OBJECT:
+			valueType = ((ODS::HdaFunctionParamObject*) * itr)->GetType();
+			break;
+		case ODS::HdaFunctionParam::TYPE_SPEC_POINT:
+			nSpecPoint = ((ODS::HdaFunctionParamSpecPoint*) * itr)->GetSpecPointFlag();
+			if (ODS::HdaFunctionParamSpecPoint::POINT_TYPE_PREV == nSpecPoint)
+				prevPoint = true;
+			else if (ODS::HdaFunctionParamSpecPoint::POINT_TYPE_POST == nSpecPoint)
+				postPoint = true;
+			else if (ODS::HdaFunctionParamSpecPoint::POINT_TYPE_BOTH == nSpecPoint)
+			{
+				prevPoint = true;
+				postPoint = true;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	pHdaFunc->DestroyParameterList(pParam, nCount);
+	ParamValueList valList(std::string(address.GetString()), std::string(fullAddress.GetString()), prevPoint, postPoint, valueType, Limit(limit.m_nLimitSide, limit.m_nLimitOffset, limit.m_nLimitCount));
+	return valList;
+}
 void DrvOPCUAHistValues::HdaCommandHandler::SendMessageError(std::string&& message)
 {
 

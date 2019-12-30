@@ -213,6 +213,9 @@
     <ClCompile Include="HdaBrowserHandler.cpp" />
     <ClCompile Include="HdaCommandHandler.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="ParamUtils.cpp" />
+    <ClCompile Include="ParamValue.cpp" />
+    <ClCompile Include="ParamValueList.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -248,6 +251,9 @@
     <ClInclude Include="HdaCommandHandler.h" />
     <ClInclude Include="ISettingsDataSource.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="ParamUtils.h" />
+    <ClInclude Include="ParamValue.h" />
+    <ClInclude Include="ParamValueList.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PluginObjectFactory.h" />
     <ClInclude Include="PropertySet.h" />

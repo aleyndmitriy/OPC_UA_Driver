@@ -120,6 +120,15 @@
     <ClCompile Include="HdaBrowserHandler.cpp">
       <Filter>Исходные файлы\Browser</Filter>
     </ClCompile>
+    <ClCompile Include="ParamValue.cpp">
+      <Filter>Исходные файлы\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="ParamValueList.cpp">
+      <Filter>Исходные файлы\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="ParamUtils.cpp">
+      <Filter>Исходные файлы\Server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -207,6 +216,15 @@
     </ClInclude>
     <ClInclude Include="HdaBrowserHandler.h">
       <Filter>Файлы заголовков\Browser</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamValue.h">
+      <Filter>Файлы заголовков\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamValueList.h">
+      <Filter>Файлы заголовков\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamUtils.h">
+      <Filter>Файлы заголовков\Server</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

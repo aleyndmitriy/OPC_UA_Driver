@@ -6,7 +6,7 @@
 #include"SoftingServerInteractor.h"
 #include<Tvq.h>
 #include"ISettingsDataSource.h"
-
+#include"ParamValueList.h"
 namespace DrvOPCUAHistValues
 {
 	class HdaCommandHandler: public SoftingServerInteractorOutput, public std::enable_shared_from_this<HdaCommandHandler>
@@ -33,6 +33,9 @@ namespace DrvOPCUAHistValues
 		void GetEndPoints(std::vector<SoftingServerEndPointDescription>&& servers) override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
 		void CloseConnectionWithGuide(std::string&& uuid) override;
+		void CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::string& sessionId);
+		ParamValueList GetParameterValueList(const ODS::HdaFunction* pHdaFunc);
+		std::vector<std::string> BuildCmdValueList(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList);
 		/*std::vector<std::string> BuildCmdValueList(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);
 		std::vector<std::string> BuildCmdValueListConditions(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);
 		std::vector<std::string> BuildCmdFirstValue(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);
@@ -47,7 +50,7 @@ namespace DrvOPCUAHistValues
 		std::vector<std::string> BuildCmdTimeStampMinValue(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList, const std::map<std::string, TagItemRecord>& tags);
 		ParamValueList GetParameterValueList(const ODS::HdaFunction* pHdaFunc);
 		ODS::Tvq* CreateTvqFromRecord(const Record& record, bool* condition) const;
-		void CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::string& sessionId);
+		
 		void ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<std::string> >& queriesList, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
 			const SYSTEMTIME& endTime, const std::string& sessionId);*/
 	};
