@@ -129,6 +129,9 @@
     <ClCompile Include="ParamUtils.cpp">
       <Filter>Исходные файлы\Server</Filter>
     </ClCompile>
+    <ClCompile Include="Record.cpp">
+      <Filter>Исходные файлы\SoftingService</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -225,6 +228,9 @@
     </ClInclude>
     <ClInclude Include="ParamUtils.h">
       <Filter>Файлы заголовков\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Record.h">
+      <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

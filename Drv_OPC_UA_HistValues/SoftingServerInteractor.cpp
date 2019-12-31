@@ -623,6 +623,53 @@ bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originN
 	return false;
 }
 
+void SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
+	std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	
+	std::vector<SoftingOPCToolbox5::NumericRange> indexRanges(nodesToRead.size(), SoftingOPCToolbox5::NumericRange());
+	std::vector<SoftingOPCToolbox5::HistoryReadValueId> historyReadValueIds;
+	std::transform(nodesToRead.cbegin(), nodesToRead.cend(), std::back_inserter(historyReadValueIds), [](const SoftingOPCToolbox5::NodeId& nodeId) {
+		SoftingOPCToolbox5::HistoryReadValueId historyReadValueId;
+		historyReadValueId.setNodeId(&nodeId);
+		return historyReadValueId; });
+	SoftingOPCToolbox5::ReadRawDetails readRawDetails;
+	readRawDetails.setStartTime(&startTime);
+	readRawDetails.setEndTime(&endTime);
+	readRawDetails.setReturnBounds(true);
+	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
+	EnumStatusCode result = EnumStatusCode_Bad;
+	result = session->historyReadRaw(EnumTimestampsToReturn_Both, false, historyReadValueIds, &readRawDetails, historyReadResults);
+	historicalValuesOfNodes.clear();
+	if (StatusCode::isSUCCEEDED(result))
+	{
+		for (std::vector<SoftingOPCToolbox5::HistoryReadDataResult>::const_iterator itr = historyReadResults.cbegin(); itr != historyReadResults.cend(); ++itr) {
+			EnumStatusCode operationResult = itr->getStatusCode();
+			if (StatusCode::isBad(operationResult)) {
+				if (output) {
+					std::string message = std::string("Operation of the HistoryRead service call returned an unexpected status code ") + std::string(getEnumStatusCodeString(operationResult));
+					output->SendMessageInfo(std::move(message));
+				}
+				return;
+			}
+			std::vector<SoftingOPCToolbox5::DataValue> values;
+			OTUInt32 sizeOfData = itr->getNumberOfValues();
+			for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
+			{
+				values.push_back(itr->getValue(valueIndex));
+			}
+			historicalValuesOfNodes.push_back(values);
+		}
+	}
+	else {
+		if (output) {
+			std::string message = std::string("Can not find any values for nodes ");
+			output->SendMessageInfo(std::move(message));
+		}
+	}
+}
+
 void SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
 {
 	tags.clear();

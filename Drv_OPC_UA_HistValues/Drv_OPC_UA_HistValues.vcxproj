@@ -225,6 +225,7 @@
     <ClCompile Include="PluginObjectFactory.cpp" />
     <ClCompile Include="PropertySet.cpp" />
     <ClCompile Include="pugixml.cpp" />
+    <ClCompile Include="Record.cpp" />
     <ClCompile Include="RegisterInfo.cpp" />
     <ClCompile Include="ServerHdaItem.cpp" />
     <ClCompile Include="SoftingServerEndPointDescription.cpp" />
@@ -257,6 +258,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="PluginObjectFactory.h" />
     <ClInclude Include="PropertySet.h" />
+    <ClInclude Include="Record.h" />
     <ClInclude Include="RegisterInfo.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ServerHdaItem.h" />
