@@ -6,6 +6,7 @@
 #include<queue>
 #include"SoftingServerInteractorOutput.h"
 #include"ConnectionAttributes.h"
+#include "Record.h"
 
 class SoftingServerInteractor {
 public:
@@ -26,6 +27,8 @@ public:
 	void TestConnection();
 	void BrowseSession(const std::string& connectionID);
 	void GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& tagsPath, const std::string& connectionID);
+	void GetRecords(std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
+		const std::map<std::string, std::vector<std::string> >& fullPaths, const std::string& connectionID);
 private:
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_pServerAttributes;
 	std::weak_ptr<SoftingServerInteractorOutput> m_pOutput;
@@ -47,3 +50,4 @@ private:
 
 bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes);
 DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc);
+DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::DataValue& dataValue);

@@ -200,12 +200,6 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		CreateQueriesList(requestMap, queriesList, startUtc, endUtc, sessionID);
 		if (queriesList.empty()) {
 			m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
-			std::vector<std::string>::const_iterator findIterator =
-				std::find_if(m_connectionsList.cbegin(), m_connectionsList.cend(), [&](const std::string& existingUuid) {
-				return existingUuid == sessionID; });
-			if (findIterator != m_connectionsList.cend()) {
-				m_connectionsList.erase(findIterator);
-			}
 			return ODS::ERR::DB_NO_DATA;
 		}
 		//ExecuteQueriesList(requestMap, queriesList, pResultList, startUtc, endUtc, sessionID);
@@ -227,40 +221,40 @@ void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int
 	for (std::map<int, std::vector<ODS::HdaFunction*> >::const_iterator itr = requestFunctions.cbegin(); itr != requestFunctions.cend(); ++itr) {
 		switch (itr->first) {
 		case ODS::HdaFunctionType::VALUE_LIST:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST), BuildCmdValueList(startTime, endTime, itr->second));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST_CONDITION), BuildCmdValueListConditions(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST_CONDITION), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::LAST_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::LAST_VALUE), BuildCmdLastValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::LAST_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::FIRST_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::FIRST_VALUE), BuildCmdFirstValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::FIRST_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE), BuildCmdTimeStampLastValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE), BuildCmdTimeStampFirstValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::AVG_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::AVG_VALUE), BuildCmdAvgValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::AVG_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::SUM_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::SUM_VALUE), BuildCmdSumValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::SUM_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::MIN_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MIN_VALUE), BuildCmdMinValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MIN_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::MAX_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MAX_VALUE), BuildCmdMaxValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MAX_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE), BuildCmdTimeStampMinValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE), BuildCmdValueList(itr->second));
 			break;
 		case ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE:
-			//pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE), BuildCmdTimeStampMaxValue(startUtc, endUtc, itr->second, tags));
+			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE), BuildCmdValueList(itr->second));
 			break;
 		default:
 			break;
@@ -269,13 +263,12 @@ void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int
 	}
 }
 
-std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::vector<ODS::HdaFunction*>& rFuncList)
+std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList)
 {
 	std::vector<std::string> vec;
 	for (std::vector<ODS::HdaFunction*>::const_iterator itr = rFuncList.cbegin(); itr != rFuncList.cend(); ++itr) {
 		ParamValueList paramList = GetParameterValueList(*itr);
 		vec.push_back(paramList.GetFullAddress());
-		//TestCase_HistoryReadRaw_IndexRange
 	}
 	return vec;
 }

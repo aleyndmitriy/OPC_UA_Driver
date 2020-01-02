@@ -670,6 +670,92 @@ void SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCTo
 	}
 }
 
+void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
+	const std::map<std::string, std::vector<std::string> >& fullPaths, const std::string& connectionID)
+{
+	tagsData.clear();
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
+	if (iter != m_sessionsList.end()) {
+		if (iter->second.isNull() || iter->second->isConnected() == false)
+		{
+			if (output) {
+				std::string message("The session is not connected... connect it before calling this function!");
+				output->SendWarning(std::move(message));
+			}
+			return;
+		}
+		std::vector<SoftingOPCToolbox5::NodeId> nodesToRead;
+		for (std::map<std::string, std::vector<std::string> >::const_iterator pathIterator = fullPaths.cbegin(); pathIterator != fullPaths.cend(); pathIterator++) {
+			SoftingOPCToolbox5::NodeId foundedNode;
+			if (findNode(foundedNode, pathIterator->second, iter->second)) {
+				nodesToRead.push_back(foundedNode);
+				foundedNode.clear();
+			}
+			else {
+				if (output) {
+					std::string message = std::string("There is no node for tag with name: ") + pathIterator->first;
+					output->SendMessageError(std::move(message));
+				}
+				return;
+			}
+		}
+		if (!nodesToRead.empty()) {
+			FILETIME start;
+			if (SystemTimeToFileTime(&startTime, &start)) {
+				if (output) {
+					std::string message("Can not get start time!");
+					output->SendWarning(std::move(message));
+				}
+				return;
+			}
+			SoftingOPCToolbox5::DateTime startTime;
+			startTime.set(start);
+
+			FILETIME end;
+			if (SystemTimeToFileTime(&endTime, &end)) {
+				if (output) {
+					std::string message("Can not get end time!");
+					output->SendWarning(std::move(message));
+				}
+				return;
+			}
+			SoftingOPCToolbox5::DateTime endTime;
+			endTime.set(end);
+			std::vector< std::vector<SoftingOPCToolbox5::DataValue> > historicalValuesOfNodes;
+			getHistoricalValues(nodesToRead,startTime,endTime, historicalValuesOfNodes,iter->second);
+			if (historicalValuesOfNodes.empty()) {
+				if (output) {
+					std::string message("There is no any data for all tags!");
+					output->SendWarning(std::move(message));
+				}
+				return;
+			}
+			if (fullPaths.size() != historicalValuesOfNodes.size()) {
+				if (output) {
+					std::string message("The number of nodes is not equal to namber of historical values!");
+					output->SendWarning(std::move(message));
+				}
+				return;
+			}
+			std::map<std::string, std::vector<std::string> >::const_iterator pathIterator = fullPaths.cbegin();
+			for (std::vector< std::vector<SoftingOPCToolbox5::DataValue> >::const_iterator historyResultsIterator = historicalValuesOfNodes.cbegin(); historyResultsIterator != historicalValuesOfNodes.cend();
+				++historyResultsIterator) {
+				std::pair<std::string, std::vector<DrvOPCUAHistValues::Record> > pair = std::make_pair<std::string, std::vector<DrvOPCUAHistValues::Record> >(std::string(pathIterator->first), std::vector<DrvOPCUAHistValues::Record>{});
+				std::transform(historyResultsIterator->cbegin(), historyResultsIterator->cend(), std::back_inserter(pair.second), mapRecordFromDataValue);
+				++pathIterator;
+				tagsData.insert(pair);
+			}
+		}
+	}
+	else {
+		if (output) {
+			std::string message("There is no any sessions with such ID!");
+			output->SendWarning(std::move(message));
+		}
+	}
+}
+
 void SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
 {
 	tags.clear();
@@ -850,4 +936,33 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	}
 	
 	return true;
+}
+
+DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::DataValue& dataValue)
+{
+	DrvOPCUAHistValues::Record record;
+	EnumDataTypeId type = dataValue.getValue()->getDataType();
+	SYSTEMTIME serverDataTime = { 0 };
+	serverDataTime.wYear = dataValue.getServerTimestamp()->yearGMT();
+	serverDataTime.wMonth = dataValue.getServerTimestamp()->monthGMT();
+	serverDataTime.wDay = dataValue.getServerTimestamp()->dayGMT();
+	serverDataTime.wHour = dataValue.getServerTimestamp()->hourGMT();
+	serverDataTime.wMinute = dataValue.getServerTimestamp()->minuteGMT();
+	serverDataTime.wSecond = dataValue.getServerTimestamp()->secondGMT();
+	serverDataTime.wMilliseconds = dataValue.getServerTimestamp()->milliSecondGMT();
+	char* strPtr = reinterpret_cast<char*>(&serverDataTime);
+	record.insert(OPC_UA_SERVER_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr,sizeof(SYSTEMTIME)));
+	SYSTEMTIME clientDataTime = { 0 };
+	clientDataTime.wYear = dataValue.getSourceTimestamp()->yearGMT();
+	clientDataTime.wMonth = dataValue.getSourceTimestamp()->monthGMT();
+	clientDataTime.wDay = dataValue.getSourceTimestamp()->dayGMT();
+	clientDataTime.wHour = dataValue.getSourceTimestamp()->hourGMT();
+	clientDataTime.wMinute = dataValue.getSourceTimestamp()->minuteGMT();
+	clientDataTime.wSecond = dataValue.getSourceTimestamp()->secondGMT();
+	clientDataTime.wMilliseconds = dataValue.getSourceTimestamp()->milliSecondGMT();
+	strPtr = reinterpret_cast<char*>(&clientDataTime);
+	record.insert(OPC_UA_CLIENT_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr, sizeof(SYSTEMTIME)));
+	record.insert(OPC_UA_VALUE, type, dataValue.getValue()->toString());
+
+	return record;
 }
