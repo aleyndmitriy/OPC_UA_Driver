@@ -585,7 +585,13 @@ bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originN
 	SoftingOPCToolbox5::ViewDescription vd;
 	std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;	// result array for function call.
 	EnumResultMask resultMask = 0;
-	bd.setNodeId(originNodeId);
+	if (originNodeId.isNull()) {
+		bd.setNodeId(SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder));
+	}
+	else {
+		bd.setNodeId(originNodeId);
+	}
+	//bd.setNodeId(originNodeId);
 	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
 	bd.setIncludeSubtypes(true);
 	bd.setBrowseDirection(EnumBrowseDirection_Forward);
@@ -702,7 +708,7 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 		}
 		if (!nodesToRead.empty()) {
 			FILETIME start;
-			if (SystemTimeToFileTime(&startTime, &start)) {
+			if (!SystemTimeToFileTime(&startTime, &start)) {
 				if (output) {
 					std::string message("Can not get start time!");
 					output->SendWarning(std::move(message));
@@ -713,7 +719,7 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 			startTime.set(start);
 
 			FILETIME end;
-			if (SystemTimeToFileTime(&endTime, &end)) {
+			if (!SystemTimeToFileTime(&endTime, &end)) {
 				if (output) {
 					std::string message("Can not get end time!");
 					output->SendWarning(std::move(message));

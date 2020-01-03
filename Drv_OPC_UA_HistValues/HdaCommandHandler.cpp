@@ -10,6 +10,7 @@
 #include"ParamUtils.h"
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
+#include"Utils.h"
 
 DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
 {
@@ -191,18 +192,22 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		std::map<int, std::vector<std::string> > queriesList;
 		std::string sessionID;
 		if (sessionId.IsEmpty()) {
-			return ODS::ERR::DB_CONNECTION_FAILED;
+			m_pSoftingInteractor->OpenConnection();
+			if (m_connectionsList.empty()) {
+				return ODS::ERR::DB_CONNECTION_FAILED;
+			}
+			sessionID = m_connectionsList.at(m_connectionsList.size() - 1);
 		}
 		else {
 			sessionID = std::string(sessionId.ToString().GetString());
 			m_pSoftingInteractor->OpenConnectionWithUUID(sessionID);
 		}
-		CreateQueriesList(requestMap, queriesList, startUtc, endUtc, sessionID);
+		CreateQueriesList(requestMap, queriesList);
 		if (queriesList.empty()) {
 			m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
 			return ODS::ERR::DB_NO_DATA;
 		}
-		//ExecuteQueriesList(requestMap, queriesList, pResultList, startUtc, endUtc, sessionID);
+		ExecuteQueriesList(requestMap, queriesList, pResultList, startUtc, endUtc, sessionID);
 		
 		m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
 		return ODS::ERR::OK;
@@ -212,7 +217,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 	}
 }
 
-void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime, const std::string& sessionId)
+void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList)
 {
 	queriesList.clear();
 	
@@ -261,6 +266,24 @@ void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int
 		}
 		insertedPair = queriesList.insert(pair);
 	}
+}
+
+void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<std::string> >& queriesList, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
+	const SYSTEMTIME& endTime, const std::string& sessionId)
+{
+	SYSTEMTIME localStartDataTime = { 0 };
+	SYSTEMTIME localEndDataTime = { 0 };
+	ODS::TimeUtils::SysTimeUtcToLocal(startTime, &localStartDataTime);
+	ODS::TimeUtils::SysTimeUtcToLocal(endTime, &localEndDataTime);
+	std::map<std::string, std::vector<std::string> > fullPaths;
+	for (std::map<int, std::vector<std::string> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
+		for (std::vector<std::string>::const_iterator pathIter = queriesIterator->second.cbegin(); pathIter != queriesIterator->second.cend(); ++pathIter) {
+			std::pair<std::string, std::vector<std::string> > pair = std::make_pair<std::string, std::vector<std::string> >(std::string(*pathIter),split(*pathIter,std::string("/")));
+			fullPaths.insert(pair);
+		}
+	}
+	std::map<std::string, std::vector<DrvOPCUAHistValues::Record> > tagsData;
+	m_pSoftingInteractor->GetRecords(tagsData, localStartDataTime, localEndDataTime, fullPaths, sessionId);
 }
 
 std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList)
