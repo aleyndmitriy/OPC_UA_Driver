@@ -38,6 +38,6 @@ namespace DrvOPCUAHistValues
 		std::vector<std::string> BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList);
 		void ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<std::string> >& queriesList, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
 			const SYSTEMTIME& endTime, const std::string& sessionId);
-		/* ODS::Tvq* CreateTvqFromRecord(const Record& record, bool* condition) const;*/
+		ODS::Tvq* CreateTvqFromRecord(const Record& record, bool* condition) const;
 	};
 }

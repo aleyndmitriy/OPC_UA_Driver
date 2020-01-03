@@ -284,6 +284,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 	}
 	std::map<std::string, std::vector<DrvOPCUAHistValues::Record> > tagsData;
 	m_pSoftingInteractor->GetRecords(tagsData, localStartDataTime, localEndDataTime, fullPaths, sessionId);
+	for (std::map<int, std::vector<std::string> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
+		
+	}
 }
 
 std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList)
@@ -294,6 +297,106 @@ std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueLis
 		vec.push_back(paramList.GetFullAddress());
 	}
 	return vec;
+}
+
+ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Record& record, bool* condition) const
+{
+	VARIANT vValue;
+	std::string str;
+	const SYSTEMTIME* timeStampStruct = nullptr;
+	SYSTEMTIME dataTime = { 0 };
+	SYSTEMTIME localDataTime = { 0 };
+	float val = 0.0;
+	WORD millisec = 0;
+	bool bitVal = false;
+	ODS::Tvq* tvq = new ODS::Tvq();
+	for (Record::const_iterator itr = record.cbegin(); itr != record.cend(); ++itr) {
+		switch (itr->second.first)
+		{
+		case EnumNumericNodeId_Null:
+			break;
+		case EnumNumericNodeId_Boolean:
+			::VariantInit(&vValue);
+			vValue.vt = VT_BOOL;
+			if (std::stoi(itr->second.second) > 0) {
+				bitVal = true;
+			}
+			else {
+				bitVal = false;
+			}
+			vValue.boolVal = bitVal;
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_SByte:
+		case EnumNumericNodeId_Int16:
+		case EnumNumericNodeId_Int32:
+			::VariantInit(&vValue);
+			vValue.vt = VT_INT;
+			vValue.intVal = std::stoi(itr->second.second);
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_Int64:
+			::VariantInit(&vValue);
+			vValue.vt = VT_I8;
+			vValue.llVal = std::stoll(itr->second.second);
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_Byte:
+		case EnumNumericNodeId_UInt16:
+		case EnumNumericNodeId_UInt32:
+			::VariantInit(&vValue);
+			vValue.vt = VT_UINT;
+			vValue.ulVal = std::stoul(itr->second.second);
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_UInt64:
+			::VariantInit(&vValue);
+			vValue.vt = VT_UI8;
+			vValue.ullVal = std::stoull(itr->second.second);
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_Double:
+			::VariantInit(&vValue);
+			vValue.vt = VT_R8;
+			vValue.dblVal = std::stod(itr->second.second);
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_Float:
+			::VariantInit(&vValue);
+			vValue.vt = VT_R8;
+			val = std::stof(itr->second.second);
+			vValue.dblVal = val;
+			tvq->SetValue(vValue);
+			::VariantClear(&vValue);
+			break;
+		case EnumNumericNodeId_DateTime:
+			timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
+			dataTime.wYear = timeStampStruct->wYear;
+			dataTime.wMonth = timeStampStruct->wMonth;
+			dataTime.wDay = timeStampStruct->wDay;
+			dataTime.wHour = timeStampStruct->wHour;
+			dataTime.wMinute = timeStampStruct->wMinute;
+			dataTime.wSecond = timeStampStruct->wSecond;
+			dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
+			break;
+		default:
+			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
+			break;
+		}
+	}
+	dataTime.wMilliseconds = millisec;
+	ODS::TimeUtils::SysTimeUtcToLocal(dataTime, &localDataTime);
+	if (localDataTime.wYear != 0) {
+		tvq->SetTimestamp(&localDataTime);
+	}
+	tvq->SetQuality(ODS::Tvq::QUALITY_GOOD);
+	return tvq;
 }
 
 DrvOPCUAHistValues::ParamValueList DrvOPCUAHistValues::HdaCommandHandler::GetParameterValueList(const ODS::HdaFunction* pHdaFunc)

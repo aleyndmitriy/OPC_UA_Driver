@@ -739,7 +739,7 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 			}
 			if (fullPaths.size() != historicalValuesOfNodes.size()) {
 				if (output) {
-					std::string message("The number of nodes is not equal to namber of historical values!");
+					std::string message("The number of nodes is not equal to number of historical values!");
 					output->SendWarning(std::move(message));
 				}
 				return;
@@ -958,7 +958,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	serverDataTime.wMilliseconds = dataValue.getServerTimestamp()->milliSecondGMT();
 	char* strPtr = reinterpret_cast<char*>(&serverDataTime);
 	record.insert(OPC_UA_SERVER_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr,sizeof(SYSTEMTIME)));
-	SYSTEMTIME clientDataTime = { 0 };
+	/*SYSTEMTIME clientDataTime = { 0 };
 	clientDataTime.wYear = dataValue.getSourceTimestamp()->yearGMT();
 	clientDataTime.wMonth = dataValue.getSourceTimestamp()->monthGMT();
 	clientDataTime.wDay = dataValue.getSourceTimestamp()->dayGMT();
@@ -967,8 +967,68 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	clientDataTime.wSecond = dataValue.getSourceTimestamp()->secondGMT();
 	clientDataTime.wMilliseconds = dataValue.getSourceTimestamp()->milliSecondGMT();
 	strPtr = reinterpret_cast<char*>(&clientDataTime);
-	record.insert(OPC_UA_CLIENT_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr, sizeof(SYSTEMTIME)));
-	record.insert(OPC_UA_VALUE, type, dataValue.getValue()->toString());
+	record.insert(OPC_UA_CLIENT_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr, sizeof(SYSTEMTIME)));*/
+	std::string valueStr;
+	switch (type) {
+	case EnumNumericNodeId_Null:
+		valueStr.clear();
+		break;
+	case EnumNumericNodeId_Boolean:
+	{
+		OTBoolean boolVal = dataValue.getValue()->getBoolean();
+		if (boolVal) {
+			valueStr = std::to_string(1);
+		}
+		else {
+			valueStr = std::to_string(0);
+		}
+	}
+		break;
+	case EnumNumericNodeId_SByte:
+	case EnumNumericNodeId_Int16:
+	case EnumNumericNodeId_Int32:
+	{
+		int intVal = dataValue.getValue()->getInt16();
+		valueStr = std::to_string(intVal);
+	}
+		break;
+	case EnumNumericNodeId_Int64:
+	{
+		long long longVal = dataValue.getValue()->getInt64();
+		valueStr = std::to_string(longVal);
+	}
+	break;
+	case EnumNumericNodeId_Byte:
+	case EnumNumericNodeId_UInt16:
+	case EnumNumericNodeId_UInt32:
+	{
+		unsigned int intVal = dataValue.getValue()->getUInt16();
+		valueStr = std::to_string(intVal);
+	}
+	break;
+	case EnumNumericNodeId_UInt64:
+	{
+		unsigned long long longVal = dataValue.getValue()->getUInt64();
+		valueStr = std::to_string(longVal);
+	}
+	break;
+	case EnumNumericNodeId_Double:
+	{
+		double doubleVale = dataValue.getValue()->getDouble();
+		valueStr = std::to_string(doubleVale);
+	}
+	break;
+	case EnumNumericNodeId_Float:
+	{
+		float floatVale = dataValue.getValue()->getFloat();
+		valueStr = std::to_string(floatVale);
+	}
+	break;
+	default:
+		valueStr = dataValue.getValue()->toString();
+		break;
+	}
+	record.insert(OPC_UA_VALUE, type, valueStr);
 
 	return record;
 }
