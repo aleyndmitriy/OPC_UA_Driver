@@ -284,8 +284,83 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 	}
 	std::map<std::string, std::vector<DrvOPCUAHistValues::Record> > tagsData;
 	m_pSoftingInteractor->GetRecords(tagsData, localStartDataTime, localEndDataTime, fullPaths, sessionId);
+	if (tagsData.empty()) {
+		return;
+	}
 	for (std::map<int, std::vector<std::string> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
-		
+		size_t length = queriesIterator->second.size();
+		std::map<int, std::vector<ODS::HdaFunction*> >::const_iterator funcIterator = requestFunctions.find(queriesIterator->first);
+		if (funcIterator != requestFunctions.cend()) {
+			for (size_t index = 0; index < length; ++index) {
+				std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >::const_iterator tagsIterator = tagsData.find(queriesIterator->second.at(index));
+				if (tagsIterator != tagsData.cend()) {
+					ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+					pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+					std::vector<ODS::TvqListElementDescription> listDesc;
+					switch (queriesIterator->first) {
+					case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
+						break;
+					case ODS::HdaFunctionType::LAST_VALUE:
+						break;
+					case ODS::HdaFunctionType::FIRST_VALUE:
+						break;
+					case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
+						break;
+					case ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE:
+						break;
+					case ODS::HdaFunctionType::AVG_VALUE:
+						break;
+					case ODS::HdaFunctionType::SUM_VALUE:
+						break;
+					case ODS::HdaFunctionType::MIN_VALUE:
+						break;
+					case ODS::HdaFunctionType::MAX_VALUE:
+						break;
+					case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
+						break;
+					case ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE:
+						break;
+					case ODS::HdaFunctionType::VALUE_LIST:
+						for (std::vector<Record>::const_iterator itr = tagsIterator->second.cbegin(); itr != tagsIterator->second.cend(); ++itr) {
+							ODS::Tvq* tvq = CreateTvqFromRecord(*itr, nullptr);
+							SYSTEMTIME tm = tvq->GetTimestampLoc();
+							if (tm.wYear != 0) {
+								if (itr == tagsIterator->second.cbegin()) {
+
+									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localStartDataTime) < 0) {
+										ODS::TvqListElementDescription desc;
+										desc.m_nIndex = 0;
+										desc.m_ulFlags = ODS::TvqListElementDescription::PREV_POINT;
+										listDesc.push_back(desc);
+									}
+								}
+								if (itr == tagsIterator->second.cend() - 1) {
+									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localEndDataTime) > 0) {
+										ODS::TvqListElementDescription desc;
+										desc.m_nIndex = tagsIterator->second.size() - 1;
+										desc.m_ulFlags = ODS::TvqListElementDescription::POST_POINT;
+										listDesc.push_back(desc);
+									}
+								}
+							}
+							pFuncResult->AddTvq(tvq);
+						}
+						if (!listDesc.empty()) {
+							ODS::TvqListElementDescription* desc = new ODS::TvqListElementDescription[listDesc.size()];
+							for (size_t descItr = 0; descItr < listDesc.size(); descItr++) {
+								(desc + descItr)->m_nIndex = listDesc.at(descItr).m_nIndex;
+								(desc + descItr)->m_ulFlags = listDesc.at(descItr).m_ulFlags;
+							}
+							pFuncResult->SetTvqDescList(desc, listDesc.size());
+						}
+						pResultList->push_back(pFuncResult);
+						break;
+					default:
+						break;
+					}
+				}
+			}
+		}
 	}
 }
 
