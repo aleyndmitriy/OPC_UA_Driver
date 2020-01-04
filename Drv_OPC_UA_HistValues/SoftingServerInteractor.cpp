@@ -27,6 +27,13 @@ SoftingServerInteractor::SoftingServerInteractor():
 	}
 	if (StatusCode::isGood(m_enumResult))
 	{
+		m_enumResult = m_pApp->setInstanceCertificate(_T("C:/ProgramData/Softing/OPCUACppSDK/V5.61/Windows/Source/PKI/sample_client/own/cert_sample_client.der"), 
+			_T("C:/ProgramData/Softing/OPCUACppSDK/V5.61/Windows/Source/PKI/sample_client/own/private_key_sample_client.pem"), _T("pass"));
+		if (StatusCode::isBad(m_enumResult))
+		{
+			DrvOPCUAHistValues::Log::GetInstance()->WriteError(_T("ERROR: Failed to load the application certificate: %s"), getEnumStatusCodeString(m_enumResult));
+			return;
+		}
 		m_enumResult = m_pApp->start();
 		if (StatusCode::isBad(m_enumResult))
 		{
@@ -93,6 +100,7 @@ void SoftingServerInteractor::initApplicationDescription()
 
 void SoftingServerInteractor::OpenConnection()
 {
+	//CPPTestServer.exe /endpointurl opc.tcp://SSBMWS015:4880
 	GUID guid;
 	if (CoCreateGuid(&guid) != S_OK) {
 		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
@@ -643,6 +651,7 @@ void SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCTo
 	SoftingOPCToolbox5::ReadRawDetails readRawDetails;
 	readRawDetails.setStartTime(&startTime);
 	readRawDetails.setEndTime(&endTime);
+	readRawDetails.setMaxNumberOfValuesPerNode(0);
 	readRawDetails.setReturnBounds(true);
 	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
 	EnumStatusCode result = EnumStatusCode_Bad;
@@ -985,13 +994,24 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	}
 		break;
 	case EnumNumericNodeId_SByte:
-	case EnumNumericNodeId_Int16:
-	case EnumNumericNodeId_Int32:
 	{
-		int intVal = dataValue.getValue()->getInt16();
+		char intVal = dataValue.getValue()->getInt8();
 		valueStr = std::to_string(intVal);
 	}
-		break;
+	break;
+	case EnumNumericNodeId_Int16:
+	{
+		short intVal = dataValue.getValue()->getInt16();
+		valueStr = std::to_string(intVal);
+	}
+	break;
+	case EnumNumericNodeId_Int32:
+	{
+		valueStr = dataValue.getValue()->toString();
+		int intVal = dataValue.getValue()->getInt32();
+		valueStr = std::to_string(intVal);
+	}
+	break;
 	case EnumNumericNodeId_Int64:
 	{
 		long long longVal = dataValue.getValue()->getInt64();
@@ -999,10 +1019,21 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	}
 	break;
 	case EnumNumericNodeId_Byte:
+	{
+		unsigned char intVal = dataValue.getValue()->getUInt8();
+		valueStr = std::to_string(intVal);
+	}
+	break;
 	case EnumNumericNodeId_UInt16:
+	{
+		unsigned short intVal = dataValue.getValue()->getUInt16();
+		valueStr = std::to_string(intVal);
+	}
+	break;
 	case EnumNumericNodeId_UInt32:
 	{
-		unsigned int intVal = dataValue.getValue()->getUInt16();
+		valueStr = dataValue.getValue()->toString();
+		unsigned int intVal = dataValue.getValue()->getUInt32();
 		valueStr = std::to_string(intVal);
 	}
 	break;
