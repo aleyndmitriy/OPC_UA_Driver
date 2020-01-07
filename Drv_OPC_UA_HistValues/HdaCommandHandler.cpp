@@ -11,6 +11,7 @@
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
 #include"Utils.h"
+#include<numeric>
 
 DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
 {
@@ -294,6 +295,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 			for (size_t index = 0; index < length; ++index) {
 				std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >::const_iterator tagsIterator = tagsData.find(queriesIterator->second.at(index));
 				if (tagsIterator != tagsData.cend()) {
+					if (tagsIterator->second.empty()) {
+						return;
+					}
 					ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
 					pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 					std::vector<ODS::TvqListElementDescription> listDesc;
@@ -301,24 +305,65 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
 						break;
 					case ODS::HdaFunctionType::LAST_VALUE:
+					case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
+					{
+						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
+							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr, nullptr);
+						SYSTEMTIME tm = tvq->GetTimestampLoc();
+						pFuncResult->AddTvq(tvq);
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::FIRST_VALUE:
-						break;
-					case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
-						break;
 					case ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE:
+					{
+						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
+							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr, nullptr);
+						SYSTEMTIME tm = tvq->GetTimestampLoc();
+						pFuncResult->AddTvq(tvq);
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::AVG_VALUE:
+					{
+						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
+						Record avgRecord = RecordAvg(record, tagsIterator->second.size());
+						ODS::Tvq* tvq = CreateTvqFromRecord(avgRecord, nullptr);
+						pFuncResult->AddTvq(tvq);
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::SUM_VALUE:
+					{
+						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
+						ODS::Tvq* tvq = CreateTvqFromRecord(record, nullptr);
+						pFuncResult->AddTvq(tvq);
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::MIN_VALUE:
+					case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
+					{
+						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
+							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr, nullptr);
+						SYSTEMTIME tm = tvq->GetTimestampLoc();
+						pFuncResult->AddTvq(tvq);
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::MAX_VALUE:
-						break;
-					case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
-						break;
 					case ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE:
+					{
+						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
+							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr, nullptr);
+						SYSTEMTIME tm = tvq->GetTimestampLoc();
+						pFuncResult->AddTvq(tvq);
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::VALUE_LIST:
 						for (std::vector<Record>::const_iterator itr = tagsIterator->second.cbegin(); itr != tagsIterator->second.cend(); ++itr) {
@@ -382,7 +427,6 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 	SYSTEMTIME dataTime = { 0 };
 	SYSTEMTIME localDataTime = { 0 };
 	float val = 0.0;
-	WORD millisec = 0;
 	bool bitVal = false;
 	ODS::Tvq* tvq = new ODS::Tvq();
 	for (Record::const_iterator itr = record.cbegin(); itr != record.cend(); ++itr) {
@@ -465,7 +509,6 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			break;
 		}
 	}
-	dataTime.wMilliseconds = millisec;
 	ODS::TimeUtils::SysTimeUtcToLocal(dataTime, &localDataTime);
 	if (localDataTime.wYear != 0) {
 		tvq->SetTimestamp(&localDataTime);
@@ -474,9 +517,9 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 	return tvq;
 }
 
+
 DrvOPCUAHistValues::ParamValueList DrvOPCUAHistValues::HdaCommandHandler::GetParameterValueList(const ODS::HdaFunction* pHdaFunc)
 {
-
 	std::vector<ODS::HdaFunctionParam*> paramList;
 	ODS::HdaFunctionParam** pParam = nullptr;
 	int nCount = 0;
@@ -576,4 +619,210 @@ void DrvOPCUAHistValues::HdaCommandHandler::CloseConnectionWithGuide(std::string
 			m_connectionsList.erase(findIterator);
 		}
 	}
+}
+
+bool DrvOPCUAHistValues::CompareRecordsValueLess(const Record& lhs, const Record& rhs)
+{
+	const SYSTEMTIME* timeStampStructLeft = nullptr;
+	const SYSTEMTIME* timeStampStructRight = nullptr;
+	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
+	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_VALUE);
+	if (itrLhs == lhs.cend() || itrRhs == rhs.cend()) {
+		return false;
+	}
+	if (itrLhs->second.first != itrRhs->second.first) {
+		return false;
+	}
+	switch (itrLhs->second.first)
+	{
+	case EnumNumericNodeId_Null:
+		return false;
+		break;
+	case EnumNumericNodeId_Boolean:
+	case EnumNumericNodeId_SByte:
+	case EnumNumericNodeId_Int16:
+	case EnumNumericNodeId_Int32:
+		return std::stoi(itrLhs->second.second) < std::stoi(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_Int64:
+		return std::stoll(itrLhs->second.second) < std::stoll(itrRhs->second.second);
+		break;
+		case EnumNumericNodeId_Byte:
+		case EnumNumericNodeId_UInt16:
+		case EnumNumericNodeId_UInt32:
+		return std::stoul(itrLhs->second.second) < std::stoul(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_UInt64:
+		return std::stoull(itrLhs->second.second) < std::stoull(itrRhs->second.second);
+		break;
+		case EnumNumericNodeId_Double:
+		return std::stod(itrLhs->second.second) < std::stod(itrRhs->second.second);
+		break;
+		case EnumNumericNodeId_Float:
+		return std::stof(itrLhs->second.second) < std::stof(itrRhs->second.second);
+		break;
+		case EnumNumericNodeId_DateTime:
+			timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
+			timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(itrRhs->second.second.c_str());
+			return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) < 0;
+			break;
+		default:
+			return itrLhs->second.second < itrRhs->second.second;
+		break;
+	}
+}
+
+bool DrvOPCUAHistValues::CompareRecordsDataTimeLess(const Record& lhs, const Record& rhs)
+{
+	const SYSTEMTIME* timeStampStructLeft = nullptr;
+	const SYSTEMTIME* timeStampStructRight = nullptr;
+	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_SERVER_TIMESTAMP);
+	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_SERVER_TIMESTAMP);
+	if (itrLhs == lhs.cend() || itrRhs == rhs.cend()) {
+		return false;
+	}
+	if (itrLhs->second.first != itrRhs->second.first) {
+		return false;
+	}
+	if (itrLhs->second.first != EnumNumericNodeId_DateTime) {
+		return false;
+	}
+	timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
+	timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(itrRhs->second.second.c_str());
+	return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) < 0;
+}
+
+DrvOPCUAHistValues::Record DrvOPCUAHistValues::RecordsSum(const Record& lhs, const Record& rhs)
+{
+	DrvOPCUAHistValues::Record record;
+	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
+	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_VALUE);
+	if (itrLhs == lhs.cend() || itrLhs->second.first < EnumNumericNodeId_SByte || itrLhs->second.first > EnumNumericNodeId_Double) {
+		if (itrRhs != rhs.cend() && itrRhs->second.first > EnumNumericNodeId_Boolean && itrRhs->second.first < EnumNumericNodeId_String) {
+			record.insert(OPC_UA_VALUE, itrRhs->second.first, itrRhs->second.second);
+			return record;
+		}
+		else {
+			record.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
+			return record;
+		}
+	}
+	if (itrRhs == rhs.cend() || itrRhs->second.first < EnumNumericNodeId_SByte || itrRhs->second.first > EnumNumericNodeId_Double) {
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, itrLhs->second.second);
+		return record;
+	}
+	switch (itrLhs->second.first)
+	{
+	case EnumNumericNodeId_SByte:
+	case EnumNumericNodeId_Int16:
+	case EnumNumericNodeId_Int32:
+	{
+		int res = std::stoi(itrLhs->second.second) + std::stoi(itrRhs->second.second);
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
+		return record;
+	}
+	break;
+	case EnumNumericNodeId_Int64:
+	{
+		long long res = std::stoll(itrLhs->second.second) + std::stoll(itrRhs->second.second);
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
+		return record;
+	}
+	break;
+	case EnumNumericNodeId_Byte:
+	case EnumNumericNodeId_UInt16:
+	case EnumNumericNodeId_UInt32:
+	{
+		unsigned long res = std::stoul(itrLhs->second.second) + std::stoul(itrRhs->second.second);
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
+		return record;
+	}
+	break;
+	case EnumNumericNodeId_UInt64:
+	{
+		unsigned long long res = std::stoull(itrLhs->second.second) + std::stoull(itrRhs->second.second);
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
+		return record;
+	}
+	break;
+	case EnumNumericNodeId_Double:
+	{
+		double res = std::stod(itrLhs->second.second) + std::stod(itrRhs->second.second);
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
+		return record;
+	}
+	break;
+	case EnumNumericNodeId_Float:
+	{
+		float res = std::stof(itrLhs->second.second) + std::stof(itrRhs->second.second);
+		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
+		return record;
+	}
+	break;
+	default:
+		record.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
+		return record;
+		break;
+	}
+}
+
+DrvOPCUAHistValues::Record DrvOPCUAHistValues::RecordAvg(const Record& record, unsigned int quantity)
+{
+	DrvOPCUAHistValues::Record avgRecord;
+	Record::const_iterator itr = record.findColumnValue(OPC_UA_VALUE);
+	if (itr == record.cend()) {
+		avgRecord.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
+		return avgRecord;
+	}
+	double res = 0.0;
+	switch (itr->second.first)
+	{
+	case EnumNumericNodeId_SByte:
+	case EnumNumericNodeId_Int16:
+	case EnumNumericNodeId_Int32:
+	{
+		int val = std::stoi(itr->second.second);
+		res = (double)val / (double)quantity;
+		
+	}
+	break;
+	case EnumNumericNodeId_Int64:
+	{
+		long long val = std::stoll(itr->second.second);
+		res = (double)val / (double)quantity;
+	}
+	break;
+	case EnumNumericNodeId_Byte:
+	case EnumNumericNodeId_UInt16:
+	case EnumNumericNodeId_UInt32:
+	{
+		unsigned long val = std::stoul(itr->second.second);
+		res = (double)val / (double)quantity;
+	}
+	break;
+	case EnumNumericNodeId_UInt64:
+	{
+		unsigned long long val = std::stoull(itr->second.second);
+		res = (double)val / (double)quantity;
+	}
+	break;
+	case EnumNumericNodeId_Double:
+	{
+		double val = std::stod(itr->second.second);
+		res = val/ (double)quantity;
+	}
+	break;
+	case EnumNumericNodeId_Float:
+	{
+		float val = std::stof(itr->second.second);
+		res = (double)val / (double)quantity;
+	}
+	break;
+	default:
+		avgRecord.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
+		return avgRecord;
+		break;
+	}
+	avgRecord.insert(OPC_UA_VALUE, EnumNumericNodeId_Double, std::to_string(res));
+	return avgRecord;
 }

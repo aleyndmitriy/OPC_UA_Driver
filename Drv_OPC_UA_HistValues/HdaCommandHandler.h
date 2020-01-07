@@ -40,4 +40,9 @@ namespace DrvOPCUAHistValues
 			const SYSTEMTIME& endTime, const std::string& sessionId);
 		ODS::Tvq* CreateTvqFromRecord(const Record& record, bool* condition) const;
 	};
+
+	bool CompareRecordsValueLess(const Record& lhs, const Record& rhs);
+	bool CompareRecordsDataTimeLess(const Record& lhs, const Record& rhs);
+	Record RecordsSum(const Record& lhs, const Record& rhs);
+	Record RecordAvg(const Record& record, unsigned int quantity);
 }

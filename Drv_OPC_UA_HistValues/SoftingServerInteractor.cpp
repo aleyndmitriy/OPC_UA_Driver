@@ -27,8 +27,8 @@ SoftingServerInteractor::SoftingServerInteractor():
 	}
 	if (StatusCode::isGood(m_enumResult))
 	{
-		m_enumResult = m_pApp->setInstanceCertificate(_T("C:/ProgramData/Softing/OPCUACppSDK/V5.61/Windows/Source/PKI/sample_client/own/cert_sample_client.der"), 
-			_T("C:/ProgramData/Softing/OPCUACppSDK/V5.61/Windows/Source/PKI/sample_client/own/private_key_sample_client.pem"), _T("pass"));
+		/*m_enumResult = m_pApp->setInstanceCertificate(_T("C:/ProgramData/Softing/OPCUACppSDK/V5.61/Windows/Source/PKI/sample_client/own/cert_sample_client.der"), 
+			_T("C:/ProgramData/Softing/OPCUACppSDK/V5.61/Windows/Source/PKI/sample_client/own/private_key_sample_client.pem"), _T("pass"));*/
 		if (StatusCode::isBad(m_enumResult))
 		{
 			DrvOPCUAHistValues::Log::GetInstance()->WriteError(_T("ERROR: Failed to load the application certificate: %s"), getEnumStatusCodeString(m_enumResult));
