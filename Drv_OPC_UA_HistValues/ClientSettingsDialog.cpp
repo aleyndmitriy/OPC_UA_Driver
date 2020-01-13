@@ -148,17 +148,17 @@ void CClientSettingsDialog::SetUpInitialState()
 
 	m_editPassword.SetSel(0, -1);
 	m_editPassword.Clear();
-	m_editPassword.EnableWindow(FALSE);
+	//m_editPassword.EnableWindow(FALSE);
 
 	m_editCertificate.SetSel(0, -1);
 	m_editCertificate.Clear();
-	m_editCertificate.EnableWindow(FALSE);
-	m_btnCertificate.EnableWindow(FALSE);
+	//m_editCertificate.EnableWindow(FALSE);
+	//m_btnCertificate.EnableWindow(FALSE);
 
 	m_editPrivateKey.SetSel(0, -1);
 	m_editPrivateKey.Clear();
-	m_editPrivateKey.EnableWindow(FALSE);
-	m_btnPrivateKey.EnableWindow(FALSE);
+	//m_editPrivateKey.EnableWindow(FALSE);
+	//m_btnPrivateKey.EnableWindow(FALSE);
 
 }
 // Обработчики сообщений CClientSettingsDialog
@@ -339,18 +339,25 @@ void CClientSettingsDialog::OnEnUpdateEditCertificate()
 
 void CClientSettingsDialog::OnBtnClickedButtonCertificatePath()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	TCHAR szPathname[_MAX_PATH];
+	OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+	ofn.hwndOwner = this->m_hWnd;
+	ofn.lpstrFilter = TEXT("*.*\0");
+	lstrcpy(szPathname, TEXT("*.*"));
+	ofn.lpstrFile = szPathname;
+	ofn.nMaxFile = _countof(szPathname);
+	ofn.lpstrTitle = TEXT("Select certificate file ");
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
+	BOOL bOk = GetOpenFileName(&ofn);
+	if (bOk) {
+		m_editCertificate.SetWindowTextA(szPathname);
+	}
 }
 
 
 void CClientSettingsDialog::OnEnChangeEditPrivateKey()
 {
-	// TODO:  Если это элемент управления RICHEDIT, то элемент управления не будет
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// функция и вызов CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Добавьте код элемента управления
+	
 }
 
 
@@ -367,7 +374,19 @@ void CClientSettingsDialog::OnEnUpdateEditPrivateKey()
 
 void CClientSettingsDialog::OnBtnClickedButtonPrivateKeyPath()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	TCHAR szPathname[_MAX_PATH];
+	OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+	ofn.hwndOwner = this->m_hWnd;
+	ofn.lpstrFilter = TEXT("*.*\0");
+	lstrcpy(szPathname, TEXT("*.*"));
+	ofn.lpstrFile = szPathname;
+	ofn.nMaxFile = _countof(szPathname);
+	ofn.lpstrTitle = TEXT("Select private key file ");
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
+	BOOL bOk = GetOpenFileName(&ofn);
+	if (bOk) {
+		m_editPrivateKey.SetWindowTextA(szPathname);
+	}
 }
 
 

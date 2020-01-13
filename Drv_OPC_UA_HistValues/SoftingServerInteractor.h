@@ -38,6 +38,8 @@ private:
 	std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 	void initApplicationDescription();
+	bool startApplication();
+	bool stopApplication();
 	EnumNodeClass getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 	void nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 	void readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
