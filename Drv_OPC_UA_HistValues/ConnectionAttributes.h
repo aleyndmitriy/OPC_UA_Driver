@@ -66,10 +66,9 @@ namespace DrvOPCUAHistValues
 		std::string password;
 		std::string certificate;
 		std::string privateKey;
+		std::string pkiTrustedPath;
 		ConfigurationSecurityType securityType;
-		SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, ConfigurationSecurityType type);
-		SecurityAccessConfiguration(const std::string& loginString, const std::string& passString);
-		SecurityAccessConfiguration(const::std::string& key, ConfigurationSecurityType type);
+		SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, const std::string& pkiString, ConfigurationSecurityType type);
 		SecurityAccessConfiguration();
 		~SecurityAccessConfiguration();
 		SecurityAccessConfiguration(const SecurityAccessConfiguration& src) = default;

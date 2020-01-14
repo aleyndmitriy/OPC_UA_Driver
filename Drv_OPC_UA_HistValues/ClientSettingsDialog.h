@@ -40,7 +40,9 @@ private:
 	CButton m_btnCertificate;
 	CEdit m_editPrivateKey;
 	CButton m_btnPrivateKey;
-	
+	CEdit m_editPkiStorePath;
+	CButton m_btnPkiStorePath;
+
 	BOOL OnInitDialog() override;
 	void SetUpInitialState();
 	void StartLoading();
@@ -56,7 +58,6 @@ public:
 	afx_msg void OnCbnSelchangeComboSelectServer();
 	afx_msg void OnEnChangeEditPort();
 	afx_msg void OnBtnClickedButtonBrowseNetwork();
-	afx_msg void OnBtnClickedButtonGetSeverProperties();
 	afx_msg void OnBtnClickedButtonDiscoverServers();
 	afx_msg void OnCbnSelChangeComboConfiguration();
 	afx_msg void OnEnChangeEditLogin();
@@ -69,6 +70,7 @@ public:
 	afx_msg void OnEnChangeEditPrivateKey();
 	afx_msg void OnEnUpdateEditPrivateKey();
 	afx_msg void OnBtnClickedButtonPrivateKeyPath();
+	afx_msg void OnBtnClickedButtonPkiStorePath();
 	afx_msg void OnBtnClickedButtonTestConnection();
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();

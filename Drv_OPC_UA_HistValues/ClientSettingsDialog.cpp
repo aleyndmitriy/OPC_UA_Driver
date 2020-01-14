@@ -38,6 +38,8 @@ void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_PRIVATE_KEY, m_editPrivateKey);
 	DDX_Control(pDX, IDC_BUTTON_PRIVATE_KEY_PATH, m_btnPrivateKey);
 	DDX_Control(pDX, IDC_LIST_LOGIN_TYPE, m_lstPolicyType);
+	DDX_Control(pDX, IDC_PKI_STORE_PATH, m_editPkiStorePath);
+	DDX_Control(pDX, IDC_BUTTON_PKI_STORE_PATH, m_btnPkiStorePath);
 }
 
 
@@ -48,7 +50,6 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO_SELECT_SERVER, &CClientSettingsDialog::OnCbnSelchangeComboSelectServer)
 	ON_EN_CHANGE(IDC_EDIT_PORT, &CClientSettingsDialog::OnEnChangeEditPort)
 	ON_BN_CLICKED(IDC_BUTTON_BROWSE_NETWORK, &CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork)
-	ON_BN_CLICKED(IDC_BUTTON_GET_SEVER_PROPERTIES, &CClientSettingsDialog::OnBtnClickedButtonGetSeverProperties)
 	ON_BN_CLICKED(IDC_BUTTON_DISCOVER_SERVERS, &CClientSettingsDialog::OnBtnClickedButtonDiscoverServers)
 	ON_CBN_SELCHANGE(IDC_COMBO_CONFIGURATION, &CClientSettingsDialog::OnCbnSelChangeComboConfiguration)
 	ON_EN_CHANGE(IDC_EDIT_LOGIN, &CClientSettingsDialog::OnEnChangeEditLogin)
@@ -64,6 +65,7 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_TEST_CONNECTION, &CClientSettingsDialog::OnBtnClickedButtonTestConnection)
 	ON_BN_CLICKED(IDCANCEL, &CClientSettingsDialog::OnBtnClickedCancel)
 	ON_BN_CLICKED(IDOK, &CClientSettingsDialog::OnBtnClickedOk)
+	ON_BN_CLICKED(IDC_BUTTON_PKI_STORE_PATH, &CClientSettingsDialog::OnBtnClickedButtonPkiStorePath)
 END_MESSAGE_MAP()
 
 
@@ -109,27 +111,22 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.securityType));
 	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
-	switch (m_connectAttributes->configurationAccess.securityType) {
-	case DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME:
-		m_cmbServerName.SetCurSel(DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME));
-		m_editLogin.EnableWindow(TRUE);
+	if (!m_connectAttributes->configurationAccess.login.empty() && !m_connectAttributes->configurationAccess.login.size() > 0) {
 		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.login.c_str());
-		m_editPassword.EnableWindow(TRUE);
-		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.password.c_str());
-		break;
-	case DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE:
-		m_cmbServerName.SetCurSel(DrvOPCUAHistValues::GetIntFromSecurityType(DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE));
-		m_editCertificate.EnableWindow(TRUE);
-		m_editCertificate.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
-		m_btnCertificate.EnableWindow(TRUE);
-		m_editPrivateKey.EnableWindow(TRUE);
-		m_editPrivateKey.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
-		m_btnPrivateKey.EnableWindow(TRUE);
-		break;
-	default:
-		break;
 	}
-	
+	if (!m_connectAttributes->configurationAccess.password.empty() && !m_connectAttributes->configurationAccess.password.size() > 0) {
+		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.password.c_str());
+	}
+	if (!m_connectAttributes->configurationAccess.certificate.empty() && !m_connectAttributes->configurationAccess.certificate.size() > 0) {
+		m_editCertificate.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
+	}
+	if (!m_connectAttributes->configurationAccess.privateKey.empty() && !m_connectAttributes->configurationAccess.privateKey.size() > 0) {
+		m_editPrivateKey.SetWindowTextA(m_connectAttributes->configurationAccess.privateKey.c_str());
+	}
+
+	if (!m_connectAttributes->configurationAccess.pkiTrustedPath.empty() && !m_connectAttributes->configurationAccess.pkiTrustedPath.size() > 0) {
+		m_editPkiStorePath.SetWindowTextA(m_connectAttributes->configurationAccess.pkiTrustedPath.c_str());
+	}
 	return TRUE;
 }
 
@@ -148,17 +145,15 @@ void CClientSettingsDialog::SetUpInitialState()
 
 	m_editPassword.SetSel(0, -1);
 	m_editPassword.Clear();
-	//m_editPassword.EnableWindow(FALSE);
 
 	m_editCertificate.SetSel(0, -1);
 	m_editCertificate.Clear();
-	//m_editCertificate.EnableWindow(FALSE);
-	//m_btnCertificate.EnableWindow(FALSE);
 
 	m_editPrivateKey.SetSel(0, -1);
 	m_editPrivateKey.Clear();
-	//m_editPrivateKey.EnableWindow(FALSE);
-	//m_btnPrivateKey.EnableWindow(FALSE);
+	
+	m_editPkiStorePath.SetSel(0, -1);
+	m_editPkiStorePath.Clear();
 
 }
 // Обработчики сообщений CClientSettingsDialog
@@ -221,12 +216,6 @@ void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 	if (getComputerName(computerName)) {
 		m_editComputerName.SetWindowTextA(computerName.c_str());
 	}
-}
-
-
-void CClientSettingsDialog::OnBtnClickedButtonGetSeverProperties()
-{
-	// TODO: добавьте свой код обработчика уведомлений
 }
 
 
@@ -389,6 +378,23 @@ void CClientSettingsDialog::OnBtnClickedButtonPrivateKeyPath()
 	}
 }
 
+void CClientSettingsDialog::OnBtnClickedButtonPkiStorePath()
+{
+	TCHAR szPathname[_MAX_PATH];
+	OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+	ofn.hwndOwner = this->m_hWnd;
+	ofn.lpstrFilter = TEXT("*.*\0");
+	lstrcpy(szPathname, TEXT("*.*"));
+	ofn.lpstrFile = szPathname;
+	ofn.nMaxFile = _countof(szPathname);
+	ofn.lpstrTitle = TEXT("Select Pki folder for trusted certificates ");
+	ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST;
+	BOOL bOk = GetOpenFileName(&ofn);
+	if (bOk) {
+		m_btnPkiStorePath.SetWindowTextA(szPathname);
+	}
+}
+
 
 void CClientSettingsDialog::OnBtnClickedButtonTestConnection()
 {
@@ -402,7 +408,6 @@ void CClientSettingsDialog::OnBtnClickedButtonTestConnection()
 
 void CClientSettingsDialog::OnBtnClickedCancel()
 {
-	// TODO: добавьте свой код обработчика уведомлений
 	CDialogEx::OnCancel();
 }
 
@@ -490,6 +495,12 @@ void CClientSettingsDialog::ReadAttributes()
 	m_connectAttributes->configurationAccess.privateKey = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
+	len = m_editPkiStorePath.GetWindowTextLengthA();
+	m_editPkiStorePath.GetWindowTextA(str);
+	m_connectAttributes->configurationAccess.pkiTrustedPath = std::string(str.GetBuffer(len));
+	str.ReleaseBuffer();
+	str.Empty();
+
 }
 
 

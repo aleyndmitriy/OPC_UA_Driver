@@ -17,10 +17,9 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Save(const ConnectionAttributes&
 	connectionNode.append_attribute("User").set_value(attributes.configurationAccess.login.c_str());
 	std::string encryptPass = attributes.configurationAccess.password;
 	connectionNode.append_attribute("Password").set_value(encryptPass.c_str());
-	std::string encryptCertificate = attributes.configurationAccess.certificate;
-	connectionNode.append_attribute("Certificate").set_value(encryptCertificate.c_str());
-	std::string encryptKey = attributes.configurationAccess.privateKey;
-	connectionNode.append_attribute("PrivateKey").set_value(encryptKey.c_str());
+	connectionNode.append_attribute("Certificate").set_value(attributes.configurationAccess.certificate.c_str());
+	connectionNode.append_attribute("PrivateKey").set_value(attributes.configurationAccess.privateKey.c_str());
+	connectionNode.append_attribute("PkiTrustedStore").set_value(attributes.configurationAccess.pkiTrustedPath.c_str());
 	connectionNode.append_attribute("SecurityType").set_value(GetIntFromSecurityType(attributes.configurationAccess.securityType));
 	doc.save(stream);
 	return true;
@@ -50,8 +49,9 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Load(ConnectionAttributes& attri
 	std::string pass = std::string(connectionNode.attribute("Password").as_string());
 	std::string certificate = std::string(connectionNode.attribute("Certificate").as_string());
 	std::string privateKey = std::string(connectionNode.attribute("PrivateKey").as_string());
+	std::string pkiKey = std::string(connectionNode.attribute("PkiTrustedStore").as_string());
 	int type = connectionNode.attribute("SecurityType").as_int();
-	SecurityAccessConfiguration configurationAccess(loginName, pass, certificate, privateKey, GetTypeFromInt(type));
+	SecurityAccessConfiguration configurationAccess(loginName, pass, certificate, privateKey, pkiKey, GetTypeFromInt(type));
 	
 	attributes.configuration = serverConfiguration;
 	attributes.configurationMode = modeConfiguration;
@@ -84,8 +84,9 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::LoadAttributesString(const char*
 	std::string pass = std::string(connectionNode.attribute("Password").as_string());
 	std::string certificate = std::string(connectionNode.attribute("Certificate").as_string());
 	std::string privateKey = std::string(connectionNode.attribute("PrivateKey").as_string());
+	std::string pkiKey = std::string(connectionNode.attribute("PkiTrustedStore").as_string());
 	int type = connectionNode.attribute("SecurityType").as_int();
-	SecurityAccessConfiguration configurationAccess(loginName, pass, certificate, privateKey, GetTypeFromInt(type));
+	SecurityAccessConfiguration configurationAccess(loginName, pass, certificate, privateKey, pkiKey, GetTypeFromInt(type));
 
 	attributes.configuration = serverConfiguration;
 	attributes.configurationMode = modeConfiguration;

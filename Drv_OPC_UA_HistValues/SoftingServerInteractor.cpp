@@ -67,18 +67,21 @@ bool SoftingServerInteractor::startApplication()
 		return false;
 	}
 	m_pApp = SoftingOPCToolbox5::Application::instance();
-	SoftingOPCToolbox5::PkiStoreConfiguration storeConfiguration;
-	storeConfiguration.setCertificateTrustListLocation(_T("C:/ODS/Dream Report/System/certificates/PKI/trusted"));
-	m_enumResult = m_pApp->setPkiStoreConfiguration(&storeConfiguration);
-	if (StatusCode::isBad(m_enumResult))
-	{
-		if (output) {
-			std::string message = std::string("Failed to set the PKI store configuration: ") + std::string(getEnumStatusCodeString(m_enumResult));
-			output->SendMessageError(std::move(message));
+	if (!m_pServerAttributes->configurationAccess.pkiTrustedPath.empty()) {
+		SoftingOPCToolbox5::PkiStoreConfiguration storeConfiguration;
+		storeConfiguration.setCertificateTrustListLocation(m_pServerAttributes->configurationAccess.pkiTrustedPath.c_str());
+		m_enumResult = m_pApp->setPkiStoreConfiguration(&storeConfiguration);
+		if (StatusCode::isBad(m_enumResult))
+		{
+			if (output) {
+				std::string message = std::string("Failed to set the PKI store configuration: ") + std::string(getEnumStatusCodeString(m_enumResult));
+				output->SendMessageError(std::move(message));
+			}
+			m_pApp.reset();
+			return false;
 		}
-		m_pApp.reset();
-		return false;
 	}
+	
 	initApplicationDescription();
 	m_enumResult = m_pApp->initialize(&m_AppDesc);
 	if (StatusCode::isBad(m_enumResult))

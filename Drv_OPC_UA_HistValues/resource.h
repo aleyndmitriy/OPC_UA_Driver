@@ -1,6 +1,6 @@
 ﻿//{{NO_DEPENDENCIES}}
-// Включаемый файл, созданный в Microsoft Visual C++.
-// Используется Drv_OPC_UA_HistValues.rc
+// Microsoft Visual C++ generated include file.
+// Used by Drv_OPC_UA_HistValues.rc
 //
 #define IDC_EDIT_COMPUTER_NAME          1000
 #define IDC_BUTTON_BROWSE_NETWORK       1001
@@ -18,7 +18,8 @@
 #define IDC_BUTTON_PRIVATE_KEY_PATH     1013
 #define IDC_BUTTON_TEST_CONNECTION      1014
 #define IDC_LIST_LOGIN_TYPE             1015
-#define IDC_LIST2                       1017
+#define IDC_BUTTON_PKI_STORE_PATH       1016
+#define IDC_PKI_STORE_PATH              1017
 
 // Next default values for new objects
 // 

@@ -60,23 +60,20 @@ DrvOPCUAHistValues::ConfigurationSecurityMode DrvOPCUAHistValues::GetModeFromInt
 int DrvOPCUAHistValues::GetIntFromSecurityType(ConfigurationSecurityType type)
 {
 	switch (type) {
-	case ConfigurationSecurityType::ANONYMOUS:
-		return 0;
 	case ConfigurationSecurityType::USER_NAME:
 		return 1;
 	case ConfigurationSecurityType::CERTIFICATE:
 		return 2;
 	case  ConfigurationSecurityType::ISSUED_TOKEN:
 		return 3;
+	default:
+		return 0;
 	}
 }
 
 std::string DrvOPCUAHistValues::GetStringFromSecurityType(ConfigurationSecurityType type)
 {
 	switch (type) {
-	case ConfigurationSecurityType::ANONYMOUS:
-		return std::string("Anonymous");
-		break;
 	case ConfigurationSecurityType::USER_NAME:
 		return std::string("User Name");
 		break;
@@ -85,6 +82,9 @@ std::string DrvOPCUAHistValues::GetStringFromSecurityType(ConfigurationSecurityT
 		break;
 	case  ConfigurationSecurityType::ISSUED_TOKEN:
 		return std::string("Issued Token");
+		break;
+	default:
+		return std::string("Anonymous");
 		break;
 	}
 }
@@ -197,31 +197,15 @@ bool DrvOPCUAHistValues::operator<(const ServerSecurityModeConfiguration& lhs, c
 	}
 }
 
-DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, ConfigurationSecurityType type):
-	login(loginString),password(passString),certificate(certificateString),privateKey(keyString), securityType(type)
+DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, CONST std::string& pkiString, ConfigurationSecurityType type):
+	login(loginString),password(passString),certificate(certificateString),privateKey(keyString), pkiTrustedPath(pkiString), securityType(type)
 {
 
 }
 
-DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const std::string& loginString, const std::string& passString):
-	SecurityAccessConfiguration(loginString,passString,std::string(),std::string(),ConfigurationSecurityType::USER_NAME)
-{
-
-}
-
-DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const::std::string& key, ConfigurationSecurityType type):
-	SecurityAccessConfiguration(std::string(), std::string(), std::string(), std::string(), type)
-{
-	if (type == ConfigurationSecurityType::CERTIFICATE) {
-		certificate = key;
-	}
-	else if (type == ConfigurationSecurityType::ISSUED_TOKEN) {
-		privateKey = key;
-	}
-}
 
 DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration() :
-	SecurityAccessConfiguration(std::string(), std::string(), std::string(), std::string(), ConfigurationSecurityType::ANONYMOUS)
+	SecurityAccessConfiguration(std::string(), std::string(), std::string(), std::string(), std::string(), ConfigurationSecurityType::ANONYMOUS)
 {
 	
 }
@@ -238,13 +222,13 @@ DrvOPCUAHistValues::SecurityAccessConfiguration::~SecurityAccessConfiguration()
 bool DrvOPCUAHistValues::operator==(const SecurityAccessConfiguration& lhs, const SecurityAccessConfiguration& rhs)
 {
 	return lhs.login == rhs.login && lhs.password == rhs.password && lhs.certificate == rhs.certificate &&
-		lhs.privateKey == rhs.privateKey && lhs.securityType == rhs.securityType;
+		lhs.privateKey == rhs.privateKey && lhs.pkiTrustedPath == rhs.pkiTrustedPath && lhs.securityType == rhs.securityType;
 }
 
 bool DrvOPCUAHistValues::operator!=(const SecurityAccessConfiguration& lhs, const SecurityAccessConfiguration& rhs)
 {
 	return lhs.login != rhs.login || lhs.password != rhs.password || lhs.certificate != rhs.certificate ||
-		lhs.privateKey != rhs.privateKey || lhs.securityType != rhs.securityType;
+		lhs.privateKey != rhs.privateKey || lhs.pkiTrustedPath != rhs.pkiTrustedPath || lhs.securityType != rhs.securityType;
 }
 
 DrvOPCUAHistValues::ConnectionAttributes::ConnectionAttributes(const ServerConfiguration& server, const ServerSecurityModeConfiguration& mode, const SecurityAccessConfiguration& accessType):
