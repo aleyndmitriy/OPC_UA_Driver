@@ -699,7 +699,7 @@ void SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCTo
 	readRawDetails.setStartTime(&startTime);
 	readRawDetails.setEndTime(&endTime);
 	readRawDetails.setMaxNumberOfValuesPerNode(0);
-	readRawDetails.setReturnBounds(true);
+	readRawDetails.setReturnBounds(false);
 	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
 	EnumStatusCode result = EnumStatusCode_Bad;
 	result = session->historyReadRaw(EnumTimestampsToReturn_Both, false, historyReadValueIds, &readRawDetails, historyReadResults);

@@ -111,20 +111,20 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.securityType));
 	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
-	if (!m_connectAttributes->configurationAccess.login.empty() && !m_connectAttributes->configurationAccess.login.size() > 0) {
+	if (!m_connectAttributes->configurationAccess.login.empty() && m_connectAttributes->configurationAccess.login.size() > 0) {
 		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.login.c_str());
 	}
-	if (!m_connectAttributes->configurationAccess.password.empty() && !m_connectAttributes->configurationAccess.password.size() > 0) {
+	if (!m_connectAttributes->configurationAccess.password.empty() && m_connectAttributes->configurationAccess.password.size() > 0) {
 		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.password.c_str());
 	}
-	if (!m_connectAttributes->configurationAccess.certificate.empty() && !m_connectAttributes->configurationAccess.certificate.size() > 0) {
+	if (!m_connectAttributes->configurationAccess.certificate.empty() && m_connectAttributes->configurationAccess.certificate.size() > 0) {
 		m_editCertificate.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
 	}
-	if (!m_connectAttributes->configurationAccess.privateKey.empty() && !m_connectAttributes->configurationAccess.privateKey.size() > 0) {
+	if (!m_connectAttributes->configurationAccess.privateKey.empty() && m_connectAttributes->configurationAccess.privateKey.size() > 0) {
 		m_editPrivateKey.SetWindowTextA(m_connectAttributes->configurationAccess.privateKey.c_str());
 	}
 
-	if (!m_connectAttributes->configurationAccess.pkiTrustedPath.empty() && !m_connectAttributes->configurationAccess.pkiTrustedPath.size() > 0) {
+	if (!m_connectAttributes->configurationAccess.pkiTrustedPath.empty() && m_connectAttributes->configurationAccess.pkiTrustedPath.size() > 0) {
 		m_editPkiStorePath.SetWindowTextA(m_connectAttributes->configurationAccess.pkiTrustedPath.c_str());
 	}
 	return TRUE;
@@ -388,11 +388,22 @@ void CClientSettingsDialog::OnBtnClickedButtonPkiStorePath()
 	ofn.lpstrFile = szPathname;
 	ofn.nMaxFile = _countof(szPathname);
 	ofn.lpstrTitle = TEXT("Select Pki folder for trusted certificates ");
-	ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST;
+	ofn.Flags = OFN_EXPLORER ;
 	BOOL bOk = GetOpenFileName(&ofn);
 	if (bOk) {
-		m_btnPkiStorePath.SetWindowTextA(szPathname);
+		m_editPkiStorePath.SetWindowTextA(szPathname);
 	}
+	/*BROWSEINFOA brs;
+	brs.hwndOwner = this->m_hWnd;
+	brs.pidlRoot = NULL;
+	brs.pszDisplayName = szPathname;
+	brs.lpszTitle = TEXT("Select Pki folder for trusted certificates ");
+	brs.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
+	brs.lpfn = NULL;
+	LPITEMIDLIST list = SHBrowseForFolderA(&brs);
+	if (list != NULL) {
+		m_editPkiStorePath.SetWindowTextA(szPathname);
+	}*/
 }
 
 
