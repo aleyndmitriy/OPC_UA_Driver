@@ -89,7 +89,7 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		m_cmbConfiguration.SetItemData(pos, 0);
 		m_cmbConfiguration.SetCurSel(pos);
 	}
-	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode, m_connectAttributes->configurationAccess));
+	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode.serverSecurityName, m_connectAttributes->configurationMode.securityMode,m_connectAttributes->configurationAccess.securityType));
 	
 	LVITEM item;
 	memset(&item, 0, sizeof(item));
@@ -252,7 +252,7 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	LVITEM item;
 	TCHAR modeStr[40];
 	std::string attr = GetStringFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode) + std::string("/") +
-		GetStringFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType);
+		GetStringFromSecurityType(m_endPointsConfigurations.at(index).m_securityType);
 	StringCchCopy(modeStr, attr.size() + 1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
@@ -262,7 +262,7 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	item.state = 0;// LVIS_FOCUSED | LVIS_SELECTED;
 	item.iItem = 0;
 	item.cColumns = 1;
-	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_endPointsConfigurations.at(index).m_endPointPolicy.securityType));
+	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_endPointsConfigurations.at(index).m_securityType));
 	m_lstPolicyType.InsertItem(&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
 	ReadAttributes();
@@ -530,7 +530,7 @@ void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::Softing
 	for (std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
 	{
 		std::string desc = itr->m_endPointDesc.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->m_endPointDesc.securityMode) +
-			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(itr->m_endPointPolicy.securityType);
+			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(itr->m_securityType);
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, index++);
 	}

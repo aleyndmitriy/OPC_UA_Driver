@@ -184,6 +184,19 @@ bool DrvOPCUAHistValues::operator!=(const ServerSecurityModeConfiguration& lhs, 
 	return lhs.serverSecurityName != rhs.serverSecurityName || lhs.securityMode != rhs.securityMode;
 }
 
+bool DrvOPCUAHistValues::operator<(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs)
+{
+	if (lhs.serverSecurityName < rhs.serverSecurityName) {
+		return true;
+	}
+	else {
+		if (lhs.serverSecurityName == rhs.serverSecurityName) {
+			return lhs.securityMode < rhs.securityMode;
+		}
+		return false;
+	}
+}
+
 DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, ConfigurationSecurityType type):
 	login(loginString),password(passString),certificate(certificateString),privateKey(keyString), securityType(type)
 {

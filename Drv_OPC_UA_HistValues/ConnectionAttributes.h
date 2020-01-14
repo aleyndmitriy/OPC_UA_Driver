@@ -59,6 +59,7 @@ namespace DrvOPCUAHistValues
 
 	bool operator==(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs);
 	bool operator!=(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs);
+	bool operator<(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs);
 
 	struct SecurityAccessConfiguration {
 		std::string login;

@@ -1,14 +1,14 @@
 #include"pch.h"
 #include"SoftingServerEndPointDescription.h"
 
-DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, int mode, const std::string& certificate, const std::string& privateKey, int type):
-	m_endPointDesc(endPoinUrl, GetModeFromInt(mode)), m_endPointPolicy(std::string(),std::string(),certificate,privateKey, GetTypeFromInt(type))
+DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, int mode, int type):
+	m_endPointDesc(endPoinUrl, GetModeFromInt(mode)), m_securityType(GetTypeFromInt(type))
 {
 
 }
 
-DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const ServerSecurityModeConfiguration& config, const SecurityAccessConfiguration& policy):
-	m_endPointDesc(config), m_endPointPolicy(policy)
+DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, ConfigurationSecurityMode mode, ConfigurationSecurityType type):
+	m_endPointDesc(endPoinUrl,mode),m_securityType(type)
 {
 
 }
@@ -16,4 +16,23 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescr
 DrvOPCUAHistValues::SoftingServerEndPointDescription::~SoftingServerEndPointDescription()
 {
 
+}
+
+bool IsEndPointDescEqual(const DrvOPCUAHistValues::SoftingServerEndPointDescription& lhs, const DrvOPCUAHistValues::SoftingServerEndPointDescription& rhs)
+{
+	return lhs.m_endPointDesc == rhs.m_endPointDesc && lhs.m_securityType == rhs.m_securityType;
+}
+
+
+bool IsEndPointDescLess(const DrvOPCUAHistValues::SoftingServerEndPointDescription& lhs, const DrvOPCUAHistValues::SoftingServerEndPointDescription& rhs)
+{
+	if (lhs.m_endPointDesc < rhs.m_endPointDesc) {
+		return true;
+	}
+	else {
+		if (lhs.m_securityType < rhs.m_securityType) {
+			return true;
+		}
+		return false;
+	}
 }

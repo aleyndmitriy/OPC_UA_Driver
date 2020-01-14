@@ -68,7 +68,7 @@ bool SoftingServerInteractor::startApplication()
 	}
 	m_pApp = SoftingOPCToolbox5::Application::instance();
 	SoftingOPCToolbox5::PkiStoreConfiguration storeConfiguration;
-	storeConfiguration.setCertificateTrustListLocation(_T("C:/ODS/Dream Report/System/certificate/trusted"));
+	storeConfiguration.setCertificateTrustListLocation(_T("C:/ODS/Dream Report/System/certificates/PKI/trusted"));
 	m_enumResult = m_pApp->setPkiStoreConfiguration(&storeConfiguration);
 	if (StatusCode::isBad(m_enumResult))
 	{
@@ -391,6 +391,9 @@ void SoftingServerInteractor::ChooseCurrentServer()
 			std::string message = std::string("Failed to get endpoint descriptions: ") + std::string(getEnumStatusCodeString(result));
 			output->SendWarning(std::move(message));
 		}
+		std::sort(endpointDescriptionsString.begin(), endpointDescriptionsString.end(), IsEndPointDescLess);
+		std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::iterator last = std::unique(endpointDescriptionsString.begin(), endpointDescriptionsString.end(), IsEndPointDescEqual);
+		endpointDescriptionsString.erase(last, endpointDescriptionsString.end());
 		output->GetEndPoints(std::move(endpointDescriptionsString));
 	}
 }
@@ -909,7 +912,7 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(cons
 {
 	std::string name(desc.getEndpointUrl());
 	int mode = desc.getMessageSecurityMode();
-	std::string certificate = desc.getServerCertificate().toString();
+	//std::string certificate = desc.getServerCertificate().toString();
 	unsigned int tokenCount = desc.getUserIdentityTokenCount();
 	std::string token;
 	int type = 0;
@@ -920,7 +923,7 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(cons
 		//token = pPolicy->getPolicyId();
 	}
 	
-	DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, mode, certificate, token, type);
+	DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, mode, type);
 	return endPointDesc;
 }
 
@@ -929,13 +932,6 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	size_t fdSofting = std::string::npos;
 	std::string name(desc.getEndpointUrl());
 	fdSofting = name.find(attributes.configurationMode.serverSecurityName);
-	if (fdSofting == tstring::npos)
-	{
-		return false;
-	}
-	fdSofting = std::string::npos;
-	std::string certificate = desc.getServerCertificate().toString();
-	fdSofting = certificate.find(attributes.configurationAccess.certificate);
 	if (fdSofting == tstring::npos)
 	{
 		return false;

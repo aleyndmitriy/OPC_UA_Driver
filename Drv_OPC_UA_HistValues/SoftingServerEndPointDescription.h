@@ -4,8 +4,8 @@
 namespace DrvOPCUAHistValues
 {
 	struct SoftingServerEndPointDescription {
-		SoftingServerEndPointDescription(const std::string& endPoinUrl, int mode, const std::string& certificate, const std::string& privateKey, int type);
-		SoftingServerEndPointDescription(const ServerSecurityModeConfiguration& config, const SecurityAccessConfiguration& policy);
+		SoftingServerEndPointDescription(const std::string& endPoinUrl, int mode, int type);
+		SoftingServerEndPointDescription(const std::string& endPoinUrl, ConfigurationSecurityMode mode, ConfigurationSecurityType type);
 		SoftingServerEndPointDescription() = default;
 		SoftingServerEndPointDescription(const SoftingServerEndPointDescription& src) = default;
 		SoftingServerEndPointDescription& operator=(const SoftingServerEndPointDescription& src) = default;
@@ -13,6 +13,9 @@ namespace DrvOPCUAHistValues
 		SoftingServerEndPointDescription& operator=(SoftingServerEndPointDescription&& src) = default;
 		~SoftingServerEndPointDescription();
 		ServerSecurityModeConfiguration m_endPointDesc;
-		SecurityAccessConfiguration m_endPointPolicy;
+		ConfigurationSecurityType m_securityType;
 	};
 }
+
+bool IsEndPointDescEqual(const DrvOPCUAHistValues::SoftingServerEndPointDescription& lhs, const DrvOPCUAHistValues::SoftingServerEndPointDescription& rhs);
+bool IsEndPointDescLess(const DrvOPCUAHistValues::SoftingServerEndPointDescription& lhs, const DrvOPCUAHistValues::SoftingServerEndPointDescription& rhs);
