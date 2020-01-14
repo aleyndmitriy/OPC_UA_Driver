@@ -381,29 +381,20 @@ void CClientSettingsDialog::OnBtnClickedButtonPrivateKeyPath()
 void CClientSettingsDialog::OnBtnClickedButtonPkiStorePath()
 {
 	TCHAR szPathname[_MAX_PATH];
-	OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
-	ofn.hwndOwner = this->m_hWnd;
-	ofn.lpstrFilter = TEXT("*.*\0");
-	lstrcpy(szPathname, TEXT("*.*"));
-	ofn.lpstrFile = szPathname;
-	ofn.nMaxFile = _countof(szPathname);
-	ofn.lpstrTitle = TEXT("Select Pki folder for trusted certificates ");
-	ofn.Flags = OFN_EXPLORER ;
-	BOOL bOk = GetOpenFileName(&ofn);
-	if (bOk) {
-		m_editPkiStorePath.SetWindowTextA(szPathname);
-	}
-	/*BROWSEINFOA brs;
+	BROWSEINFOA brs;
 	brs.hwndOwner = this->m_hWnd;
 	brs.pidlRoot = NULL;
 	brs.pszDisplayName = szPathname;
 	brs.lpszTitle = TEXT("Select Pki folder for trusted certificates ");
-	brs.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NONEWFOLDERBUTTON;
+	brs.ulFlags = BIF_NONEWFOLDERBUTTON | BIF_RETURNONLYFSDIRS;
 	brs.lpfn = NULL;
 	LPITEMIDLIST list = SHBrowseForFolderA(&brs);
-	if (list != NULL) {
+	if (list == NULL) {
+		return;
+	}
+	if (SHGetPathFromIDListA(list, szPathname)) {
 		m_editPkiStorePath.SetWindowTextA(szPathname);
-	}*/
+	}
 }
 
 
