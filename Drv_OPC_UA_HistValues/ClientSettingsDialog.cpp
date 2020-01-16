@@ -212,9 +212,17 @@ void CClientSettingsDialog::OnEnChangeEditPort()
 
 void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 {
-	std::string computerName;
-	if (getComputerName(computerName)) {
-		m_editComputerName.SetWindowTextA(computerName.c_str());
+	TCHAR szPathname[_MAX_PATH];
+	BROWSEINFOA brs;
+	brs.hwndOwner = this->m_hWnd;
+	brs.pidlRoot = NULL;
+	brs.pszDisplayName = szPathname;
+	brs.lpszTitle = TEXT("Select Computer Name");
+	brs.ulFlags = BIF_NONEWFOLDERBUTTON | BIF_BROWSEFORCOMPUTER;
+	brs.lpfn = NULL;
+	LPITEMIDLIST list = SHBrowseForFolderA(&brs);
+	if (list != NULL) {
+		m_editComputerName.SetWindowTextA(szPathname);
 	}
 }
 
