@@ -43,13 +43,15 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleCommand(ODS::HdaCommand* pComma
 	ODS::HdaFunction** pList = nullptr;
 	int nCount = 0;
 	int iRes = pCommand->GetFunctionList(&pList, &nCount);
-	ExecuteCommand(pCommand, *pList, nCount, &resultList);
-	for (std::vector<ODS::HdaFunctionResult*>::const_iterator iterRes = resultList.cbegin(); iterRes != resultList.cend(); iterRes++)
-	{
-		pResult->AddFunctionResult(*iterRes);
+	iRes = ExecuteCommand(pCommand, *pList, nCount, &resultList);
+	if (iRes == ODS::ERR::OK) {
+		for (std::vector<ODS::HdaFunctionResult*>::const_iterator iterRes = resultList.cbegin(); iterRes != resultList.cend(); iterRes++)
+		{
+			pResult->AddFunctionResult(*iterRes);
+		}
 	}
 	pCommand->DestroyFunctionList(pList, nCount);
-	return ODS::ERR::OK;
+	return iRes;
 }
 
 
