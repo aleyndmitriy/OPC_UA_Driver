@@ -6,31 +6,16 @@
 #include<functional>
 #include <UserIdentityToken.h>
 #include <Statics.h>
-#include"Log.h"
 
 SoftingServerInteractor::SoftingServerInteractor():
  m_pServerAttributes(), m_pOutput(), m_pApp(), m_AppDesc(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_sessionsList()
 {
-	m_enumResult = SoftingOPCToolbox5::loadToolbox(NULL);
-	if (StatusCode::isBad(m_enumResult))
-	{
-		DrvOPCUAHistValues::Log::GetInstance()->WriteError(_T("Failed to load the SDK: %s"), std::string(getEnumStatusCodeString(m_enumResult)).c_str());
-	}
+	
 }
 
 SoftingServerInteractor::~SoftingServerInteractor()
 {
-	if (stopApplication()) {
-		m_enumResult = SoftingOPCToolbox5::unloadToolbox();
-		if (StatusCode::isBad(m_enumResult))
-		{
-			std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-			if (output) {
-				std::string message = std::string("An error occurred while unloading the SDK:") + std::string(getEnumStatusCodeString(m_enumResult));
-				output->SendMessageError(std::move(message));
-			}
-		}
-	}
+	stopApplication();
 }
 
 void SoftingServerInteractor::SetAttributes(std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes)
@@ -46,6 +31,7 @@ void SoftingServerInteractor::SetOutput(std::shared_ptr<SoftingServerInteractorO
 
 void SoftingServerInteractor::initApplicationDescription()
 {
+	m_AppDesc.clear();
 	std::string folder = std::string("/ODS/Dream Report/System/");
 	m_AppDesc.setApplicationType(EnumApplicationType_Client);
 	m_AppDesc.setApplicationName(SoftingOPCToolbox5::LocalizedText(_T("DreamReport OpcUa Histotical Items Client"), _T("en")));
@@ -59,6 +45,16 @@ bool SoftingServerInteractor::startApplication()
 		return true;
 	}
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	m_enumResult = SoftingOPCToolbox5::loadToolbox(NULL);
+	if (StatusCode::isBad(m_enumResult))
+	{
+		if (output) {
+			std::string message = std::string("Failed to load the SDK: ") + std::string(getEnumStatusCodeString(m_enumResult));
+			output->SendMessageError(std::move(message));
+		}
+		return false;
+	}
+	
 	if (m_pServerAttributes->configuration.computerName.empty()) {
 		if (output) {
 			std::string message("Computer name is empty!");
@@ -77,11 +73,10 @@ bool SoftingServerInteractor::startApplication()
 				std::string message = std::string("Failed to set the PKI store configuration: ") + std::string(getEnumStatusCodeString(m_enumResult));
 				output->SendMessageError(std::move(message));
 			}
-			m_pApp.reset();
+			resetApplication();
 			return false;
 		}
 	}
-	
 	initApplicationDescription();
 	m_enumResult = m_pApp->initialize(&m_AppDesc);
 	if (StatusCode::isBad(m_enumResult))
@@ -90,9 +85,10 @@ bool SoftingServerInteractor::startApplication()
 			std::string message = std::string("Failed to initialize the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
 			output->SendMessageError(std::move(message));
 		}
-		m_pApp.reset();
+		resetApplication();
 		return false;
 	}
+	
 	if (StatusCode::isGood(m_enumResult))
 	{
 		if (m_pServerAttributes->configurationAccess.certificate.empty() == false && m_pServerAttributes->configurationAccess.privateKey.empty() == false &&
@@ -105,7 +101,7 @@ bool SoftingServerInteractor::startApplication()
 					std::string message = std::string("Failed to load the application certificate: ") + std::string(getEnumStatusCodeString(m_enumResult));
 					output->SendMessageError(std::move(message));
 				}
-				m_pApp.reset();
+				resetApplication();
 				return false;
 			}
 		}
@@ -116,7 +112,7 @@ bool SoftingServerInteractor::startApplication()
 				std::string message = std::string("Failed to start the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
 				output->SendMessageError(std::move(message));
 			}
-			m_pApp.reset();
+			resetApplication();
 			return false;
 		}
 	}
@@ -138,12 +134,12 @@ bool SoftingServerInteractor::stopApplication()
 				std::string message = std::string("An error occurred while stopping the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
 				output->SendMessageError(std::move(message));
 			}
-			m_pApp.reset();
+			resetApplication();
 			return false;
 		}
-		m_AppDesc.clear();
 		if (m_selectedEndPointDescription) {
 			m_selectedEndPointDescription->clear();
+			m_selectedEndPointDescription.reset();
 		}
 
 		m_enumResult = m_pApp->uninitialize();
@@ -153,12 +149,27 @@ bool SoftingServerInteractor::stopApplication()
 				std::string message = std::string("An error occurred while uninitializing the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
 				output->SendMessageError(std::move(message));
 			}
-			m_pApp.reset();
+			resetApplication();
 			return false;
 		}
-		m_pApp.reset();
+		m_AppDesc.clear();
+		resetApplication();
 	}
 	return true;
+}
+
+void SoftingServerInteractor::resetApplication()
+{
+	m_pApp.reset();
+	m_enumResult = SoftingOPCToolbox5::unloadToolbox();
+	if (StatusCode::isBad(m_enumResult))
+	{
+		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+		if (output) {
+			std::string message = std::string("An error occurred while unloading the SDK:") + std::string(getEnumStatusCodeString(m_enumResult));
+			output->SendMessageError(std::move(message));
+		}
+	}
 }
 
 void SoftingServerInteractor::OpenConnection()
@@ -335,6 +346,9 @@ void SoftingServerInteractor::GetServers()
 
 void SoftingServerInteractor::ChooseCurrentServer()
 {
+	if (startApplication() == false) {
+		return;
+	}
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> endpointDescriptionsString;
 	if (m_pServerAttributes->configuration.serverName.empty()) {
@@ -403,6 +417,9 @@ void SoftingServerInteractor::ChooseCurrentServer()
 
 void SoftingServerInteractor::ChooseCurrentEndPoint()
 {
+	if (startApplication() == false) {
+		return;
+	}
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	if(m_selectedEndPointDescription) {
 		m_selectedEndPointDescription->clear();
@@ -485,6 +502,7 @@ void SoftingServerInteractor::TestConnection()
 			output->CloseConnectionWithGuide(std::string(iter->first));
 		}
 	}
+	stopApplication();
 }
 
 void SoftingServerInteractor::BrowseSession(const std::string& connectionID)
