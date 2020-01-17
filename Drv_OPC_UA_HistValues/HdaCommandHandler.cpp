@@ -548,6 +548,9 @@ DrvOPCUAHistValues::ParamValueList DrvOPCUAHistValues::HdaCommandHandler::GetPar
 		case ODS::HdaFunctionParam::TYPE_ITEM_ADDRESS:
 			ParamUtils::GetAddress(address, fullAddress, *itr);
 			break;
+		case ODS::HdaFunctionParam::TYPE_SQL:
+			sql = ParamUtils::GetSql(*itr);
+			break;
 		case ODS::HdaFunctionParam::TYPE_LIMIT:
 			((ODS::HdaFunctionParamLimit*) * itr)->GetLimit(&limit);
 			break;
@@ -571,7 +574,7 @@ DrvOPCUAHistValues::ParamValueList DrvOPCUAHistValues::HdaCommandHandler::GetPar
 		}
 	}
 	pHdaFunc->DestroyParameterList(pParam, nCount);
-	ParamValueList valList(std::string(address.GetString()), std::string(fullAddress.GetString()), prevPoint, postPoint, valueType, Limit(limit.m_nLimitSide, limit.m_nLimitOffset, limit.m_nLimitCount));
+	ParamValueList valList(std::string(address.GetString()), std::string(fullAddress.GetString()), std::string(sql.GetString()), prevPoint, postPoint, valueType, Limit(limit.m_nLimitSide, limit.m_nLimitOffset, limit.m_nLimitCount));
 	return valList;
 }
 void DrvOPCUAHistValues::HdaCommandHandler::SendMessageError(std::string&& message)

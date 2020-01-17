@@ -21,8 +21,8 @@ bool DrvOPCUAHistValues::Limit::IsLimit() const
 	return (m_nLimitOffset != 0 && m_nLimitCount != 0);
 }
 
-DrvOPCUAHistValues::ParamValueList::ParamValueList(std::string&& address, std::string&& fullAddress, bool prevPoint, bool postPoint, int valueType, Limit&& limit) :
-	ParamValue(std::move(address), std::move(fullAddress), prevPoint, postPoint), m_ValueType(valueType), m_Limit(std::move(limit))
+DrvOPCUAHistValues::ParamValueList::ParamValueList(std::string&& address, std::string&& fullAddress, std::string&& sql, bool prevPoint, bool postPoint, int valueType, Limit&& limit) :
+	ParamValue(std::move(address), std::move(fullAddress), std::move(sql), prevPoint, postPoint), m_ValueType(valueType), m_Limit(std::move(limit))
 {
 
 }
