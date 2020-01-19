@@ -27,6 +27,18 @@ namespace DrvOPCUAHistValues
 		COMBINEOP_AND = 1
 	};
 
+	struct TagCondition {
+		std::string conditionValue;
+		ConditionType conditionType;
+		CombineOperation conditionOperation;
+		TagCondition(const std::string& condVal, ConditionType condType, CombineOperation condOperation);
+		TagCondition();
+		TagCondition(const TagCondition& src) = default;
+		TagCondition(TagCondition&& src) = default;
+		TagCondition& operator=(const TagCondition& rhs) = default;
+		TagCondition& operator=(TagCondition&& rhs) = default;
+	};
+
 	class ParamValue {
 	public:
 		ParamValue() = delete;
@@ -44,11 +56,12 @@ namespace DrvOPCUAHistValues
 		bool HasSql() const;
 		void GetConditionsFromParam(const std::string& sql);
 	private:
-		std::vector<std::pair<std::string, CombineOperation> > m_conditionsList;
+		std::vector<std::pair<std::string, TagCondition> > m_conditionsList;
 		std::string m_Address;
 		std::string m_FullAddress;
 		std::string m_Sql;
 		bool m_bPrevPoint;
 		bool m_bPostPoint;
+		std::pair<std::string, TagCondition> parseCondition(const std::string& condition, CombineOperation operation);
 	};
 }
