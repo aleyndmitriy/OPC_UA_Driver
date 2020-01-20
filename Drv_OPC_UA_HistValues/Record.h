@@ -36,4 +36,10 @@ namespace DrvOPCUAHistValues {
 	bool operator<=(const Record& lhs, const Record& rhs);
 	bool operator>(const Record& lhs, const Record& rhs);
 	bool operator>=(const Record& lhs, const Record& rhs);
+	const SYSTEMTIME* GetTimeStampFromRecord(const Record& rec);
+	bool CompareRecordsValueLess(const Record& lhs, const Record& rhs);
+	bool CompareRecordsDataTimeLess(const Record& lhs, const Record& rhs);
+	bool CompareRecordsDataTime(const Record& lhs, const Record& rhs);
+	Record RecordsSum(const Record& lhs, const Record& rhs);
+	Record RecordAvg(const Record& record, unsigned int quantity);
 }
