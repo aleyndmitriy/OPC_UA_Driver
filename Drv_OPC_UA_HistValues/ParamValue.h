@@ -1,6 +1,6 @@
 #pragma once
 #include<string>
-
+#include<set>
 namespace DrvOPCUAHistValues
 {
 	enum class ConditionType : int
@@ -28,10 +28,11 @@ namespace DrvOPCUAHistValues
 	};
 
 	struct TagCondition {
+		std::string tagName;
 		std::string conditionValue;
 		ConditionType conditionType;
 		CombineOperation conditionOperation;
-		TagCondition(const std::string& condVal, ConditionType condType, CombineOperation condOperation);
+		TagCondition(const std::string& name, const std::string& condVal, ConditionType condType, CombineOperation condOperation);
 		TagCondition();
 		TagCondition(const TagCondition& src) = default;
 		TagCondition(TagCondition&& src) = default;
@@ -41,7 +42,7 @@ namespace DrvOPCUAHistValues
 
 	class ParamValue {
 	public:
-		ParamValue() = delete;
+		ParamValue();
 		ParamValue(std::string&& address, std::string&& fullAddress, std::string&& sql, bool prevPoint, bool postPoint);
 		virtual ~ParamValue();
 		ParamValue(const ParamValue& src) = default;
@@ -49,19 +50,24 @@ namespace DrvOPCUAHistValues
 		ParamValue& operator=(const ParamValue& rhs) = default;
 		ParamValue& operator=(ParamValue&& rhs) = default;
 		std::string GetAddress() const;
-		std::string GetFullAddress() const;
+		const std::string& GetFullAddress() const;
 		std::string GetSqc() const;
 		bool HasPrevPoint() const;
 		bool HasPostPoint() const;
 		bool HasSql() const;
-		void GetConditionsFromParam(const std::string& sql);
+		const std::vector<TagCondition>& GetConditions() const;
+		bool IsEmpty() const;
+		std::set<std::string> GetTagsNames() const;
 	private:
-		std::vector<std::pair<std::string, TagCondition> > m_conditionsList;
+		std::vector<TagCondition> m_conditionsList;
 		std::string m_Address;
 		std::string m_FullAddress;
 		std::string m_Sql;
 		bool m_bPrevPoint;
 		bool m_bPostPoint;
-		std::pair<std::string, TagCondition> parseCondition(const std::string& condition, CombineOperation operation);
+		TagCondition parseCondition(const std::string& condition, CombineOperation operation);
+		void createConditionsFromParam();
 	};
+
+	bool ParamValueLess(const ParamValue& val1, const ParamValue& val2);
 }

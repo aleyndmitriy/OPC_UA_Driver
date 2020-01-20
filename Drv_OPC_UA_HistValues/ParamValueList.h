@@ -24,7 +24,7 @@ namespace DrvOPCUAHistValues {
 	public:
 		static const int LIMIT_FROM_START = 0;
 		static const int LIMIT_FROM_END = 1;
-		ParamValueList() = delete;
+		ParamValueList();
 		ParamValueList(std::string&& address, std::string&& fullAddress, std::string&& sql, bool prevPoint, bool postPoint, int valueType, Limit&& limit);
 		~ParamValueList();
 		ParamValueList(const ParamValueList& src) = default;

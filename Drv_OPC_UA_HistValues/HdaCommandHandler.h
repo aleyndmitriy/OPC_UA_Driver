@@ -2,6 +2,7 @@
 #include"ConnectionAttributes.h"
 #include<HdaCommand.h>
 #include<vector>
+#include<set>
 #include"SoftingServerInteractorOutput.h"
 #include"SoftingServerInteractor.h"
 #include<Tvq.h>
@@ -33,10 +34,11 @@ namespace DrvOPCUAHistValues
 		void GetEndPoints(std::vector<SoftingServerEndPointDescription>&& servers) override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
 		void CloseConnectionWithGuide(std::string&& uuid) override;
-		void CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList);
+		void CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<ParamValueList> >& paramList, std::set<std::string>& tagsForQuery);
 		ParamValueList GetParameterValueList(const ODS::HdaFunction* pHdaFunc);
-		std::vector<std::string> BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList);
-		void ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<std::string> >& queriesList, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
+		std::vector<ParamValueList> BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList);
+		void ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<ParamValueList> >& paramList,
+			const std::set<std::string>& tagsForQuery, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
 			const SYSTEMTIME& endTime, const std::string& sessionId);
 		ODS::Tvq* CreateTvqFromRecord(const Record& record, bool* condition) const;
 	};

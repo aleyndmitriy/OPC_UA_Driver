@@ -192,7 +192,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		SYSTEMTIME startUtc, endUtc;
 		ODS::TimeUtils::SysTimeLocalToUtc(start, &startUtc);
 		ODS::TimeUtils::SysTimeLocalToUtc(end, &endUtc);
-		std::map<int, std::vector<std::string> > queriesList;
+		std::map<int, std::vector<ParamValueList> > paramList;
 		std::string sessionID;
 		if (sessionId.IsEmpty()) {
 			m_pSoftingInteractor->OpenConnection();
@@ -205,12 +205,13 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 			sessionID = std::string(sessionId.ToString().GetString());
 			m_pSoftingInteractor->OpenConnectionWithUUID(sessionID);
 		}
-		CreateQueriesList(requestMap, queriesList);
-		if (queriesList.empty()) {
+		std::set<std::string> tags;
+		CreateQueriesList(requestMap, paramList,tags);
+		if (paramList.empty()) {
 			m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
 			return ODS::ERR::DB_NO_DATA;
 		}
-		ExecuteQueriesList(requestMap, queriesList, pResultList, startUtc, endUtc, sessionID);
+		ExecuteQueriesList(requestMap, paramList, tags, pResultList, startUtc, endUtc, sessionID);
 		
 		m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
 		return ODS::ERR::OK;
@@ -220,58 +221,25 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 	}
 }
 
-void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<std::string> >& queriesList)
+void DrvOPCUAHistValues::HdaCommandHandler::CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions,
+	std::map<int, std::vector<ParamValueList> >& paramList, std::set<std::string>& tagsForQuery)
 {
-	queriesList.clear();
-	
-	std::pair<int, std::vector<std::string> > pair;
-	std::pair<std::map<int, std::vector<std::string> >::iterator, bool > insertedPair;
+	paramList.clear();
+	tagsForQuery.clear();
+	std::pair<int, std::vector<ParamValueList> > pair;
+	std::pair<std::map<int, std::vector<ParamValueList> >::iterator, bool > insertedPair;
 	for (std::map<int, std::vector<ODS::HdaFunction*> >::const_iterator itr = requestFunctions.cbegin(); itr != requestFunctions.cend(); ++itr) {
-		switch (itr->first) {
-		case ODS::HdaFunctionType::VALUE_LIST:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::VALUE_LIST_CONDITION), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::LAST_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::LAST_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::FIRST_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::FIRST_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::AVG_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::AVG_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::SUM_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::SUM_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::MIN_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MIN_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::MAX_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::MAX_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE), BuildCmdValueList(itr->second));
-			break;
-		case ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE:
-			pair = std::make_pair<int, std::vector<std::string> >(int(ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE), BuildCmdValueList(itr->second));
-			break;
-		default:
-			break;
+		int type = itr->first;
+		pair = std::make_pair<int, std::vector<ParamValueList> >(std::move(type), BuildCmdValueList(itr->second));
+		for (std::vector<ParamValueList>::const_iterator paramItr = pair.second.cbegin(); paramItr != pair.second.cend(); ++paramItr) {
+			tagsForQuery.merge(paramItr->GetTagsNames());
 		}
-		insertedPair = queriesList.insert(pair);
+		insertedPair = paramList.insert(pair);
 	}
 }
 
-void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<std::string> >& queriesList, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
+void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<ParamValueList> >& queriesList, 
+	const std::set<std::string>& tagsForQuery, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
 	const SYSTEMTIME& endTime, const std::string& sessionId)
 {
 	SYSTEMTIME localStartDataTime = { 0 };
@@ -279,23 +247,21 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 	ODS::TimeUtils::SysTimeUtcToLocal(startTime, &localStartDataTime);
 	ODS::TimeUtils::SysTimeUtcToLocal(endTime, &localEndDataTime);
 	std::map<std::string, std::vector<std::string> > fullPaths;
-	for (std::map<int, std::vector<std::string> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
-		for (std::vector<std::string>::const_iterator pathIter = queriesIterator->second.cbegin(); pathIter != queriesIterator->second.cend(); ++pathIter) {
-			std::pair<std::string, std::vector<std::string> > pair = std::make_pair<std::string, std::vector<std::string> >(std::string(*pathIter),split(*pathIter,std::string("/")));
-			fullPaths.insert(pair);
-		}
+	for (std::set<std::string>::const_iterator queriesIterator = tagsForQuery.cbegin(); queriesIterator != tagsForQuery.cend(); ++queriesIterator) {
+		std::pair<std::string, std::vector<std::string> > pair = std::make_pair<std::string, std::vector<std::string> >(std::string(*queriesIterator),split(*queriesIterator,std::string("/")));
+		fullPaths.insert(pair);
 	}
 	std::map<std::string, std::vector<DrvOPCUAHistValues::Record> > tagsData;
 	m_pSoftingInteractor->GetRecords(tagsData, localStartDataTime, localEndDataTime, fullPaths, sessionId);
 	if (tagsData.empty()) {
 		return;
 	}
-	for (std::map<int, std::vector<std::string> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
+	for (std::map<int, std::vector<ParamValueList> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
 		size_t length = queriesIterator->second.size();
 		std::map<int, std::vector<ODS::HdaFunction*> >::const_iterator funcIterator = requestFunctions.find(queriesIterator->first);
 		if (funcIterator != requestFunctions.cend()) {
 			for (size_t index = 0; index < length; ++index) {
-				std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >::const_iterator tagsIterator = tagsData.find(queriesIterator->second.at(index));
+				std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >::const_iterator tagsIterator = tagsData.find(queriesIterator->second.at(index).GetFullAddress());
 				if (tagsIterator != tagsData.cend()) {
 					if (tagsIterator->second.empty()) {
 						return;
@@ -411,12 +377,11 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 	}
 }
 
-std::vector<std::string> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList)
+std::vector<DrvOPCUAHistValues::ParamValueList> DrvOPCUAHistValues::HdaCommandHandler::BuildCmdValueList(const std::vector<ODS::HdaFunction*>& rFuncList)
 {
-	std::vector<std::string> vec;
+	std::vector<ParamValueList> vec;
 	for (std::vector<ODS::HdaFunction*>::const_iterator itr = rFuncList.cbegin(); itr != rFuncList.cend(); ++itr) {
-		ParamValueList paramList = GetParameterValueList(*itr);
-		vec.push_back(paramList.GetFullAddress());
+		vec.push_back(GetParameterValueList(*itr));
 	}
 	return vec;
 }

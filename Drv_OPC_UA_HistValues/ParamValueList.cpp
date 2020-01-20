@@ -27,6 +27,11 @@ DrvOPCUAHistValues::ParamValueList::ParamValueList(std::string&& address, std::s
 
 }
 
+DrvOPCUAHistValues::ParamValueList::ParamValueList():ParamValueList(std::string(),std::string(),std::string(),false,false,0,Limit())
+{
+
+}
+
 DrvOPCUAHistValues::ParamValueList::~ParamValueList() {
 
 }
