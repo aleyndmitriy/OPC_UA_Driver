@@ -1,6 +1,7 @@
 #pragma once
 #include<map>
 #include<string>
+#include"ParamValue.h"
 
 namespace DrvOPCUAHistValues {
 
@@ -39,7 +40,9 @@ namespace DrvOPCUAHistValues {
 	const SYSTEMTIME* GetTimeStampFromRecord(const Record& rec);
 	bool CompareRecordsValueLess(const Record& lhs, const Record& rhs);
 	bool CompareRecordsDataTimeLess(const Record& lhs, const Record& rhs);
+	bool CompareRecordsValue(const Record& lhs, const Record& rhs);
 	bool CompareRecordsDataTime(const Record& lhs, const Record& rhs);
+	bool CompareRecord(const Record& lhs, const std::string& val, ConditionType type);
 	Record RecordsSum(const Record& lhs, const Record& rhs);
 	Record RecordAvg(const Record& record, unsigned int quantity);
 }

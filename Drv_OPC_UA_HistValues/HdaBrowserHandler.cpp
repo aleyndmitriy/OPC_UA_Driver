@@ -37,7 +37,6 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 		pathQueue.push(name);
 	}
 	m_pSoftingInteractor->GetTags(tagsName, pathQueue, m_ConnectionId);
-
 	for (std::vector<std::pair<std::string, bool> >::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
 		ODS::OdsString szAddress(itr->first.c_str());
 		STagItem sItem;

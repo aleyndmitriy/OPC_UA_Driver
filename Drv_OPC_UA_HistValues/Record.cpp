@@ -122,6 +122,57 @@ bool DrvOPCUAHistValues::CompareRecordsValueLess(const Record& lhs, const Record
 	}
 }
 
+bool DrvOPCUAHistValues::CompareRecordsValue(const Record& lhs, const Record& rhs)
+{
+	const SYSTEMTIME* timeStampStructLeft = nullptr;
+	const SYSTEMTIME* timeStampStructRight = nullptr;
+	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
+	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_VALUE);
+	if (itrLhs == lhs.cend() || itrRhs == rhs.cend()) {
+		return false;
+	}
+	if (itrLhs->second.first != itrRhs->second.first) {
+		return false;
+	}
+	switch (itrLhs->second.first)
+	{
+	case EnumNumericNodeId_Null:
+		return true;
+		break;
+	case EnumNumericNodeId_Boolean:
+	case EnumNumericNodeId_SByte:
+	case EnumNumericNodeId_Int16:
+	case EnumNumericNodeId_Int32:
+		return std::stoi(itrLhs->second.second) == std::stoi(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_Int64:
+		return std::stoll(itrLhs->second.second) == std::stoll(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_Byte:
+	case EnumNumericNodeId_UInt16:
+	case EnumNumericNodeId_UInt32:
+		return std::stoul(itrLhs->second.second) == std::stoul(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_UInt64:
+		return std::stoull(itrLhs->second.second) == std::stoull(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_Double:
+		return std::stod(itrLhs->second.second) == std::stod(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_Float:
+		return std::stof(itrLhs->second.second) == std::stof(itrRhs->second.second);
+		break;
+	case EnumNumericNodeId_DateTime:
+		timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
+		timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(itrRhs->second.second.c_str());
+		return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) < 0;
+		break;
+	default:
+		return itrLhs->second.second == itrRhs->second.second;
+		break;
+	}
+}
+
 const SYSTEMTIME* DrvOPCUAHistValues::GetTimeStampFromRecord(const Record& rec)
 {
 	Record::const_iterator itr = rec.findColumnValue(OPC_UA_SERVER_TIMESTAMP);
@@ -154,6 +205,163 @@ bool DrvOPCUAHistValues::CompareRecordsDataTime(const Record& lhs, const Record&
 	return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) == 0;
 }
 
+bool DrvOPCUAHistValues::CompareRecord(const Record& lhs, const std::string& val, ConditionType type)
+{
+	const SYSTEMTIME* timeStampStructLeft = nullptr;
+	const SYSTEMTIME* timeStampStructRight = nullptr;
+	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
+	if (itrLhs == lhs.cend()) {
+		return false;
+	}
+	if (val.empty()) {
+		if (itrLhs->second.first == EnumNumericNodeId_Null) {
+			return true;
+		}
+		return false;
+	}
+	switch (itrLhs->second.first)
+	{
+	case EnumNumericNodeId_Boolean:
+	case EnumNumericNodeId_SByte:
+	case EnumNumericNodeId_Int16:
+	case EnumNumericNodeId_Int32:
+		switch (type) {
+		case ConditionType::CONDTYPE_LESS:
+			return std::stoi(itrLhs->second.second) < std::stoi(val);
+			break;
+		case ConditionType::CONDTYPE_GREATER:
+			return std::stoi(itrLhs->second.second) > std::stoi(val);
+			break;
+		case ConditionType::CONDTYPE_LESSEQUAL:
+			return std::stoi(itrLhs->second.second) <= std::stoi(val);
+			break;
+		case ConditionType::CONDTYPE_GREATEREQUAL:
+			return std::stoi(itrLhs->second.second) >= std::stoi(val);
+			break;
+		case ConditionType::CONDTYPE_NOTEQUAL:
+			return std::stoi(itrLhs->second.second) != std::stoi(val);
+			break;
+		default:
+			return std::stoi(itrLhs->second.second) == std::stoi(val);
+			break;
+		}
+	case EnumNumericNodeId_Int64:
+		switch (type) {
+		case ConditionType::CONDTYPE_LESS:
+			return std::stoll(itrLhs->second.second) < std::stoll(val);
+			break;
+		case ConditionType::CONDTYPE_GREATER:
+			return std::stoll(itrLhs->second.second) > std::stoll(val);
+			break;
+		case ConditionType::CONDTYPE_LESSEQUAL:
+			return std::stoll(itrLhs->second.second) <= std::stoll(val);
+			break;
+		case ConditionType::CONDTYPE_GREATEREQUAL:
+			return std::stoll(itrLhs->second.second) >= std::stoll(val);
+			break;
+		case ConditionType::CONDTYPE_NOTEQUAL:
+			return std::stoll(itrLhs->second.second) != std::stoll(val);
+			break;
+		default:
+			return std::stoll(itrLhs->second.second) == std::stoll(val);
+			break;
+		}
+	case EnumNumericNodeId_Byte:
+	case EnumNumericNodeId_UInt16:
+	case EnumNumericNodeId_UInt32:
+		switch (type) {
+		case ConditionType::CONDTYPE_LESS:
+			return std::stoul(itrLhs->second.second) < std::stoul(val);
+			break;
+		case ConditionType::CONDTYPE_GREATER:
+			return std::stoul(itrLhs->second.second) > std::stoul(val);
+			break;
+		case ConditionType::CONDTYPE_LESSEQUAL:
+			return std::stoul(itrLhs->second.second) <= std::stoul(val);
+			break;
+		case ConditionType::CONDTYPE_GREATEREQUAL:
+			return std::stoul(itrLhs->second.second) >= std::stoul(val);
+			break;
+		case ConditionType::CONDTYPE_NOTEQUAL:
+			return std::stoul(itrLhs->second.second) != std::stoul(val);
+			break;
+		default:
+			return std::stoul(itrLhs->second.second) == std::stoul(val);
+			break;
+		}
+	case EnumNumericNodeId_UInt64:
+		switch (type) {
+		case ConditionType::CONDTYPE_LESS:
+			return std::stoull(itrLhs->second.second) < std::stoull(val);
+			break;
+		case ConditionType::CONDTYPE_GREATER:
+			return std::stoull(itrLhs->second.second) > std::stoull(val);
+			break;
+		case ConditionType::CONDTYPE_LESSEQUAL:
+			return std::stoull(itrLhs->second.second) <= std::stoull(val);
+			break;
+		case ConditionType::CONDTYPE_GREATEREQUAL:
+			return std::stoull(itrLhs->second.second) >= std::stoull(val);
+			break;
+		case ConditionType::CONDTYPE_NOTEQUAL:
+			return std::stoull(itrLhs->second.second) != std::stoull(val);
+			break;
+		default:
+			return std::stoull(itrLhs->second.second) == std::stoull(val);
+			break;
+		}
+	case EnumNumericNodeId_Double:
+		switch (type) {
+		case ConditionType::CONDTYPE_LESS:
+			return std::stod(itrLhs->second.second) < std::stod(val);
+			break;
+		case ConditionType::CONDTYPE_GREATER:
+			return std::stod(itrLhs->second.second) > std::stod(val);
+			break;
+		case ConditionType::CONDTYPE_LESSEQUAL:
+			return std::stod(itrLhs->second.second) <= std::stod(val);
+			break;
+		case ConditionType::CONDTYPE_GREATEREQUAL:
+			return std::stod(itrLhs->second.second) >= std::stod(val);
+			break;
+		case ConditionType::CONDTYPE_NOTEQUAL:
+			return std::stod(itrLhs->second.second) != std::stod(val);
+			break;
+		default:
+			return std::stod(itrLhs->second.second) == std::stod(val);
+			break;
+		}
+	case EnumNumericNodeId_Float:
+		switch (type) {
+		case ConditionType::CONDTYPE_LESS:
+			return std::stof(itrLhs->second.second) < std::stof(val);
+			break;
+		case ConditionType::CONDTYPE_GREATER:
+			return std::stof(itrLhs->second.second) > std::stof(val);
+			break;
+		case ConditionType::CONDTYPE_LESSEQUAL:
+			return std::stof(itrLhs->second.second) <= std::stof(val);
+			break;
+		case ConditionType::CONDTYPE_GREATEREQUAL:
+			return std::stof(itrLhs->second.second) >= std::stof(val);
+			break;
+		case ConditionType::CONDTYPE_NOTEQUAL:
+			return std::stof(itrLhs->second.second) != std::stof(val);
+			break;
+		default:
+			return std::stof(itrLhs->second.second) == std::stof(val);
+			break;
+		}
+	case EnumNumericNodeId_DateTime:
+		timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
+		timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(val.c_str());
+		return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) == 0;
+		break;
+	default:
+		return itrLhs->second.second == val;
+		break;
+	}
+}
 
 DrvOPCUAHistValues::Record DrvOPCUAHistValues::RecordsSum(const Record& lhs, const Record& rhs)
 {

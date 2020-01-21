@@ -234,7 +234,7 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 		session->setSecurityConfiguration(mode,policy);
 		// and the first (only one) user identity token
 		SoftingOPCToolbox5::UserIdentityToken userIdentityToken;
-		userIdentityToken.setAnonymousIdentityToken(m_selectedEndPointDescription->getUserIdentityToken(0)->getPolicyId());
+		//userIdentityToken.setAnonymousIdentityToken(m_selectedEndPointDescription->getUserIdentityToken(0)->getPolicyId());
 		//session->setUserSecurityPolicy(m_selectedEndPointDescription->getUserIdentityToken(0)->getSecurityPolicyUri());
 		session->setUserIdentityToken(&userIdentityToken);
 		result = m_pApp->addSession(session);
@@ -401,6 +401,7 @@ void SoftingServerInteractor::ChooseCurrentServer()
 				continue;
 			}
 			std::transform(selectedUrlEndpointDescriptions.cbegin(), selectedUrlEndpointDescriptions.cend(), std::back_inserter(endpointDescriptionsString),mapEndPointDescription);
+
 		}
 	}
 	if (output) {
@@ -791,7 +792,6 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 			}
 			SoftingOPCToolbox5::DateTime startTime;
 			startTime.set(start);
-
 			FILETIME end;
 			if (!SystemTimeToFileTime(&endTime, &end)) {
 				if (output) {
@@ -802,6 +802,7 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 			}
 			SoftingOPCToolbox5::DateTime endTime;
 			endTime.set(end);
+
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> > historicalValuesOfNodes;
 			getHistoricalValues(nodesToRead,startTime,endTime, historicalValuesOfNodes,iter->second);
 			if (historicalValuesOfNodes.empty()) {
@@ -922,6 +923,10 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 				std::string name(desc.getDisplayName()->getText());
 				return name == findingName; });
 			if (findIterator != refDescriptions.cend()) {
+				EnumNodeClass nodeClass = findIterator->getNodeClass();
+				if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
+					return;
+				}
 				devicesNode = findIterator->getNodeId();
 				getTags(devicesNode, tags, receivedTags, session);
 			}
@@ -938,12 +943,11 @@ DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(cons
 	std::string token;
 	int type = 0;
 	if (tokenCount > 0) {
-		const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(0);
-		EnumUserTokenType identityToken = pPolicy->getTokenType();
-		type = identityToken;
-		//token = pPolicy->getPolicyId();
+			const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(0);
+			EnumUserTokenType identityToken = pPolicy->getTokenType();
+			type = identityToken;
+			token = pPolicy->getPolicyId();
 	}
-	
 	DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, mode, type);
 	return endPointDesc;
 }

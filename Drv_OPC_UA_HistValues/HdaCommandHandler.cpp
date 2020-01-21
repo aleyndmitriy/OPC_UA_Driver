@@ -12,6 +12,7 @@
 #include <OdsErr.h>
 #include"Utils.h"
 #include<numeric>
+#include<functional>
 
 DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
 {
@@ -266,15 +267,63 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					if (tagsIterator->second.empty()) {
 						return;
 					}
-					ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
-					pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
-					std::vector<ODS::TvqListElementDescription> listDesc;
 					switch (queriesIterator->first) {
 					case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
+					{
+						ODS::HdaFunctionResultVLC* pFuncResult = new ODS::HdaFunctionResultVLC;
+						std::vector<bool> conditions;
+						std::vector<ODS::TvqListElementDescription> listDesc;
+						for (std::vector<Record>::const_iterator itr = tagsIterator->second.cbegin(); itr != tagsIterator->second.cend(); ++itr) {
+							bool condition = false;
+							if (AdjustConditions(queriesIterator->second.at(index).GetConditions(), tagsData, *itr)) {
+								condition = true;
+							}
+							ODS::Tvq* tvq = CreateTvqFromRecord(*itr, nullptr);
+							SYSTEMTIME tm = tvq->GetTimestampLoc();
+							if (tm.wYear != 0) {
+								if (itr == tagsIterator->second.cbegin()) {
+
+									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localStartDataTime) < 0) {
+										ODS::TvqListElementDescription desc;
+										desc.m_nIndex = 0;
+										desc.m_ulFlags = ODS::TvqListElementDescription::PREV_POINT;
+										listDesc.push_back(desc);
+									}
+								}
+								if (itr == tagsIterator->second.cend() - 1) {
+									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localEndDataTime) > 0) {
+										ODS::TvqListElementDescription desc;
+										desc.m_nIndex = tagsIterator->second.size() - 1;
+										desc.m_ulFlags = ODS::TvqListElementDescription::POST_POINT;
+										listDesc.push_back(desc);
+									}
+								}
+							}
+							pFuncResult->AddTvq(tvq);
+						}
+						bool* conditionsList = new bool[conditions.size()];
+						for (size_t conditionItr = 0; conditionItr < conditions.size(); ++conditionItr) {
+							*(conditionsList + conditionItr) = conditions.at(conditionItr);
+						}
+						pFuncResult->SetConditionValueList(conditionsList, conditions.size());
+
+						if (!listDesc.empty()) {
+							ODS::TvqListElementDescription* desc = new ODS::TvqListElementDescription[listDesc.size()];
+							for (size_t descItr = 0; descItr < listDesc.size(); descItr++) {
+								(desc + descItr)->m_nIndex = listDesc.at(descItr).m_nIndex;
+								(desc + descItr)->m_ulFlags = listDesc.at(descItr).m_ulFlags;
+							}
+							pFuncResult->SetTvqDescList(desc, listDesc.size());
+						}
+						pResultList->push_back(pFuncResult);
+					}
 						break;
 					case ODS::HdaFunctionType::LAST_VALUE:
 					case ODS::HdaFunctionType::TIMESTAMP_OF_LAST_VALUE:
 					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
 							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr, nullptr);
@@ -286,6 +335,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					case ODS::HdaFunctionType::FIRST_VALUE:
 					case ODS::HdaFunctionType::TIMESTAMP_OF_FIRST_VALUE:
 					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
 							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr, nullptr);
@@ -296,6 +348,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						break;
 					case ODS::HdaFunctionType::AVG_VALUE:
 					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
 						Record avgRecord = RecordAvg(record, tagsIterator->second.size());
 						ODS::Tvq* tvq = CreateTvqFromRecord(avgRecord, nullptr);
@@ -305,6 +360,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						break;
 					case ODS::HdaFunctionType::SUM_VALUE:
 					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
 						ODS::Tvq* tvq = CreateTvqFromRecord(record, nullptr);
 						pFuncResult->AddTvq(tvq);
@@ -314,6 +372,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					case ODS::HdaFunctionType::MIN_VALUE:
 					case ODS::HdaFunctionType::TIMESTAMP_OF_MINIMUM_VALUE:
 					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
 							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr, nullptr);
@@ -325,6 +386,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					case ODS::HdaFunctionType::MAX_VALUE:
 					case ODS::HdaFunctionType::TIMESTAMP_OF_MAXIMUM_VALUE:
 					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
 							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr, nullptr);
@@ -334,7 +398,14 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					}
 						break;
 					case ODS::HdaFunctionType::VALUE_LIST:
+					{
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						std::vector<ODS::TvqListElementDescription> listDesc;
 						for (std::vector<Record>::const_iterator itr = tagsIterator->second.cbegin(); itr != tagsIterator->second.cend(); ++itr) {
+							if (!AdjustConditions(queriesIterator->second.at(index).GetConditions(), tagsData, *itr)) {
+								continue;
+							}
 							ODS::Tvq* tvq = CreateTvqFromRecord(*itr, nullptr);
 							SYSTEMTIME tm = tvq->GetTimestampLoc();
 							if (tm.wYear != 0) {
@@ -367,6 +438,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 							pFuncResult->SetTvqDescList(desc, listDesc.size());
 						}
 						pResultList->push_back(pFuncResult);
+					}
 						break;
 					default:
 						break;
@@ -386,26 +458,25 @@ std::vector<DrvOPCUAHistValues::ParamValueList> DrvOPCUAHistValues::HdaCommandHa
 	return vec;
 }
 
-bool DrvOPCUAHistValues::HdaCommandHandler::AdjustConditions(const ParamValueList& param, const std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData)
+bool DrvOPCUAHistValues::HdaCommandHandler::AdjustConditions(const std::vector<TagCondition>& conditions,
+	const std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const Record& record)
 {
-	if (param.IsEmpty() || tagsData.empty()) {
-		return false;
-	}
-	std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >::const_iterator findRecord = tagsData.find(param.GetFullAddress());
-	if (findRecord == tagsData.cend()) {
-		return false;
-	}
-	if (param.GetConditions().empty()) {
+	if (conditions.empty()) {
 		return true;
 	}
-	
-	for (std::vector<TagCondition>::const_iterator conditionsIter = param.GetConditions().cbegin(); conditionsIter != param.GetConditions().cend(); ++conditionsIter) {
+	//bool isConditions = false;
+	for (std::vector<TagCondition>::const_iterator conditionsIter = conditions.cbegin(); conditionsIter != conditions.cend(); ++conditionsIter) {
 		std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >::const_iterator findConditionRecord = tagsData.find(conditionsIter->tagName);
 		if (findConditionRecord != tagsData.cend()) {
+			std::vector<DrvOPCUAHistValues::Record>::const_iterator findEqualTime = std::find_if(findConditionRecord->second.cbegin(),
+				findConditionRecord->second.cend(), std::bind(CompareRecordsDataTime, std::placeholders::_1, record));
+			if (findEqualTime != findConditionRecord->second.cend()) {
+				return true;
+			}
 
 		}
 	}
-	return true;
+	return false;
 }
 
 ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Record& record, bool* condition) const
