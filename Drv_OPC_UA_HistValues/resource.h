@@ -20,6 +20,9 @@
 #define IDC_LIST_LOGIN_TYPE             1015
 #define IDC_BUTTON_PKI_STORE_PATH       1016
 #define IDC_PKI_STORE_PATH              1017
+#define IDC_COMBO_POLICY_ID             1018
+#define IDC_EDIT1                       1019
+#define IDC_EDIT_USER_PASSWORD          1019
 
 // Next default values for new objects
 // 
@@ -27,7 +30,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1000
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           1008
 #endif
 #endif

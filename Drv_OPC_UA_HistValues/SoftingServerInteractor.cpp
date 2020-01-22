@@ -8,7 +8,7 @@
 #include <Statics.h>
 
 SoftingServerInteractor::SoftingServerInteractor():
- m_pServerAttributes(), m_pOutput(), m_pApp(), m_AppDesc(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_sessionsList()
+ m_pServerAttributes(), m_pOutput(), m_pApp(), m_AppDesc(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
 {
 	
 }
@@ -196,10 +196,10 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 	if (connectionID.empty() || startApplication() == false) {
 		return;
 	}
-	if (!m_selectedEndPointDescription) {
-		ChooseCurrentEndPoint();
+	if (!m_selectedEndPointDescription || !m_userToken) {
+		chooseEndPointAndPolicyId();
 	}
-	if (!m_selectedEndPointDescription) {
+	if (!m_selectedEndPointDescription || !m_userToken) {
 		return;
 	}
 	EnumStatusCode result = EnumStatusCode_Good;
@@ -350,7 +350,7 @@ void SoftingServerInteractor::ChooseCurrentServer()
 		return;
 	}
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-	std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> endpointDescriptionsString;
+	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> endpointDescriptionsString;
 	if (m_pServerAttributes->configuration.serverName.empty()) {
 		std::string message("Select sever!");
 		if (output) {
@@ -402,19 +402,28 @@ void SoftingServerInteractor::ChooseCurrentServer()
 			}
 			for (std::vector<SoftingOPCToolbox5::EndpointDescription>::const_iterator endPointIterator = selectedUrlEndpointDescriptions.cbegin(); endPointIterator != selectedUrlEndpointDescriptions.cend(); ++endPointIterator) {
 				std::string name(endPointIterator->getEndpointUrl());
-				int mode = endPointIterator->getMessageSecurityMode();
-				//std::string certificate = desc.getServerCertificate().toString();
-				unsigned int tokenCount = endPointIterator->getUserIdentityTokenCount();
-				std::string token;
-				int type = 0;
-				for (unsigned int tokenIndex = 0; tokenIndex < tokenCount; ++tokenIndex) {
-					const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = endPointIterator->getUserIdentityToken(tokenIndex);
-					EnumUserTokenType identityToken = pPolicy->getTokenType();
-					type = identityToken;
-					token = pPolicy->getPolicyId();
-					DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, token, mode, type);
-					endpointDescriptionsString.push_back(endPointDesc);
+				EnumMessageSecurityMode descMode = endPointIterator->getMessageSecurityMode();
+				DrvOPCUAHistValues::ConfigurationSecurityMode mode = DrvOPCUAHistValues::ConfigurationSecurityMode::INVALID;
+				switch (descMode)
+				{
+				case EnumMessageSecurityMode::EnumMessageSecurityMode_SignAndEncrypt:
+					mode = DrvOPCUAHistValues::ConfigurationSecurityMode::SIGN_AND_ENCRYPT;
+					break;
+				case EnumMessageSecurityMode::EnumMessageSecurityMode_Sign:
+					mode = DrvOPCUAHistValues::ConfigurationSecurityMode::SIGN;
+					break;
+				case EnumMessageSecurityMode::EnumMessageSecurityMode_None:
+					mode = DrvOPCUAHistValues::ConfigurationSecurityMode::NONE;
+					break;
+				default:
+					mode = DrvOPCUAHistValues::ConfigurationSecurityMode::INVALID;
+					break;
 				}
+				if (mode == DrvOPCUAHistValues::ConfigurationSecurityMode::INVALID) {
+					continue;
+				}
+				DrvOPCUAHistValues::ServerSecurityModeConfiguration endPointDesc(name, mode);
+				endpointDescriptionsString.push_back(endPointDesc);
 			}
 		}
 	}
@@ -423,9 +432,9 @@ void SoftingServerInteractor::ChooseCurrentServer()
 			std::string message = std::string("Failed to get endpoint descriptions: ") + std::string(getEnumStatusCodeString(result));
 			output->SendWarning(std::move(message));
 		}
-		std::sort(endpointDescriptionsString.begin(), endpointDescriptionsString.end(), IsEndPointDescLess);
-		std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::iterator last = std::unique(endpointDescriptionsString.begin(), endpointDescriptionsString.end(), IsEndPointDescEqual);
-		endpointDescriptionsString.erase(last, endpointDescriptionsString.end());
+		//std::sort(endpointDescriptionsString.begin(), endpointDescriptionsString.end(), IsEndPointDescLess);
+		//std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>::iterator last = std::unique(endpointDescriptionsString.begin(), endpointDescriptionsString.end(), IsEndPointDescEqual);
+		//endpointDescriptionsString.erase(last, endpointDescriptionsString.end());
 		output->GetEndPoints(std::move(endpointDescriptionsString));
 	}
 }
@@ -436,10 +445,124 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 		return;
 	}
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> policyIds;
 	if(m_selectedEndPointDescription) {
 		m_selectedEndPointDescription->clear();
 	}
 	m_selectedEndPointDescription.reset();
+	if (m_pServerAttributes->configuration.serverName.empty()) {
+		std::string message("Select sever!");
+		if (output) {
+			output->SendWarning(std::move(message));
+			output->GetPolicyIds(std::move(policyIds));
+		}
+		return;
+	}
+	EnumStatusCode result = EnumStatusCode_Good;
+	std::vector<std::string> serverURIs;
+	serverURIs.push_back(m_pServerAttributes->configuration.serverName);
+	std::vector<SoftingOPCToolbox5::ApplicationDescription> serverList;
+	std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
+	if (m_pServerAttributes->configuration.port > 0) {
+		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
+	}
+	result = m_pApp->findServers(discoveryServerUrl, serverURIs, serverList);
+	if (StatusCode::isBad(result) || serverList.empty())
+	{
+		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(m_enumResult));
+		if (output) {
+			output->SendMessageError(std::move(message));
+			output->GetPolicyIds(std::move(policyIds));
+		}
+		return;
+	}
+	std::vector<tstring> discoveryUrls;
+	discoveryUrls = serverList.at(0).getDiscoveryUrls();
+	if (discoveryUrls.empty())
+	{
+		if (output) {
+			std::string message("Invalid endpoint URL!");
+			output->SendWarning(std::move(message));
+			output->GetPolicyIds(std::move(policyIds));
+		}
+		return;
+	}
+	std::vector<SoftingOPCToolbox5::EndpointDescription> selectedUrlEndpointDescriptions;
+	for (std::vector<std::string>::const_iterator itr = discoveryUrls.cbegin(); itr != discoveryUrls.cend(); itr++) {
+		if (itr->length() > 0) {
+			std::vector<tstring> transportProfileList;
+			result = EnumStatusCode_Good;
+			result = m_pApp->getEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
+			if (StatusCode::isBad(result))
+			{
+				selectedUrlEndpointDescriptions.clear();
+				continue;
+			}
+			std::vector<SoftingOPCToolbox5::EndpointDescription>::const_iterator itrFound =
+				std::find_if(selectedUrlEndpointDescriptions.cbegin(), selectedUrlEndpointDescriptions.cend(), std::bind(admitToAttributes, std::placeholders::_1, *m_pServerAttributes));
+			if (itrFound != selectedUrlEndpointDescriptions.cend()) {
+				m_selectedEndPointDescription = std::make_unique<SoftingOPCToolbox5::EndpointDescription>(SoftingOPCToolbox5::EndpointDescription(*itrFound));
+				break;
+			}
+			else {
+				selectedUrlEndpointDescriptions.clear();
+				continue;
+			}
+		}
+	}
+	if (output) {
+		if (selectedUrlEndpointDescriptions.empty() || !m_selectedEndPointDescription) {
+			std::string message = std::string("Failed to get endpoint with given attributes");
+			output->SendWarning(std::move(message));
+			output->GetPolicyIds(std::move(policyIds));
+		}
+		else {
+			DrvOPCUAHistValues::ConfigurationSecurityType type;
+			unsigned int tokenIndex = 0;
+			unsigned int tokenCount = m_selectedEndPointDescription->getUserIdentityTokenCount();
+			for (unsigned int tokenIndex = 0; tokenIndex < tokenCount; ++tokenIndex) {
+				const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = m_selectedEndPointDescription->getUserIdentityToken(tokenIndex);
+				std::string token = pPolicy->getPolicyId();
+				EnumUserTokenType identityToken = pPolicy->getTokenType();
+				switch (identityToken) {
+				case EnumUserTokenType_Anonymous:
+					type = DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS;
+					break;
+				case EnumUserTokenType_UserName:
+					type = DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME;
+					break;
+				case EnumUserTokenType_Certificate:
+					type = DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE;
+					break;
+				case EnumUserTokenType_IssuedToken:
+					type = DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN;
+					break;
+				default:
+					continue;
+					break;
+				}
+				policyIds.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(token,type));
+			}
+			output->GetPolicyIds(std::move(policyIds));
+		}
+	}
+}
+
+
+void SoftingServerInteractor::chooseEndPointAndPolicyId()
+{
+	if (startApplication() == false) {
+		return;
+	}
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (m_selectedEndPointDescription) {
+		m_selectedEndPointDescription->clear();
+	}
+	m_selectedEndPointDescription.reset();
+	if (m_userToken) {
+		m_userToken->clear();
+	}
+	m_userToken.reset();
 	if (m_pServerAttributes->configuration.serverName.empty()) {
 		std::string message("Select sever!");
 		if (output) {
@@ -498,9 +621,45 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 		}
 	}
 	if (output) {
-		if (selectedUrlEndpointDescriptions.empty()) {
+		if (selectedUrlEndpointDescriptions.empty() || !m_selectedEndPointDescription) {
 			std::string message = std::string("Failed to get endpoint with given attributes");
 			output->SendWarning(std::move(message));
+		}
+		else {
+			unsigned int tokenIndex = 0;
+			unsigned int tokenCount = m_selectedEndPointDescription->getUserIdentityTokenCount();
+			for (unsigned int tokenIndex = 0; tokenIndex < tokenCount; ++tokenIndex) {
+				const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = m_selectedEndPointDescription->getUserIdentityToken(tokenIndex);
+				std::string token = pPolicy->getPolicyId();
+				if (token == m_pServerAttributes->configurationAccess.m_policyId) {
+					m_userToken = std::make_unique<SoftingOPCToolbox5::UserIdentityToken>();
+					DrvOPCUAHistValues::ConfigurationSecurityType type = m_pServerAttributes->configurationAccess.m_securityType;
+					EnumUserTokenType identityToken = pPolicy->getTokenType();
+					switch (identityToken) {
+					case EnumUserTokenType_Anonymous:
+						if (m_pServerAttributes->configurationAccess.m_securityType == DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS) {
+							m_userToken->setAnonymousIdentityToken(token);
+						}
+						break;
+					case EnumUserTokenType_UserName:
+						if (m_pServerAttributes->configurationAccess.m_securityType == DrvOPCUAHistValues::ConfigurationSecurityType::USER_NAME) {
+							SoftingOPCToolbox5::ByteString pwdByteString(m_pServerAttributes->configurationAccess.m_userLogin.m_password);
+							m_userToken->setUserNameIdentityToken(token, m_pServerAttributes->configurationAccess.m_userLogin.m_login, &pwdByteString);
+						}
+						break;
+					case EnumUserTokenType_Certificate:
+						type = DrvOPCUAHistValues::ConfigurationSecurityType::CERTIFICATE;
+						break;
+					case EnumUserTokenType_IssuedToken:
+						type = DrvOPCUAHistValues::ConfigurationSecurityType::ISSUED_TOKEN;
+						break;
+					default:
+						continue;
+						break;
+					}
+					break;
+				}
+			}
 		}
 	}
 }
@@ -981,39 +1140,7 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 	if (mode != DrvOPCUAHistValues::GetIntFromSecurityMode(attributes.configurationMode.securityMode)) {
 		return false;
 	}
-	int type = 0;
-	unsigned int tokenIndex = 0;
-	unsigned int tokenCount = desc.getUserIdentityTokenCount();
-	bool isFounded = false;
-	for (unsigned int tokenIndex = 0; tokenIndex < tokenCount; ++tokenIndex) {
-		const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(tokenIndex);
-		std::string token = pPolicy->getPolicyId();
-		EnumUserTokenType identityToken = pPolicy->getTokenType();
-		
-		switch (identityToken) {
-		case EnumUserTokenType_Anonymous:
-			type = 0;
-			break;
-		case EnumUserTokenType_UserName:
-			type = 1;
-			break;
-		case EnumUserTokenType_Certificate:
-			type = 2;
-			break;
-		case EnumUserTokenType_IssuedToken:
-			type = 3;
-			break;
-		default:
-			type = -1;
-			break;
-		}
-		type = identityToken;
-		if (type == DrvOPCUAHistValues::GetIntFromSecurityType(attributes.configurationAccess.m_securityType) && token == attributes.configurationAccess.m_policyId) {
-			return true;
-		}
-	}
-	
-	return isFounded;
+	return true;
 }
 
 DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::DataValue& dataValue)

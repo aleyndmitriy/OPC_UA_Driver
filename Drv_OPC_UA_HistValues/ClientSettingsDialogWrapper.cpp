@@ -42,7 +42,7 @@ void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetServers(std::vector<std
 	m_pMFCdialog->GetServers(std::move(servers));
 }
 
-void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers)
+void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers)
 {
 	m_pMFCdialog->GetEndPoints(std::move(servers));
 }

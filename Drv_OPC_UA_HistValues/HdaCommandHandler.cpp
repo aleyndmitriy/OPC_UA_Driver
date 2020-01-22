@@ -655,7 +655,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::GetServers(std::vector<std::string>&
 
 }
 
-void DrvOPCUAHistValues::HdaCommandHandler::GetEndPoints(std::vector<SoftingServerEndPointDescription>&& servers)
+void DrvOPCUAHistValues::HdaCommandHandler::GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers)
 {
 
 }

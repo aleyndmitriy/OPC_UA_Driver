@@ -73,7 +73,7 @@ void DrvOPCUAHistValues::BrowserHandler::GetServers(std::vector<std::string>&& s
 
 }
 
-void DrvOPCUAHistValues::BrowserHandler::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& servers)
+void DrvOPCUAHistValues::BrowserHandler::GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers)
 {
 
 }

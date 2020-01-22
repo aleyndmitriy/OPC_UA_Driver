@@ -40,6 +40,8 @@ void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_LOGIN_TYPE, m_lstPolicyType);
 	DDX_Control(pDX, IDC_PKI_STORE_PATH, m_editPkiStorePath);
 	DDX_Control(pDX, IDC_BUTTON_PKI_STORE_PATH, m_btnPkiStorePath);
+	DDX_Control(pDX, IDC_COMBO_POLICY_ID, m_cmbPolicyId);
+	DDX_Control(pDX, IDC_EDIT_USER_PASSWORD, m_editUserPassword);
 }
 
 
@@ -66,6 +68,7 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &CClientSettingsDialog::OnBtnClickedCancel)
 	ON_BN_CLICKED(IDOK, &CClientSettingsDialog::OnBtnClickedOk)
 	ON_BN_CLICKED(IDC_BUTTON_PKI_STORE_PATH, &CClientSettingsDialog::OnBtnClickedButtonPkiStorePath)
+	ON_CBN_SELCHANGE(IDC_COMBO_POLICY_ID, &CClientSettingsDialog::OnCbnSelChangeComboPolicyId)
 END_MESSAGE_MAP()
 
 
@@ -91,7 +94,7 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		m_cmbConfiguration.SetItemData(pos, 0);
 		m_cmbConfiguration.SetCurSel(pos);
 	}
-	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode.serverSecurityName, m_connectAttributes->configurationAccess.m_policyId, m_connectAttributes->configurationMode.securityMode,m_connectAttributes->configurationAccess.m_securityType));
+	m_endPointsConfigurations.push_back(m_connectAttributes->configurationMode);
 	
 	LVITEM item;
 	memset(&item, 0, sizeof(item));
@@ -136,12 +139,13 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editPort.SetSel(0, -1);
 	m_editPort.Clear();
 	m_cmbConfiguration.ResetContent();
+	m_cmbPolicyId.ResetContent();
 	m_lstPolicyType.DeleteAllItems();
 	m_endPointsConfigurations.clear();
 	m_editLogin.SetSel(0, -1);
 	m_editLogin.Clear();
-	m_editLogin.EnableWindow(FALSE);
-
+	m_editUserPassword.SetSel(0, -1);
+	m_editUserPassword.Clear();
 	m_editPassword.SetSel(0, -1);
 	m_editPassword.Clear();
 
@@ -483,8 +487,8 @@ void CClientSettingsDialog::ReadAttributes()
 	int type = HIWORD(lParam);
 	m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromInt(mode);
 	m_connectAttributes->configurationAccess.m_securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
-	len = m_lstPolicyType.GetWindowTextLengthA();
-	m_lstPolicyType.GetWindowTextA(str);
+	len = m_cmbPolicyId.GetWindowTextLengthA();
+	m_cmbPolicyId.GetWindowTextA(str);
 	m_connectAttributes->configurationAccess.m_policyId = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
@@ -545,16 +549,15 @@ void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
 	StopLoading();
 }
 
-void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints)
+void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints)
 {
 	m_endPointsConfigurations.clear();
 	m_endPointsConfigurations.assign(endPoints.cbegin(), endPoints.cend());
 	m_cmbConfiguration.ResetContent();
 	size_t index = 0;
-	for (std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
+	for (std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
 	{
-		std::string desc = itr->m_endPointDesc.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->m_endPointDesc.securityMode) +
-			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(itr->m_securityType);
+		std::string desc = itr->serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->securityMode);
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, index++);
 	}
@@ -574,3 +577,9 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 	
 }
 
+
+
+void CClientSettingsDialog::OnCbnSelChangeComboPolicyId()
+{
+	// TODO: Add your control notification handler code here
+}

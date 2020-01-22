@@ -28,13 +28,14 @@ private:
 	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
 	std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
-	std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription> m_endPointsConfigurations;
+	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> m_endPointsConfigurations;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
 	CComboBox m_cmbConfiguration;
 	CListCtrl m_lstPolicyType;
 	CEdit m_editLogin;
+	CEdit m_editUserPassword;
 	CEdit m_editPassword;
 	CEdit m_editCertificate;
 	CButton m_btnCertificate;
@@ -42,7 +43,7 @@ private:
 	CButton m_btnPrivateKey;
 	CEdit m_editPkiStorePath;
 	CButton m_btnPkiStorePath;
-
+	CComboBox m_cmbPolicyId;
 	BOOL OnInitDialog() override;
 	void SetUpInitialState();
 	void StartLoading();
@@ -72,13 +73,14 @@ public:
 	afx_msg void OnBtnClickedButtonPrivateKeyPath();
 	afx_msg void OnBtnClickedButtonPkiStorePath();
 	afx_msg void OnBtnClickedButtonTestConnection();
+	afx_msg void OnCbnSelChangeComboPolicyId();
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();
 	void SendMessageError(std::string&& message);
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);
 	void GetServers(std::vector<std::string>&& servers);
-	void GetEndPoints(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& endPoints);
+	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
 	void GetNewConnectionGuide(std::string&& uuid);
-	void CloseConnectionWithGuide(std::string&& uuid);
+	void CloseConnectionWithGuide(std::string&& uuid);	
 };

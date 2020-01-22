@@ -36,11 +36,13 @@ private:
 	SoftingOPCToolbox5::ApplicationDescription m_AppDesc;
 	EnumStatusCode m_enumResult;
 	std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;
+	std::unique_ptr<SoftingOPCToolbox5::UserIdentityToken> m_userToken;
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 	void initApplicationDescription();
 	bool startApplication();
 	bool stopApplication();
 	void resetApplication();
+	void chooseEndPointAndPolicyId();
 	EnumNodeClass getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 	void nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 	void readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
