@@ -29,6 +29,7 @@ private:
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
 	std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> m_endPointsConfigurations;
+	std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy> m_endPointPolicyIds;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
@@ -81,6 +82,7 @@ public:
 	void SendMessageInfo(std::string&& message);
 	void GetServers(std::vector<std::string>&& servers);
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
+	void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds);
 	void GetNewConnectionGuide(std::string&& uuid);
 	void CloseConnectionWithGuide(std::string&& uuid);	
 };

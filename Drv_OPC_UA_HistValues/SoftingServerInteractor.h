@@ -36,7 +36,7 @@ private:
 	SoftingOPCToolbox5::ApplicationDescription m_AppDesc;
 	EnumStatusCode m_enumResult;
 	std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;
-	std::unique_ptr<SoftingOPCToolbox5::UserIdentityToken> m_userToken;
+	std::unique_ptr<SoftingOPCToolbox5::UserTokenPolicy> m_userToken;
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 	void initApplicationDescription();
 	bool startApplication();
@@ -54,4 +54,7 @@ private:
 };
 
 bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes);
+bool admitToSecurityPolicy(const SoftingOPCToolbox5::UserTokenPolicy& policy, const DrvOPCUAHistValues::SecurityUserTokenPolicy& attributesPolicy);
+DrvOPCUAHistValues::ServerSecurityModeConfiguration mapConfigFromEndPointDesc(const SoftingOPCToolbox5::EndpointDescription& desc);
+DrvOPCUAHistValues::SecurityUserTokenPolicy mapEndPointTokenFromPolicy(const SoftingOPCToolbox5::UserTokenPolicy& policy);
 DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::DataValue& dataValue);

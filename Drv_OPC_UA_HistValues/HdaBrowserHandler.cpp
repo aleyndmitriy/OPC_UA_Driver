@@ -78,6 +78,11 @@ void DrvOPCUAHistValues::BrowserHandler::GetEndPoints(std::vector<ServerSecurity
 
 }
 
+void DrvOPCUAHistValues::BrowserHandler::GetPolicyIds(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& policyIds)
+{
+
+}
+
 void DrvOPCUAHistValues::BrowserHandler::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_ConnectionId = uuid;

@@ -16,6 +16,7 @@ namespace DrvOPCUAHistValues
 		void SendMessageInfo(std::string&& message) override;
 		void GetServers(std::vector<std::string>&& servers) override;
 		void GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers) override;
+		void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds) override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
 		void CloseConnectionWithGuide(std::string&& uuid) override;
 	private:

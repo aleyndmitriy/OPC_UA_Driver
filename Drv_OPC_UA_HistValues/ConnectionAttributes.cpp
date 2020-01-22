@@ -150,20 +150,14 @@ bool DrvOPCUAHistValues::operator!=(const ServerConfiguration& lhs, const Server
 }
 
 
-DrvOPCUAHistValues::ServerSecurityModeConfiguration::ServerSecurityModeConfiguration(const std::string& config, ConfigurationSecurityMode mode):
-	serverSecurityName(config),securityMode(mode)
-{
-
-}
-
-DrvOPCUAHistValues::ServerSecurityModeConfiguration::ServerSecurityModeConfiguration(const std::string& config):
-	ServerSecurityModeConfiguration(config, ConfigurationSecurityMode::INVALID)
+DrvOPCUAHistValues::ServerSecurityModeConfiguration::ServerSecurityModeConfiguration(const std::string& config, const std::string& policy, ConfigurationSecurityMode mode):
+	serverSecurityName(config), serverSecurityPolicy(policy), securityMode(mode)
 {
 
 }
 
 DrvOPCUAHistValues::ServerSecurityModeConfiguration::ServerSecurityModeConfiguration():
-	ServerSecurityModeConfiguration(std::string())
+	ServerSecurityModeConfiguration(std::string(),std::string(), ConfigurationSecurityMode::INVALID)
 {
 
 }
@@ -171,17 +165,18 @@ DrvOPCUAHistValues::ServerSecurityModeConfiguration::ServerSecurityModeConfigura
 DrvOPCUAHistValues::ServerSecurityModeConfiguration::~ServerSecurityModeConfiguration()
 {
 	serverSecurityName.clear();
+	serverSecurityPolicy.clear();
 	securityMode = ConfigurationSecurityMode::INVALID;
 }
 
 bool DrvOPCUAHistValues::operator==(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs)
 {
-	return lhs.serverSecurityName == rhs.serverSecurityName && lhs.securityMode == rhs.securityMode;
+	return lhs.serverSecurityName == rhs.serverSecurityName && lhs.securityMode == rhs.securityMode && rhs.serverSecurityPolicy == lhs.serverSecurityPolicy;
 }
 
 bool DrvOPCUAHistValues::operator!=(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs)
 {
-	return lhs.serverSecurityName != rhs.serverSecurityName || lhs.securityMode != rhs.securityMode;
+	return lhs.serverSecurityName != rhs.serverSecurityName || lhs.securityMode != rhs.securityMode || rhs.serverSecurityPolicy == lhs.serverSecurityPolicy;
 }
 
 bool DrvOPCUAHistValues::operator<(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs)
@@ -191,7 +186,15 @@ bool DrvOPCUAHistValues::operator<(const ServerSecurityModeConfiguration& lhs, c
 	}
 	else {
 		if (lhs.serverSecurityName == rhs.serverSecurityName) {
-			return lhs.securityMode < rhs.securityMode;
+			if (lhs.securityMode < rhs.securityMode) {
+				return true;
+			}
+			else {
+				if (lhs.securityMode == rhs.securityMode) {
+					return lhs.serverSecurityPolicy < rhs.serverSecurityPolicy;
+				}
+				return false;
+			}
 		}
 		return false;
 	}
@@ -241,6 +244,55 @@ DrvOPCUAHistValues::SecurityCertificateAccess::~SecurityCertificateAccess()
 
 }
 
+
+DrvOPCUAHistValues::SecurityUserTokenPolicy::SecurityUserTokenPolicy(const std::string& policyId, const std::string& securityPolicyUri, int type) :
+	m_policyId(policyId), m_securityPolicyUri(securityPolicyUri), m_securityType(GetTypeFromInt(type))
+{
+
+}
+
+DrvOPCUAHistValues::SecurityUserTokenPolicy::SecurityUserTokenPolicy(const std::string& policyId, const std::string& securityPolicyUri, ConfigurationSecurityType type) :
+	m_policyId(policyId), m_securityPolicyUri(securityPolicyUri), m_securityType(type)
+{
+
+}
+
+DrvOPCUAHistValues::SecurityUserTokenPolicy::~SecurityUserTokenPolicy()
+{
+
+}
+
+bool DrvOPCUAHistValues::operator==(const DrvOPCUAHistValues::SecurityUserTokenPolicy& lhs, const DrvOPCUAHistValues::SecurityUserTokenPolicy& rhs)
+{
+	return lhs.m_policyId == rhs.m_policyId && lhs.m_securityType == rhs.m_securityType && lhs.m_securityPolicyUri == rhs.m_securityPolicyUri;
+}
+
+bool DrvOPCUAHistValues::operator!=(const DrvOPCUAHistValues::SecurityUserTokenPolicy& lhs, const DrvOPCUAHistValues::SecurityUserTokenPolicy& rhs)
+{
+	return lhs.m_policyId != rhs.m_policyId || lhs.m_securityType != rhs.m_securityType || lhs.m_securityPolicyUri != rhs.m_securityPolicyUri;
+}
+
+bool DrvOPCUAHistValues::operator<(const DrvOPCUAHistValues::SecurityUserTokenPolicy& lhs, const DrvOPCUAHistValues::SecurityUserTokenPolicy& rhs)
+{
+	if (lhs.m_policyId < rhs.m_policyId) {
+		return true;
+	}
+	else {
+		if (lhs.m_policyId == rhs.m_policyId) {
+			if (lhs.m_securityType < rhs.m_securityType) {
+				return true;
+			}
+			else {
+				if (lhs.m_securityType == rhs.m_securityType) {
+					return lhs.m_securityPolicyUri == rhs.m_securityPolicyUri;
+				}
+				return false;
+			}
+		}
+		return false;
+	}
+}
+
 bool DrvOPCUAHistValues::operator==(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs)
 {
 	return lhs.m_password == rhs.m_password && lhs.m_certificate == rhs.m_certificate &&
@@ -254,15 +306,15 @@ bool DrvOPCUAHistValues::operator!=(const SecurityCertificateAccess& lhs, const 
 }
 
 
-DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const SecurityUserNameAccess& user, const SecurityCertificateAccess& certificate, const::std::string& policyId, ConfigurationSecurityType type):
-	m_userLogin(user), m_certificate(certificate), m_policyId(policyId), m_securityType(type)
+DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const SecurityUserNameAccess& user, const SecurityCertificateAccess& certificate, const SecurityUserTokenPolicy& policy):
+	m_userLogin(user), m_certificate(certificate), m_policy(policy)
 {
 
 }
 
 
 DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration() :
-	SecurityAccessConfiguration(SecurityUserNameAccess(), SecurityCertificateAccess(), std::string(), ConfigurationSecurityType::ANONYMOUS)
+	SecurityAccessConfiguration(SecurityUserNameAccess(), SecurityCertificateAccess(), SecurityUserTokenPolicy())
 {
 	
 }
@@ -274,14 +326,12 @@ DrvOPCUAHistValues::SecurityAccessConfiguration::~SecurityAccessConfiguration()
 
 bool DrvOPCUAHistValues::operator==(const SecurityAccessConfiguration& lhs, const SecurityAccessConfiguration& rhs)
 {
-	return lhs.m_userLogin == rhs.m_userLogin && lhs.m_certificate == rhs.m_certificate &&
-		 lhs.m_policyId == rhs.m_policyId && lhs.m_securityType == rhs.m_securityType;
+	return lhs.m_userLogin == rhs.m_userLogin && lhs.m_certificate == rhs.m_certificate && lhs.m_policy == rhs.m_policy;
 }
 
 bool DrvOPCUAHistValues::operator!=(const SecurityAccessConfiguration& lhs, const SecurityAccessConfiguration& rhs)
 {
-	return lhs.m_userLogin != rhs.m_userLogin || lhs.m_certificate != rhs.m_certificate ||
-		lhs.m_policyId != rhs.m_policyId || lhs.m_securityType != rhs.m_securityType;
+	return lhs.m_userLogin != rhs.m_userLogin || lhs.m_certificate != rhs.m_certificate || lhs.m_policy != rhs.m_policy;
 }
 
 DrvOPCUAHistValues::ConnectionAttributes::ConnectionAttributes(const ServerConfiguration& server, const ServerSecurityModeConfiguration& mode, const SecurityAccessConfiguration& accessType):

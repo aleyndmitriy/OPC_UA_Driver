@@ -13,7 +13,7 @@
 IMPLEMENT_DYNAMIC(CClientSettingsDialog, CDialogEx)
 
 CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent)
-	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pSoftingInteractor(softingInteractor), m_endPointsConfigurations()
+	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pSoftingInteractor(softingInteractor), m_endPointsConfigurations(), m_endPointPolicyIds()
 {
 	
 }
@@ -560,6 +560,20 @@ void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::ServerS
 		std::string desc = itr->serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->securityMode);
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, index++);
+	}
+	StopLoading();
+}
+
+void CClientSettingsDialog::GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds)
+{
+	m_endPointPolicyIds.clear();
+	m_endPointPolicyIds.assign(policyIds.cbegin(),policyIds.cend());
+	m_cmbPolicyId.ResetContent();
+	size_t index = 0;
+	for (std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>::const_iterator itr = policyIds.cbegin(); itr != policyIds.cend(); ++itr)
+	{
+		int pos = m_cmbConfiguration.AddString(itr->m_policyId.c_str());
+		m_cmbPolicyId.SetItemData(pos, index++);
 	}
 	StopLoading();
 }

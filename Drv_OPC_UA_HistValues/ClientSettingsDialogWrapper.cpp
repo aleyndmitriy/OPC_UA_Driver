@@ -47,6 +47,11 @@ void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetEndPoints(std::vector<S
 	m_pMFCdialog->GetEndPoints(std::move(servers));
 }
 
+void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds)
+{
+	m_pMFCdialog->GetPolicyIds(std::move(policyIds));
+}
+
 void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_pMFCdialog->GetNewConnectionGuide(std::move(uuid));

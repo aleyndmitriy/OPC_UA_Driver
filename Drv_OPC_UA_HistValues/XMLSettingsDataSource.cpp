@@ -13,6 +13,7 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Save(const ConnectionAttributes&
 	pugi::xml_node securityModeNode = rootNode.append_child("SecurityModeConfiguration");
 	securityModeNode.append_attribute("Configuration").set_value(attributes.configurationMode.serverSecurityName.c_str());
 	securityModeNode.append_attribute("SecurityMode").set_value(GetIntFromSecurityMode(attributes.configurationMode.securityMode));
+	securityModeNode.append_attribute("SecurityPolicy").set_value(attributes.configurationMode.serverSecurityPolicy.c_str());
 	pugi::xml_node connectionNode = rootNode.append_child("SecurityAccessConfiguration");
 	connectionNode.append_attribute("UserName").set_value(attributes.configurationAccess.m_userLogin.m_login.c_str());
 	std::string encryptUserPass = attributes.configurationAccess.m_userLogin.m_password;
@@ -22,8 +23,9 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Save(const ConnectionAttributes&
 	connectionNode.append_attribute("CertificatePassword").set_value(encryptCertificatePass.c_str());
 	connectionNode.append_attribute("PrivateKey").set_value(attributes.configurationAccess.m_certificate.m_privateKey.c_str());
 	connectionNode.append_attribute("PkiTrustedStore").set_value(attributes.configurationAccess.m_certificate.m_pkiTrustedPath.c_str());
-	connectionNode.append_attribute("PolicyId").set_value(attributes.configurationAccess.m_policyId.c_str());
-	connectionNode.append_attribute("SecurityType").set_value(GetIntFromSecurityType(attributes.configurationAccess.m_securityType));
+	connectionNode.append_attribute("PolicyId").set_value(attributes.configurationAccess.m_policy.m_policyId.c_str());
+	connectionNode.append_attribute("PolicyUri").set_value(attributes.configurationAccess.m_policy.m_securityPolicyUri.c_str());
+	connectionNode.append_attribute("SecurityType").set_value(GetIntFromSecurityType(attributes.configurationAccess.m_policy.m_securityType));
 	doc.save(stream);
 	return true;
 }
@@ -45,7 +47,8 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Load(ConnectionAttributes& attri
 	pugi::xml_node securityModeNode = rootNode.child("SecurityModeConfiguration");
 	std::string serverSecurityName = std::string(securityModeNode.attribute("Configuration").as_string());
 	int intMode = securityModeNode.attribute("SecurityMode").as_int();
-	ServerSecurityModeConfiguration modeConfiguration(serverSecurityName, GetModeFromInt(intMode));
+	std::string serverSecurityPolicy = std::string(securityModeNode.attribute("SecurityPolicy").as_string());
+	ServerSecurityModeConfiguration modeConfiguration(serverSecurityName, serverSecurityPolicy, GetModeFromInt(intMode));
 	pugi::xml_node connectionNode = rootNode.child("SecurityAccessConfiguration");
 	std::string loginName = std::string(connectionNode.attribute("UserName").as_string());
 	std::string loginPass = std::string(connectionNode.attribute("UserPassword").as_string());
@@ -58,8 +61,10 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Load(ConnectionAttributes& attri
 	SecurityCertificateAccess certificateAccess(certificatePassword,certificate,privateKey,pkiKey);
 
 	std::string policyId = std::string(connectionNode.attribute("PolicyId").as_string());
+	std::string policyUri = std::string(connectionNode.attribute("PolicyUri").as_string());
 	int type = connectionNode.attribute("SecurityType").as_int();
-	SecurityAccessConfiguration configurationAccess(userAccess, certificateAccess, policyId, GetTypeFromInt(type));
+	SecurityUserTokenPolicy policy(policyId, policyUri, type);
+	SecurityAccessConfiguration configurationAccess(userAccess, certificateAccess, policy);
 	
 	attributes.configuration = serverConfiguration;
 	attributes.configurationMode = modeConfiguration;
@@ -85,7 +90,8 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::LoadAttributesString(const char*
 	pugi::xml_node securityModeNode = rootNode.child("SecurityModeConfiguration");
 	std::string serverSecurityName = std::string(securityModeNode.attribute("Configuration").as_string());
 	int intMode = securityModeNode.attribute("SecurityMode").as_int();
-	ServerSecurityModeConfiguration modeConfiguration(serverSecurityName, GetModeFromInt(intMode));
+	std::string serverSecurityPolicy = std::string(securityModeNode.attribute("SecurityPolicy").as_string());
+	ServerSecurityModeConfiguration modeConfiguration(serverSecurityName, serverSecurityPolicy, GetModeFromInt(intMode));
 
 	pugi::xml_node connectionNode = rootNode.child("SecurityAccessConfiguration");
 	std::string loginName = std::string(connectionNode.attribute("UserName").as_string());
@@ -99,8 +105,10 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::LoadAttributesString(const char*
 	SecurityCertificateAccess certificateAccess(certificatePassword, certificate, privateKey, pkiKey);
 
 	std::string policyId = std::string(connectionNode.attribute("PolicyId").as_string());
+	std::string policyUri = std::string(connectionNode.attribute("PolicyUri").as_string());
 	int type = connectionNode.attribute("SecurityType").as_int();
-	SecurityAccessConfiguration configurationAccess(userAccess, certificateAccess, policyId, GetTypeFromInt(type));
+	SecurityUserTokenPolicy policy(policyId, policyUri, type);
+	SecurityAccessConfiguration configurationAccess(userAccess, certificateAccess, policy);
 
 	attributes.configuration = serverConfiguration;
 	attributes.configurationMode = modeConfiguration;

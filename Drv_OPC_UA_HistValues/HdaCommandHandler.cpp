@@ -660,6 +660,12 @@ void DrvOPCUAHistValues::HdaCommandHandler::GetEndPoints(std::vector<ServerSecur
 
 }
 
+void DrvOPCUAHistValues::HdaCommandHandler::GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds)
+{
+
+}
+
+
 void DrvOPCUAHistValues::HdaCommandHandler::GetNewConnectionGuide(std::string&& uuid)
 {
 	if (uuid.empty() == false) {

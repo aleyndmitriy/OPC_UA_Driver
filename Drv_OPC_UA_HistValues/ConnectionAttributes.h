@@ -46,9 +46,9 @@ namespace DrvOPCUAHistValues
 
 	struct ServerSecurityModeConfiguration {
 		std::string serverSecurityName;
+		std::string serverSecurityPolicy;
 		ConfigurationSecurityMode securityMode;
-		ServerSecurityModeConfiguration(const std::string& config, ConfigurationSecurityMode mode);
-		ServerSecurityModeConfiguration(const std::string& config);
+		ServerSecurityModeConfiguration(const std::string& config, const std::string& policy, ConfigurationSecurityMode mode);
 		ServerSecurityModeConfiguration();
 		~ServerSecurityModeConfiguration();
 		ServerSecurityModeConfiguration(const ServerSecurityModeConfiguration& src) = default;
@@ -91,14 +91,30 @@ namespace DrvOPCUAHistValues
 	bool operator==(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs);
 	bool operator!=(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs);
 
+	struct SecurityUserTokenPolicy {
+		SecurityUserTokenPolicy(const std::string& policyId, const std::string& securityPolicyUri, int type);
+		SecurityUserTokenPolicy(const std::string& policyId, const std::string& securityPolicyUri, ConfigurationSecurityType type);
+		SecurityUserTokenPolicy() = default;
+		SecurityUserTokenPolicy(const SecurityUserTokenPolicy& src) = default;
+		SecurityUserTokenPolicy& operator=(const SecurityUserTokenPolicy& src) = default;
+		SecurityUserTokenPolicy(SecurityUserTokenPolicy&& src) = default;
+		SecurityUserTokenPolicy& operator=(SecurityUserTokenPolicy&& src) = default;
+		~SecurityUserTokenPolicy();
+		std::string m_policyId;
+		std::string m_securityPolicyUri;
+		ConfigurationSecurityType m_securityType;
+	};
+
+	bool operator==(const DrvOPCUAHistValues::SecurityUserTokenPolicy& lhs, const DrvOPCUAHistValues::SecurityUserTokenPolicy& rhs);
+	bool operator!=(const DrvOPCUAHistValues::SecurityUserTokenPolicy& lhs, const DrvOPCUAHistValues::SecurityUserTokenPolicy& rhs);
+	bool operator<(const DrvOPCUAHistValues::SecurityUserTokenPolicy& lhs, const DrvOPCUAHistValues::SecurityUserTokenPolicy& rhs);
 
 
 	struct SecurityAccessConfiguration {
 		SecurityUserNameAccess m_userLogin;
 		SecurityCertificateAccess m_certificate;
-		std::string m_policyId;
-		ConfigurationSecurityType m_securityType;
-		SecurityAccessConfiguration(const SecurityUserNameAccess& user, const SecurityCertificateAccess& certificate, const::std::string& policyId, ConfigurationSecurityType type);
+		SecurityUserTokenPolicy m_policy;
+		SecurityAccessConfiguration(const SecurityUserNameAccess& user, const SecurityCertificateAccess& certificate, const SecurityUserTokenPolicy& policy);
 		SecurityAccessConfiguration();
 		~SecurityAccessConfiguration();
 		SecurityAccessConfiguration(const SecurityAccessConfiguration& src) = default;
