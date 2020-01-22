@@ -63,9 +63,9 @@ bool SoftingServerInteractor::startApplication()
 		return false;
 	}
 	m_pApp = SoftingOPCToolbox5::Application::instance();
-	if (!m_pServerAttributes->configurationAccess.pkiTrustedPath.empty()) {
+	if (!m_pServerAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.empty()) {
 		SoftingOPCToolbox5::PkiStoreConfiguration storeConfiguration;
-		storeConfiguration.setCertificateTrustListLocation(m_pServerAttributes->configurationAccess.pkiTrustedPath.c_str());
+		storeConfiguration.setCertificateTrustListLocation(m_pServerAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.c_str());
 		m_enumResult = m_pApp->setPkiStoreConfiguration(&storeConfiguration);
 		if (StatusCode::isBad(m_enumResult))
 		{
@@ -91,10 +91,10 @@ bool SoftingServerInteractor::startApplication()
 	
 	if (StatusCode::isGood(m_enumResult))
 	{
-		if (m_pServerAttributes->configurationAccess.certificate.empty() == false && m_pServerAttributes->configurationAccess.privateKey.empty() == false &&
-			m_pServerAttributes->configurationAccess.password.empty() == false) {
-			m_enumResult = m_pApp->setInstanceCertificate(m_pServerAttributes->configurationAccess.certificate.c_str(),
-				m_pServerAttributes->configurationAccess.privateKey.c_str(), m_pServerAttributes->configurationAccess.password.c_str());
+		if (m_pServerAttributes->configurationAccess.m_certificate.m_certificate.empty() == false && m_pServerAttributes->configurationAccess.m_certificate.m_privateKey.empty() == false &&
+			m_pServerAttributes->configurationAccess.m_certificate.m_password.empty() == false) {
+			m_enumResult = m_pApp->setInstanceCertificate(m_pServerAttributes->configurationAccess.m_certificate.m_certificate.c_str(),
+				m_pServerAttributes->configurationAccess.m_certificate.m_privateKey.c_str(), m_pServerAttributes->configurationAccess.m_certificate.m_password.c_str());
 			if (StatusCode::isBad(m_enumResult))
 			{
 				if (output) {
@@ -400,8 +400,22 @@ void SoftingServerInteractor::ChooseCurrentServer()
 			{
 				continue;
 			}
-			std::transform(selectedUrlEndpointDescriptions.cbegin(), selectedUrlEndpointDescriptions.cend(), std::back_inserter(endpointDescriptionsString),mapEndPointDescription);
-
+			for (std::vector<SoftingOPCToolbox5::EndpointDescription>::const_iterator endPointIterator = selectedUrlEndpointDescriptions.cbegin(); endPointIterator != selectedUrlEndpointDescriptions.cend(); ++endPointIterator) {
+				std::string name(endPointIterator->getEndpointUrl());
+				int mode = endPointIterator->getMessageSecurityMode();
+				//std::string certificate = desc.getServerCertificate().toString();
+				unsigned int tokenCount = endPointIterator->getUserIdentityTokenCount();
+				std::string token;
+				int type = 0;
+				for (unsigned int tokenIndex = 0; tokenIndex < tokenCount; ++tokenIndex) {
+					const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = endPointIterator->getUserIdentityToken(tokenIndex);
+					EnumUserTokenType identityToken = pPolicy->getTokenType();
+					type = identityToken;
+					token = pPolicy->getPolicyId();
+					DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, token, mode, type);
+					endpointDescriptionsString.push_back(endPointDesc);
+				}
+			}
 		}
 	}
 	if (output) {
@@ -934,23 +948,6 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 	}
 }
 
-DrvOPCUAHistValues::SoftingServerEndPointDescription mapEndPointDescription(const SoftingOPCToolbox5::EndpointDescription& desc)
-{
-	std::string name(desc.getEndpointUrl());
-	int mode = desc.getMessageSecurityMode();
-	//std::string certificate = desc.getServerCertificate().toString();
-	unsigned int tokenCount = desc.getUserIdentityTokenCount();
-	std::string token;
-	int type = 0;
-	if (tokenCount > 0) {
-			const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(0);
-			EnumUserTokenType identityToken = pPolicy->getTokenType();
-			type = identityToken;
-			token = pPolicy->getPolicyId();
-	}
-	DrvOPCUAHistValues::SoftingServerEndPointDescription endPointDesc(name, mode, type);
-	return endPointDesc;
-}
 
 bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes)
 {
@@ -985,34 +982,38 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 		return false;
 	}
 	int type = 0;
+	unsigned int tokenIndex = 0;
 	unsigned int tokenCount = desc.getUserIdentityTokenCount();
-	if (tokenCount == 0) {
-		return false;
-	}
-	const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(0);
-	EnumUserTokenType identityToken = pPolicy->getTokenType();
-	switch (identityToken) {
-	case EnumUserTokenType_Anonymous:
-		type = 0;
-		break;
-	case EnumUserTokenType_UserName:
-		type = 1;
-		break;
-	case EnumUserTokenType_Certificate:
-		type = 2;
-		break;
-	case EnumUserTokenType_IssuedToken:
-		type = 3;
-		break;
-	default:
-		type = -1;
-		break;
-	}
-	if (type != DrvOPCUAHistValues::GetIntFromSecurityType(attributes.configurationAccess.securityType)) {
-		return false;
+	bool isFounded = false;
+	for (unsigned int tokenIndex = 0; tokenIndex < tokenCount; ++tokenIndex) {
+		const SoftingOPCToolbox5::IUserTokenPolicy* pPolicy = desc.getUserIdentityToken(tokenIndex);
+		std::string token = pPolicy->getPolicyId();
+		EnumUserTokenType identityToken = pPolicy->getTokenType();
+		
+		switch (identityToken) {
+		case EnumUserTokenType_Anonymous:
+			type = 0;
+			break;
+		case EnumUserTokenType_UserName:
+			type = 1;
+			break;
+		case EnumUserTokenType_Certificate:
+			type = 2;
+			break;
+		case EnumUserTokenType_IssuedToken:
+			type = 3;
+			break;
+		default:
+			type = -1;
+			break;
+		}
+		type = identityToken;
+		if (type == DrvOPCUAHistValues::GetIntFromSecurityType(attributes.configurationAccess.m_securityType) && token == attributes.configurationAccess.m_policyId) {
+			return true;
+		}
 	}
 	
-	return true;
+	return isFounded;
 }
 
 DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::DataValue& dataValue)

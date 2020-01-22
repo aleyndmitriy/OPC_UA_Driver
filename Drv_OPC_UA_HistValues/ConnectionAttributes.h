@@ -61,14 +61,44 @@ namespace DrvOPCUAHistValues
 	bool operator!=(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs);
 	bool operator<(const ServerSecurityModeConfiguration& lhs, const ServerSecurityModeConfiguration& rhs);
 
+	struct SecurityUserNameAccess {
+		std::string m_login;
+		std::string m_password;
+		SecurityUserNameAccess(const std::string& login, const std::string& password);
+		SecurityUserNameAccess(const SecurityUserNameAccess& src) = default;
+		SecurityUserNameAccess& operator=(const SecurityUserNameAccess& src) = default;
+		SecurityUserNameAccess(SecurityUserNameAccess&& src) = default;
+		SecurityUserNameAccess& operator=(SecurityUserNameAccess&& src) = default;
+		SecurityUserNameAccess();
+		~SecurityUserNameAccess();
+	};
+	bool operator==(const SecurityUserNameAccess& lhs, const SecurityUserNameAccess& rhs);
+	bool operator!=(const SecurityUserNameAccess& lhs, const SecurityUserNameAccess& rhs);
+
+	struct SecurityCertificateAccess {
+		std::string m_password;
+		std::string m_certificate;
+		std::string m_privateKey;
+		std::string m_pkiTrustedPath;
+		SecurityCertificateAccess(std::string password, std::string certificate, std::string privateKey, std::string pkiTrustedPath);
+		SecurityCertificateAccess(const SecurityCertificateAccess& src) = default;
+		SecurityCertificateAccess& operator=(const SecurityCertificateAccess& src) = default;
+		SecurityCertificateAccess(SecurityCertificateAccess&& src) = default;
+		SecurityCertificateAccess& operator=(SecurityCertificateAccess&& src) = default;
+		SecurityCertificateAccess();
+		~SecurityCertificateAccess();
+	};
+	bool operator==(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs);
+	bool operator!=(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs);
+
+
+
 	struct SecurityAccessConfiguration {
-		std::string login;
-		std::string password;
-		std::string certificate;
-		std::string privateKey;
-		std::string pkiTrustedPath;
-		ConfigurationSecurityType securityType;
-		SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, const std::string& pkiString, ConfigurationSecurityType type);
+		SecurityUserNameAccess m_userLogin;
+		SecurityCertificateAccess m_certificate;
+		std::string m_policyId;
+		ConfigurationSecurityType m_securityType;
+		SecurityAccessConfiguration(const SecurityUserNameAccess& user, const SecurityCertificateAccess& certificate, const::std::string& policyId, ConfigurationSecurityType type);
 		SecurityAccessConfiguration();
 		~SecurityAccessConfiguration();
 		SecurityAccessConfiguration(const SecurityAccessConfiguration& src) = default;

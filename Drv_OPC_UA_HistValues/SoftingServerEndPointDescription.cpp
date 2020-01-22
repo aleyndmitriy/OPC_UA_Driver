@@ -1,14 +1,14 @@
 #include"pch.h"
 #include"SoftingServerEndPointDescription.h"
 
-DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, int mode, int type):
-	m_endPointDesc(endPoinUrl, GetModeFromInt(mode)), m_securityType(GetTypeFromInt(type))
+DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, const std::string& policyId, int mode, int type):
+	m_endPointDesc(endPoinUrl, GetModeFromInt(mode)), m_policyId(policyId), m_securityType(GetTypeFromInt(type))
 {
 
 }
 
-DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, ConfigurationSecurityMode mode, ConfigurationSecurityType type):
-	m_endPointDesc(endPoinUrl,mode),m_securityType(type)
+DrvOPCUAHistValues::SoftingServerEndPointDescription::SoftingServerEndPointDescription(const std::string& endPoinUrl, const std::string& policyId, ConfigurationSecurityMode mode, ConfigurationSecurityType type):
+	m_endPointDesc(endPoinUrl,mode), m_policyId(policyId), m_securityType(type)
 {
 
 }
@@ -33,6 +33,11 @@ bool IsEndPointDescLess(const DrvOPCUAHistValues::SoftingServerEndPointDescripti
 		if (lhs.m_securityType < rhs.m_securityType) {
 			return true;
 		}
-		return false;
+		else {
+			if (lhs.m_securityType == rhs.m_securityType) {
+				return lhs.m_policyId < rhs.m_policyId;
+			}
+			return false;
+		}
 	}
 }

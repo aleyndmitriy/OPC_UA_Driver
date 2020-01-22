@@ -197,38 +197,91 @@ bool DrvOPCUAHistValues::operator<(const ServerSecurityModeConfiguration& lhs, c
 	}
 }
 
-DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const std::string& loginString, const std::string& passString, const::std::string& certificateString, const::std::string& keyString, CONST std::string& pkiString, ConfigurationSecurityType type):
-	login(loginString),password(passString),certificate(certificateString),privateKey(keyString), pkiTrustedPath(pkiString), securityType(type)
+
+DrvOPCUAHistValues::SecurityUserNameAccess::SecurityUserNameAccess(const std::string& login, const std::string& password):
+	m_login(login),m_password(password)
+{
+
+}
+
+DrvOPCUAHistValues::SecurityUserNameAccess::SecurityUserNameAccess():SecurityUserNameAccess(std::string(),std::string())
+{
+
+}
+
+DrvOPCUAHistValues::SecurityUserNameAccess::~SecurityUserNameAccess()
+{
+
+}
+
+
+bool DrvOPCUAHistValues::operator==(const SecurityUserNameAccess& lhs, const SecurityUserNameAccess& rhs)
+{
+	return lhs.m_login == rhs.m_login && lhs.m_password == rhs.m_password;
+}
+
+bool DrvOPCUAHistValues::operator!=(const SecurityUserNameAccess& lhs, const SecurityUserNameAccess& rhs)
+{
+	return lhs.m_login != rhs.m_login || lhs.m_password != rhs.m_password;
+}
+
+DrvOPCUAHistValues::SecurityCertificateAccess::SecurityCertificateAccess(std::string password, std::string certificate, std::string privateKey, std::string pkiTrustedPath) :
+	m_password(password),m_certificate(certificate), m_privateKey(privateKey),m_pkiTrustedPath(pkiTrustedPath)
+{
+
+}
+
+DrvOPCUAHistValues::SecurityCertificateAccess::SecurityCertificateAccess():SecurityCertificateAccess(std::string(), std::string(), std::string(), std::string())
+{
+
+}
+
+DrvOPCUAHistValues::SecurityCertificateAccess::~SecurityCertificateAccess()
+{
+
+}
+
+bool DrvOPCUAHistValues::operator==(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs)
+{
+	return lhs.m_password == rhs.m_password && lhs.m_certificate == rhs.m_certificate &&
+		lhs.m_privateKey == rhs.m_privateKey && lhs.m_pkiTrustedPath == rhs.m_pkiTrustedPath;
+}
+
+bool DrvOPCUAHistValues::operator!=(const SecurityCertificateAccess& lhs, const SecurityCertificateAccess& rhs)
+{
+	return lhs.m_password != rhs.m_password || lhs.m_certificate != rhs.m_certificate ||
+		lhs.m_privateKey != rhs.m_privateKey || lhs.m_pkiTrustedPath != rhs.m_pkiTrustedPath;
+}
+
+
+DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration(const SecurityUserNameAccess& user, const SecurityCertificateAccess& certificate, const::std::string& policyId, ConfigurationSecurityType type):
+	m_userLogin(user), m_certificate(certificate), m_policyId(policyId), m_securityType(type)
 {
 
 }
 
 
 DrvOPCUAHistValues::SecurityAccessConfiguration::SecurityAccessConfiguration() :
-	SecurityAccessConfiguration(std::string(), std::string(), std::string(), std::string(), std::string(), ConfigurationSecurityType::ANONYMOUS)
+	SecurityAccessConfiguration(SecurityUserNameAccess(), SecurityCertificateAccess(), std::string(), ConfigurationSecurityType::ANONYMOUS)
 {
 	
 }
 
 DrvOPCUAHistValues::SecurityAccessConfiguration::~SecurityAccessConfiguration()
 {
-	login.clear();
-	password.clear();
-	certificate.clear();
-	privateKey.clear();
-	securityType = ConfigurationSecurityType::ANONYMOUS;
+	
 }
 
 bool DrvOPCUAHistValues::operator==(const SecurityAccessConfiguration& lhs, const SecurityAccessConfiguration& rhs)
 {
-	return lhs.login == rhs.login && lhs.password == rhs.password && lhs.certificate == rhs.certificate &&
-		lhs.privateKey == rhs.privateKey && lhs.pkiTrustedPath == rhs.pkiTrustedPath && lhs.securityType == rhs.securityType;
+	return lhs.m_userLogin == rhs.m_userLogin && lhs.m_certificate == rhs.m_certificate &&
+		 lhs.m_policyId == rhs.m_policyId && lhs.m_securityType == rhs.m_securityType;
 }
 
 bool DrvOPCUAHistValues::operator!=(const SecurityAccessConfiguration& lhs, const SecurityAccessConfiguration& rhs)
 {
-	return lhs.login != rhs.login || lhs.password != rhs.password || lhs.certificate != rhs.certificate ||
-		lhs.privateKey != rhs.privateKey || lhs.pkiTrustedPath != rhs.pkiTrustedPath || lhs.securityType != rhs.securityType;
+	return lhs.m_userLogin != rhs.m_userLogin || lhs.m_certificate != rhs.m_certificate ||
+		lhs.m_policyId != rhs.m_policyId || lhs.m_securityType != rhs.m_securityType;
 }
 
 DrvOPCUAHistValues::ConnectionAttributes::ConnectionAttributes(const ServerConfiguration& server, const ServerSecurityModeConfiguration& mode, const SecurityAccessConfiguration& accessType):

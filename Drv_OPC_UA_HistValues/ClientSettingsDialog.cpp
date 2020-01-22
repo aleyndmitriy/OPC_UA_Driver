@@ -86,18 +86,17 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	}
 	if (!m_connectAttributes->configurationMode.serverSecurityName.empty()) {
 		std::string desc = m_connectAttributes->configurationMode.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) +
-			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType);
+			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(m_connectAttributes->configurationAccess.m_securityType);
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, 0);
 		m_cmbConfiguration.SetCurSel(pos);
 	}
-	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode.serverSecurityName, m_connectAttributes->configurationMode.securityMode,m_connectAttributes->configurationAccess.securityType));
+	m_endPointsConfigurations.push_back(DrvOPCUAHistValues::SoftingServerEndPointDescription(m_connectAttributes->configurationMode.serverSecurityName, m_connectAttributes->configurationAccess.m_policyId, m_connectAttributes->configurationMode.securityMode,m_connectAttributes->configurationAccess.m_securityType));
 	
 	LVITEM item;
 	memset(&item, 0, sizeof(item));
 	TCHAR modeStr[40];
-	std::string attr = GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) + std::string("/") +
-		GetStringFromSecurityType(m_connectAttributes->configurationAccess.securityType);
+	std::string attr = m_connectAttributes->configurationAccess.m_policyId;
 	StringCchCopy(modeStr, attr.size()+1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
@@ -108,24 +107,24 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	item.iItem = 0;
 	item.cColumns = 0;
 	item.puColumns = NULL;
-	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.securityType));
+	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.m_securityType));
 	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
-	if (!m_connectAttributes->configurationAccess.login.empty() && m_connectAttributes->configurationAccess.login.size() > 0) {
-		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.login.c_str());
+	if (!m_connectAttributes->configurationAccess.m_userLogin.m_login.empty() && m_connectAttributes->configurationAccess.m_userLogin.m_login.size() > 0) {
+		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.m_userLogin.m_login.c_str());
 	}
-	if (!m_connectAttributes->configurationAccess.password.empty() && m_connectAttributes->configurationAccess.password.size() > 0) {
-		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.password.c_str());
+	if (!m_connectAttributes->configurationAccess.m_certificate.m_password.empty() && m_connectAttributes->configurationAccess.m_certificate.m_password.size() > 0) {
+		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_password.c_str());
 	}
-	if (!m_connectAttributes->configurationAccess.certificate.empty() && m_connectAttributes->configurationAccess.certificate.size() > 0) {
-		m_editCertificate.SetWindowTextA(m_connectAttributes->configurationAccess.certificate.c_str());
+	if (!m_connectAttributes->configurationAccess.m_certificate.m_certificate.empty() && m_connectAttributes->configurationAccess.m_certificate.m_certificate.size() > 0) {
+		m_editCertificate.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_certificate.c_str());
 	}
-	if (!m_connectAttributes->configurationAccess.privateKey.empty() && m_connectAttributes->configurationAccess.privateKey.size() > 0) {
-		m_editPrivateKey.SetWindowTextA(m_connectAttributes->configurationAccess.privateKey.c_str());
+	if (!m_connectAttributes->configurationAccess.m_certificate.m_privateKey.empty() && m_connectAttributes->configurationAccess.m_certificate.m_privateKey.size() > 0) {
+		m_editPrivateKey.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_privateKey.c_str());
 	}
 
-	if (!m_connectAttributes->configurationAccess.pkiTrustedPath.empty() && m_connectAttributes->configurationAccess.pkiTrustedPath.size() > 0) {
-		m_editPkiStorePath.SetWindowTextA(m_connectAttributes->configurationAccess.pkiTrustedPath.c_str());
+	if (!m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.empty() && m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.size() > 0) {
+		m_editPkiStorePath.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.c_str());
 	}
 	return TRUE;
 }
@@ -248,8 +247,7 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	
 	LVITEM item;
 	TCHAR modeStr[40];
-	std::string attr = GetStringFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode) + std::string("/") +
-		GetStringFromSecurityType(m_endPointsConfigurations.at(index).m_securityType);
+	std::string attr = m_connectAttributes->configurationAccess.m_policyId;
 	StringCchCopy(modeStr, attr.size() + 1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
@@ -484,30 +482,35 @@ void CClientSettingsDialog::ReadAttributes()
 	int mode = LOWORD(lParam);
 	int type = HIWORD(lParam);
 	m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromInt(mode);
-	m_connectAttributes->configurationAccess.securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
+	m_connectAttributes->configurationAccess.m_securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
+	len = m_lstPolicyType.GetWindowTextLengthA();
+	m_lstPolicyType.GetWindowTextA(str);
+	m_connectAttributes->configurationAccess.m_policyId = std::string(str.GetBuffer(len));
+	str.ReleaseBuffer();
+	str.Empty();
 	len = m_editLogin.GetWindowTextLengthA();
 	m_editLogin.GetWindowTextA(str);
-	m_connectAttributes->configurationAccess.login = std::string(str.GetBuffer(len));
+	m_connectAttributes->configurationAccess.m_userLogin.m_login = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
 	len = m_editPassword.GetWindowTextLengthA();
 	m_editPassword.GetWindowTextA(str);
-	m_connectAttributes->configurationAccess.password = std::string(str.GetBuffer(len));
+	m_connectAttributes->configurationAccess.m_certificate.m_password = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
 	len = m_editCertificate.GetWindowTextLengthA();
 	m_editCertificate.GetWindowTextA(str);
-	m_connectAttributes->configurationAccess.certificate = std::string(str.GetBuffer(len));
+	m_connectAttributes->configurationAccess.m_certificate.m_certificate = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
 	len = m_editPrivateKey.GetWindowTextLengthA();
 	m_editPrivateKey.GetWindowTextA(str);
-	m_connectAttributes->configurationAccess.privateKey = std::string(str.GetBuffer(len));
+	m_connectAttributes->configurationAccess.m_certificate.m_privateKey = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
 	len = m_editPkiStorePath.GetWindowTextLengthA();
 	m_editPkiStorePath.GetWindowTextA(str);
-	m_connectAttributes->configurationAccess.pkiTrustedPath = std::string(str.GetBuffer(len));
+	m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
 
