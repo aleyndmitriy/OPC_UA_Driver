@@ -105,9 +105,6 @@
     <ClCompile Include="SoftingServerInteractor.cpp">
       <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
-    <ClCompile Include="SoftingServerEndPointDescription.cpp">
-      <Filter>Исходные файлы\SoftingService</Filter>
-    </ClCompile>
     <ClCompile Include="HdaCommandHandler.cpp">
       <Filter>Исходные файлы\Server</Filter>
     </ClCompile>
@@ -203,9 +200,6 @@
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
     <ClInclude Include="SoftingServerInteractor.h">
-      <Filter>Файлы заголовков\SoftingService</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftingServerEndPointDescription.h">
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
     <ClInclude Include="HdaCommandHandler.h">
