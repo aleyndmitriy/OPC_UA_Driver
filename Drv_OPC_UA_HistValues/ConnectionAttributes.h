@@ -13,7 +13,7 @@ namespace DrvOPCUAHistValues
 	int GetIntFromSecurityMode(ConfigurationSecurityMode mode);
 	std::string GetStringFromSecurityMode(ConfigurationSecurityMode mode);
 	ConfigurationSecurityMode GetModeFromInt(int mode);
-
+	ConfigurationSecurityMode GetModeFromString(const std::string& mode);
 
 	enum class ConfigurationSecurityType {
 		ANONYMOUS = 0,

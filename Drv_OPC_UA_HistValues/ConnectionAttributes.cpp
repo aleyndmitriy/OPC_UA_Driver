@@ -39,6 +39,22 @@ std::string DrvOPCUAHistValues::GetStringFromSecurityMode(ConfigurationSecurityM
 	}
 }
 
+DrvOPCUAHistValues::ConfigurationSecurityMode DrvOPCUAHistValues::GetModeFromString(const std::string& mode)
+{
+	if (mode == std::string("None")) {
+		return ConfigurationSecurityMode::NONE;
+	}
+	else if (mode == std::string("Sign")) {
+		return ConfigurationSecurityMode::SIGN;
+	}
+	else if (mode == std::string("Sign and Encrypt")) {
+		return ConfigurationSecurityMode::SIGN_AND_ENCRYPT;
+	}
+	else {
+		return ConfigurationSecurityMode::INVALID;
+	}
+}
+
 DrvOPCUAHistValues::ConfigurationSecurityMode DrvOPCUAHistValues::GetModeFromInt(int mode)
 {
 	switch (mode) {

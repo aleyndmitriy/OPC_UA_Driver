@@ -1121,9 +1121,15 @@ bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, cons
 
 DrvOPCUAHistValues::ServerSecurityModeConfiguration mapConfigFromEndPointDesc(const SoftingOPCToolbox5::EndpointDescription& desc)
 {
+	size_t pos = std::string::npos;
 	std::string name(desc.getEndpointUrl());
 	EnumMessageSecurityMode descMode = desc.getMessageSecurityMode();
 	std::string policy(desc.getSecurityPolicy());
+	pos = policy.rfind('#');
+	if (pos != tstring::npos)
+	{
+		policy = policy.substr(pos + 1, policy.size() - pos);
+	}
 	DrvOPCUAHistValues::ConfigurationSecurityMode mode = DrvOPCUAHistValues::ConfigurationSecurityMode::INVALID;
 	switch (descMode)
 	{
@@ -1140,7 +1146,7 @@ DrvOPCUAHistValues::ServerSecurityModeConfiguration mapConfigFromEndPointDesc(co
 		mode = DrvOPCUAHistValues::ConfigurationSecurityMode::INVALID;
 		break;
 	}
-	DrvOPCUAHistValues::ServerSecurityModeConfiguration endPointDesc(name, policy,mode);
+	DrvOPCUAHistValues::ServerSecurityModeConfiguration endPointDesc(name, policy, mode);
 	return endPointDesc;
 }
 
@@ -1155,8 +1161,13 @@ bool admitToSecurityPolicy(const SoftingOPCToolbox5::UserTokenPolicy& policy, co
 		return false;
 	}
 	std::string securityPolicyUri(policy.getSecurityPolicyUri());
+	fdSofting = securityPolicyUri.rfind('#');
+	if (fdSofting != tstring::npos)
+	{
+		securityPolicyUri = securityPolicyUri.substr(fdSofting + 1, securityPolicyUri.size() - fdSofting);
+	}
 	fdSofting = securityPolicyUri.find(attributesPolicy.m_securityPolicyUri);
-	if (fdSofting == tstring::npos)
+	if (fdSofting == tstring::npos && securityPolicyUri.empty() && attributesPolicy.m_securityPolicyUri.empty())
 	{
 		return false;
 	}
@@ -1188,7 +1199,13 @@ bool admitToSecurityPolicy(const SoftingOPCToolbox5::UserTokenPolicy& policy, co
 DrvOPCUAHistValues::SecurityUserTokenPolicy mapEndPointTokenFromPolicy(const SoftingOPCToolbox5::UserTokenPolicy& policy)
 {
 	std::string policyId(policy.getPolicyId());
+	size_t fdSofting = std::string::npos;
 	std::string securityPolicyUri(policy.getSecurityPolicyUri());
+	fdSofting = securityPolicyUri.rfind('#');
+	if (fdSofting != tstring::npos)
+	{
+		securityPolicyUri = securityPolicyUri.substr(fdSofting + 1, securityPolicyUri.size() - fdSofting);
+	}
 	EnumUserTokenType identityToken = policy.getTokenType();
 	DrvOPCUAHistValues::ConfigurationSecurityType type;
 	switch (identityToken) {

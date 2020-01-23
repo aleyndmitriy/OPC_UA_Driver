@@ -117,7 +117,7 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	item.iItem = 0;
 	item.cColumns = 0;
 	item.puColumns = NULL;
-	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.m_policy.m_securityType));
+	item.lParam = MAKELPARAM(0, DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.m_policy.m_securityType));
 	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
 	if (!m_connectAttributes->configurationAccess.m_userLogin.m_login.empty() && m_connectAttributes->configurationAccess.m_userLogin.m_login.size() > 0) {
@@ -503,22 +503,23 @@ void CClientSettingsDialog::ReadAttributes()
 	str.Empty();
 	len = m_cmbConfiguration.GetWindowTextLengthA();
 	m_cmbConfiguration.GetWindowTextA(str);
-	size_t posPartOfName = std::string::npos;
 	std::string fullName = std::string(str.GetBuffer(len));
-	posPartOfName = fullName.find_first_of('#');
-	std::string servName = fullName.substr(0, fullName.find_first_of('#'));
+	size_t posFirstPartOfName = fullName.find('#');
+	std::string servName = fullName.substr(0, posFirstPartOfName);
 	m_connectAttributes->configurationMode.serverSecurityName = servName;
-	if (posPartOfName != std::string::npos) {
-		posPartOfName = fullName.find_first_of('#', posPartOfName + 1);
-		servName = fullName.substr(posPartOfName);
+	if (posFirstPartOfName != std::string::npos) {
+		size_t posSecondPartOfName = fullName.rfind('#');
+		servName = fullName.substr(posSecondPartOfName + 1, fullName.size() - posSecondPartOfName);
 		m_connectAttributes->configurationMode.serverSecurityPolicy = servName;
+		servName = fullName.substr(posFirstPartOfName + 1, posSecondPartOfName - posFirstPartOfName - 1);
+		m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromString(servName);
 	}
 	str.ReleaseBuffer();
 	str.Empty();
 	DWORD_PTR lParam = m_lstPolicyType.GetItemData(0);
 	int mode = LOWORD(lParam);
 	int type = HIWORD(lParam);
-	m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromInt(mode);
+	
 	m_connectAttributes->configurationAccess.m_policy.m_securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
 	len = m_cmbPolicyId.GetWindowTextLengthA();
 	m_cmbPolicyId.GetWindowTextA(str);
@@ -595,7 +596,7 @@ void CClientSettingsDialog::GetEndPoints(std::vector<DrvOPCUAHistValues::ServerS
 	size_t index = 0;
 	for (std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>::const_iterator itr = endPoints.cbegin(); itr != endPoints.cend(); ++itr)
 	{
-		std::string desc = itr->serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->securityMode);
+		std::string desc = itr->serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(itr->securityMode) + std::string("#") + itr->serverSecurityPolicy;
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, index++);
 	}
