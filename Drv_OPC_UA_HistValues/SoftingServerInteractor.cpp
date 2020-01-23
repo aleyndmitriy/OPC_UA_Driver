@@ -530,10 +530,8 @@ void SoftingServerInteractor::ChooseCurrentTokenPolicy()
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	if (!m_selectedEndPointDescription) {
-		if (output) {
-			std::string message = std::string("Endpoint has not been selected!");
-			output->SendWarning(std::move(message));
-		}
+		
+		return;
 	}
 	std::vector<SoftingOPCToolbox5::UserTokenPolicy> userTokens = m_selectedEndPointDescription->getUserIdentityTokens();
 	std::vector<SoftingOPCToolbox5::UserTokenPolicy>::const_iterator itrTokenFound =
@@ -622,8 +620,10 @@ void SoftingServerInteractor::chooseEndPointAndPolicyId()
 	}
 	if (output) {
 		if (selectedUrlEndpointDescriptions.empty() || !m_selectedEndPointDescription) {
-			std::string message = std::string("Failed to get endpoint with given attributes");
-			output->SendWarning(std::move(message));
+			if (output) {
+				std::string message = std::string("Failed to get endpoint with given attributes");
+				output->SendWarning(std::move(message));
+			}
 		}
 		else {
 			std::vector<SoftingOPCToolbox5::UserTokenPolicy> userTokens = m_selectedEndPointDescription->getUserIdentityTokens();
@@ -631,6 +631,12 @@ void SoftingServerInteractor::chooseEndPointAndPolicyId()
 				std::find_if(userTokens.cbegin(), userTokens.cend(), std::bind(admitToSecurityPolicy, std::placeholders::_1, m_pServerAttributes->configurationAccess.m_policy));
 			if (itrTokenFound != userTokens.cend()) {
 				m_userToken = std::make_unique<SoftingOPCToolbox5::UserTokenPolicy>(*itrTokenFound);
+			}
+			else {
+				if (output) {
+					std::string message = std::string("User token policy was not found!");
+					output->SendWarning(std::move(message));
+				}
 			}
 		}
 	}
@@ -1167,8 +1173,7 @@ bool admitToSecurityPolicy(const SoftingOPCToolbox5::UserTokenPolicy& policy, co
 	{
 		securityPolicyUri = securityPolicyUri.substr(fdSofting + 1, securityPolicyUri.size() - fdSofting);
 	}
-	fdSofting = securityPolicyUri.find(attributesPolicy.m_securityPolicyUri);
-	if (fdSofting == tstring::npos && securityPolicyUri.empty() && attributesPolicy.m_securityPolicyUri.empty())
+	if (securityPolicyUri != attributesPolicy.m_securityPolicyUri)
 	{
 		return false;
 	}
