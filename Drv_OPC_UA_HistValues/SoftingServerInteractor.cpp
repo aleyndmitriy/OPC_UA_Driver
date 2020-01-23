@@ -836,7 +836,6 @@ bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originN
 		}
 		else {
 			finalNodeId.clear();
-			std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 			if (output) {
 				std::string message = std::string("Can not find node with name ") + path;
 				output->SendMessageInfo(std::move(message));
@@ -934,8 +933,8 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 				}
 				return;
 			}
-			SoftingOPCToolbox5::DateTime startTime;
-			startTime.set(start);
+			SoftingOPCToolbox5::DateTime softingStartTime;
+			softingStartTime.set(start);
 			FILETIME end;
 			if (!SystemTimeToFileTime(&endTime, &end)) {
 				if (output) {
@@ -944,11 +943,11 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 				}
 				return;
 			}
-			SoftingOPCToolbox5::DateTime endTime;
-			endTime.set(end);
+			SoftingOPCToolbox5::DateTime softingEndTime;
+			softingEndTime.set(end);
 
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> > historicalValuesOfNodes;
-			getHistoricalValues(nodesToRead,startTime,endTime, historicalValuesOfNodes,iter->second);
+			getHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes,iter->second);
 			if (historicalValuesOfNodes.empty()) {
 				if (output) {
 					std::string message("There is no any data for all tags!");
@@ -1319,7 +1318,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 		valueStr = dataValue.getValue()->toString();
 		break;
 	}
-	record.insert(OPC_UA_VALUE, type, valueStr);
+	record.insert(OPC_UA_VALUE, (short)type, valueStr);
 
 	return record;
 }
