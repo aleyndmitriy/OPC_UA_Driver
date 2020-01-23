@@ -89,17 +89,24 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	}
 	if (!m_connectAttributes->configurationMode.serverSecurityName.empty()) {
 		std::string desc = m_connectAttributes->configurationMode.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) +
-			std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityType(m_connectAttributes->configurationAccess.m_securityType);
+			std::string("#") + m_connectAttributes->configurationMode.serverSecurityPolicy;
 		int pos = m_cmbConfiguration.AddString(desc.c_str());
 		m_cmbConfiguration.SetItemData(pos, 0);
 		m_cmbConfiguration.SetCurSel(pos);
 	}
 	m_endPointsConfigurations.push_back(m_connectAttributes->configurationMode);
 	
+	if (!m_connectAttributes->configurationAccess.m_policy.m_policyId.empty()) {
+		int pos = m_cmbPolicyId.AddString(m_connectAttributes->configurationAccess.m_policy.m_policyId.c_str());
+		m_cmbPolicyId.SetItemData(pos, 0);
+		m_cmbPolicyId.SetCurSel(pos);
+	}
+	m_endPointPolicyIds.push_back(m_connectAttributes->configurationAccess.m_policy);
+
 	LVITEM item;
 	memset(&item, 0, sizeof(item));
-	TCHAR modeStr[40];
-	std::string attr = m_connectAttributes->configurationAccess.m_policyId;
+	TCHAR modeStr[256];
+	std::string attr = m_connectAttributes->configurationAccess.m_policy.m_securityPolicyUri;
 	StringCchCopy(modeStr, attr.size()+1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
@@ -110,11 +117,14 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	item.iItem = 0;
 	item.cColumns = 0;
 	item.puColumns = NULL;
-	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.m_securityType));
+	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_connectAttributes->configurationAccess.m_policy.m_securityType));
 	LRESULT res = ::SendMessage(m_lstPolicyType.m_hWnd, LVM_INSERTITEM, 0, (LPARAM)&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
 	if (!m_connectAttributes->configurationAccess.m_userLogin.m_login.empty() && m_connectAttributes->configurationAccess.m_userLogin.m_login.size() > 0) {
 		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.m_userLogin.m_login.c_str());
+	}
+	if (!m_connectAttributes->configurationAccess.m_userLogin.m_password.empty() && m_connectAttributes->configurationAccess.m_userLogin.m_password.size() > 0) {
+		m_editLogin.SetWindowTextA(m_connectAttributes->configurationAccess.m_userLogin.m_password.c_str());
 	}
 	if (!m_connectAttributes->configurationAccess.m_certificate.m_password.empty() && m_connectAttributes->configurationAccess.m_certificate.m_password.size() > 0) {
 		m_editPassword.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_password.c_str());
@@ -248,10 +258,25 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	}
 	StartLoading();
 	m_lstPolicyType.DeleteAllItems();
+	m_cmbPolicyId.ResetContent();
 	
+	ReadAttributes();
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->ChooseCurrentEndPoint();
+	}
+}
+
+void CClientSettingsDialog::OnCbnSelChangeComboPolicyId()
+{
+	int index = m_cmbPolicyId.GetCurSel();
+	if (index < 0 || index >= m_endPointPolicyIds.size()) {
+		return;
+	}
+	StartLoading();
+	m_lstPolicyType.DeleteAllItems();
 	LVITEM item;
-	TCHAR modeStr[40];
-	std::string attr = m_connectAttributes->configurationAccess.m_policyId;
+	TCHAR modeStr[256];
+	std::string attr = m_endPointPolicyIds.at(index).m_securityPolicyUri;
 	StringCchCopy(modeStr, attr.size() + 1, attr.c_str());
 	item.pszText = modeStr;
 	item.mask = LVIF_TEXT | LVIF_PARAM;
@@ -261,14 +286,16 @@ void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 	item.state = 0;// LVIS_FOCUSED | LVIS_SELECTED;
 	item.iItem = 0;
 	item.cColumns = 1;
-	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_endPointsConfigurations.at(index).m_endPointDesc.securityMode), DrvOPCUAHistValues::GetIntFromSecurityType(m_endPointsConfigurations.at(index).m_securityType));
+	item.lParam = MAKELPARAM(DrvOPCUAHistValues::GetIntFromSecurityMode(m_connectAttributes->configurationMode.securityMode),
+		DrvOPCUAHistValues::GetIntFromSecurityType(m_endPointPolicyIds.at(index).m_securityType));
 	m_lstPolicyType.InsertItem(&item);
 	ListView_SetItem(m_lstPolicyType.m_hWnd, &item);
 	ReadAttributes();
 	if (m_pSoftingInteractor) {
-		m_pSoftingInteractor->ChooseCurrentEndPoint();
+		m_pSoftingInteractor->ChooseCurrentTokenPolicy();
 	}
 }
+
 
 void CClientSettingsDialog::OnEnChangeEditLogin()
 {
@@ -478,18 +505,29 @@ void CClientSettingsDialog::ReadAttributes()
 	m_cmbConfiguration.GetWindowTextA(str);
 	size_t posPartOfName = std::string::npos;
 	std::string fullName = std::string(str.GetBuffer(len));
-	fullName = fullName.substr(0, fullName.find_first_of('#'));
-	m_connectAttributes->configurationMode.serverSecurityName = fullName;
+	posPartOfName = fullName.find_first_of('#');
+	std::string servName = fullName.substr(0, fullName.find_first_of('#'));
+	m_connectAttributes->configurationMode.serverSecurityName = servName;
+	if (posPartOfName != std::string::npos) {
+		posPartOfName = fullName.find_first_of('#', posPartOfName + 1);
+		servName = fullName.substr(posPartOfName);
+		m_connectAttributes->configurationMode.serverSecurityPolicy = servName;
+	}
 	str.ReleaseBuffer();
 	str.Empty();
 	DWORD_PTR lParam = m_lstPolicyType.GetItemData(0);
 	int mode = LOWORD(lParam);
 	int type = HIWORD(lParam);
 	m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromInt(mode);
-	m_connectAttributes->configurationAccess.m_securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
+	m_connectAttributes->configurationAccess.m_policy.m_securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
 	len = m_cmbPolicyId.GetWindowTextLengthA();
 	m_cmbPolicyId.GetWindowTextA(str);
-	m_connectAttributes->configurationAccess.m_policyId = std::string(str.GetBuffer(len));
+	m_connectAttributes->configurationAccess.m_policy.m_policyId = std::string(str.GetBuffer(len));
+	str.ReleaseBuffer();
+	str.Empty();
+	len = m_lstPolicyType.GetWindowTextLengthA();
+	m_lstPolicyType.GetWindowTextA(str);
+	m_connectAttributes->configurationAccess.m_policy.m_securityPolicyUri = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
 	len = m_editLogin.GetWindowTextLengthA();
@@ -572,7 +610,7 @@ void CClientSettingsDialog::GetPolicyIds(std::vector<DrvOPCUAHistValues::Securit
 	size_t index = 0;
 	for (std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>::const_iterator itr = policyIds.cbegin(); itr != policyIds.cend(); ++itr)
 	{
-		int pos = m_cmbConfiguration.AddString(itr->m_policyId.c_str());
+		int pos = m_cmbPolicyId.AddString(itr->m_policyId.c_str());
 		m_cmbPolicyId.SetItemData(pos, index++);
 	}
 	StopLoading();
@@ -593,7 +631,4 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 
 
 
-void CClientSettingsDialog::OnCbnSelChangeComboPolicyId()
-{
-	// TODO: Add your control notification handler code here
-}
+

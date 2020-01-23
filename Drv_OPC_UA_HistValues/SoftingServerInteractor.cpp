@@ -260,9 +260,7 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 			break;
 		}
 		// and the first (only one) user identity token
-		
-		//userIdentityToken.setAnonymousIdentityToken(m_selectedEndPointDescription->getUserIdentityToken(0)->getPolicyId());
-		session->setUserSecurityPolicy(m_selectedEndPointDescription->getUserIdentityToken(0)->getSecurityPolicyUri());
+		session->setUserSecurityPolicy(m_pServerAttributes->configurationAccess.m_policy.m_securityPolicyUri);
 		session->setUserIdentityToken(&userIdentityToken);
 		result = m_pApp->addSession(session);
 		if (StatusCode::isBad(result))
@@ -527,6 +525,28 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 	}
 }
 
+void SoftingServerInteractor::ChooseCurrentTokenPolicy()
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (!m_selectedEndPointDescription) {
+		if (output) {
+			std::string message = std::string("Endpoint has not been selected!");
+			output->SendWarning(std::move(message));
+		}
+	}
+	std::vector<SoftingOPCToolbox5::UserTokenPolicy> userTokens = m_selectedEndPointDescription->getUserIdentityTokens();
+	std::vector<SoftingOPCToolbox5::UserTokenPolicy>::const_iterator itrTokenFound =
+		std::find_if(userTokens.cbegin(), userTokens.cend(), std::bind(admitToSecurityPolicy, std::placeholders::_1, m_pServerAttributes->configurationAccess.m_policy));
+	if (itrTokenFound != userTokens.cend()) {
+		m_userToken = std::make_unique<SoftingOPCToolbox5::UserTokenPolicy>(*itrTokenFound);
+	}
+	else {
+		if (output) {
+			std::string message = std::string("User token policy was not found!");
+			output->SendWarning(std::move(message));
+		}
+	}
+}
 
 void SoftingServerInteractor::chooseEndPointAndPolicyId()
 {

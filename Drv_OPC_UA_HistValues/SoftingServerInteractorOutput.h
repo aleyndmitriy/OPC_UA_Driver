@@ -1,6 +1,8 @@
 #pragma once
 #include<string>
 #include<vector>
+#include"ConnectionAttributes.h"
+
 class SoftingServerInteractorOutput {
 public:
 	virtual void SendMessageError(std::string&& message) = 0;

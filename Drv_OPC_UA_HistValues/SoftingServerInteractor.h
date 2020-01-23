@@ -21,6 +21,7 @@ public:
 	void GetServers();
 	void ChooseCurrentServer();
 	void ChooseCurrentEndPoint();
+	void ChooseCurrentTokenPolicy();
 	void OpenConnectionWithUUID(const std::string& connectionID);
 	void CloseConnectionWithUUID(const std::string& connectionID);
 	void OpenConnection();

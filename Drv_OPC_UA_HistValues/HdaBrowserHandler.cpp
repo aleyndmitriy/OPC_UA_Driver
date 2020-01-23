@@ -78,7 +78,7 @@ void DrvOPCUAHistValues::BrowserHandler::GetEndPoints(std::vector<ServerSecurity
 
 }
 
-void DrvOPCUAHistValues::BrowserHandler::GetPolicyIds(std::vector<DrvOPCUAHistValues::SoftingServerEndPointDescription>&& policyIds)
+void DrvOPCUAHistValues::BrowserHandler::GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds)
 {
 
 }
