@@ -232,10 +232,10 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 	}
 	if (StatusCode::isGood(result))
 	{
-		session->setServerCertificate(m_selectedEndPointDescription->getServerCertificate());
+		result = session->setServerCertificate(m_selectedEndPointDescription->getServerCertificate());
 		EnumMessageSecurityMode mode = m_selectedEndPointDescription->getMessageSecurityMode();
 		std::string policy = m_selectedEndPointDescription->getSecurityPolicy();
-		session->setSecurityConfiguration(mode,policy);
+		result = session->setSecurityConfiguration(mode,policy);
 		SoftingOPCToolbox5::UserIdentityToken userIdentityToken;
 		EnumUserTokenType identityToken = m_userToken->getTokenType();
 		std::string policyId = m_userToken->getPolicyId();
@@ -246,8 +246,9 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 		case EnumUserTokenType_UserName:
 			{
 				SoftingOPCToolbox5::ByteString pwdByteString;
-				pwdByteString.setUtf8String(m_pServerAttributes->configurationAccess.m_userLogin.m_password);
-				userIdentityToken.setUserNameIdentityToken(policyId, m_pServerAttributes->configurationAccess.m_userLogin.m_login, &pwdByteString);
+
+				result = pwdByteString.setUtf8String(m_pServerAttributes->configurationAccess.m_userLogin.m_password);
+				result = userIdentityToken.setUserNameIdentityToken(policyId, m_pServerAttributes->configurationAccess.m_userLogin.m_login, &pwdByteString);
 			}
 			break;
 		case EnumUserTokenType_Certificate:
@@ -260,8 +261,8 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 			break;
 		}
 		// and the first (only one) user identity token
-		session->setUserSecurityPolicy(m_pServerAttributes->configurationAccess.m_policy.m_securityPolicyUri);
-		session->setUserIdentityToken(&userIdentityToken);
+		result = session->setUserSecurityPolicy(m_pServerAttributes->configurationAccess.m_policy.m_securityPolicyUri);
+		result = session->setUserIdentityToken(&userIdentityToken);
 		result = m_pApp->addSession(session);
 		if (StatusCode::isBad(result))
 		{

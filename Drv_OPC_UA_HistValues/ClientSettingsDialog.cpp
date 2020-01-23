@@ -536,6 +536,11 @@ void CClientSettingsDialog::ReadAttributes()
 	m_connectAttributes->configurationAccess.m_userLogin.m_login = std::string(str.GetBuffer(len));
 	str.ReleaseBuffer();
 	str.Empty();
+	len = m_editUserPassword.GetWindowTextLengthA();
+	m_editUserPassword.GetWindowTextA(str);
+	m_connectAttributes->configurationAccess.m_userLogin.m_password = std::string(str.GetBuffer(len));
+	str.ReleaseBuffer();
+	str.Empty();
 	len = m_editPassword.GetWindowTextLengthA();
 	m_editPassword.GetWindowTextA(str);
 	m_connectAttributes->configurationAccess.m_certificate.m_password = std::string(str.GetBuffer(len));
