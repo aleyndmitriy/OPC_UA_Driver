@@ -67,3 +67,34 @@ std::string DecryptPassword(const std::string& password)
 {
 	return std::string(password);
 }
+
+bool loadFileIntoByteString(const std::string& fileName, SoftingOPCToolbox5::ByteString& byteString)
+{
+	HANDLE hFileHandle = CreateFile(fileName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	BOOL isRead = false;
+	DWORD readSize = 0;
+	if (hFileHandle == INVALID_HANDLE_VALUE) {
+		return false;
+	}
+	DWORD dwfileSize = GetFileSize(hFileHandle, NULL);
+	if (dwfileSize == INVALID_FILE_SIZE) {
+		DWORD error = GetLastError();
+		CloseHandle(hFileHandle);
+		return false;
+	}
+	std::unique_ptr<unsigned char[]> chBuffer = std::make_unique<unsigned char[]>(dwfileSize);
+	isRead = ReadFile(hFileHandle, chBuffer.get(), dwfileSize, &readSize, NULL);
+	if (isRead == FALSE || readSize != dwfileSize) {
+		DWORD error = GetLastError();
+		CloseHandle(hFileHandle);
+		return false;
+	}
+	CloseHandle(hFileHandle);
+	if (StatusCode::isSUCCEEDED(byteString.init(dwfileSize, chBuffer.get())))
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
+}

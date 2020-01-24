@@ -206,11 +206,12 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 	if (!m_selectedEndPointDescription || !m_userToken) {
 		return;
 	}
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	EnumStatusCode result = EnumStatusCode_Good;
 	std::string endpointUrl = m_selectedEndPointDescription->getEndpointUrl();
 	if (endpointUrl.length() <= 0)
 	{
-		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+		
 		if (output) {
 			std::string message("Invalid endpoint URL!");
 			output->SendMessageError(std::move(message));
@@ -222,7 +223,6 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 	result = session->setUrl(endpointUrl);
 	if (StatusCode::isBad(result))
 	{
-		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 		if (output) {
 			std::string message = std::string("Set URL to the session failed: ") + std::string(getEnumStatusCodeString(result));
 			output->SendMessageError(std::move(message));
@@ -252,7 +252,29 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 			}
 			break;
 		case EnumUserTokenType_Certificate:
-			
+			{
+				SoftingOPCToolbox5::ByteString certificate;
+				if (!loadFileIntoByteString(m_pServerAttributes->configurationAccess.m_certificate.m_certificate, certificate)) {
+					if (output) {
+						std::string message = std::string("Can not load certificate file: ");
+						output->SendMessageError(std::move(message));
+						output->GetNewConnectionGuide(std::string());
+					}
+					return;
+				}
+				result = userIdentityToken.setX509IdentityToken(policyId, &certificate, m_pServerAttributes->configurationAccess.m_certificate.m_privateKey,
+					m_pServerAttributes->configurationAccess.m_certificate.m_password);
+				if (StatusCode::isBad(result))
+				{
+					if (output) {
+						std::string message = std::string("Failed to load users private key: ") + std::string(getEnumStatusCodeString(result));
+						output->SendMessageError(std::move(message));
+						output->GetNewConnectionGuide(std::string());
+					}
+					return;
+				}
+
+			}
 			break;
 		case EnumUserTokenType_IssuedToken:
 			
@@ -266,7 +288,6 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 		result = m_pApp->addSession(session);
 		if (StatusCode::isBad(result))
 		{
-			std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 			if (output) {
 				std::string message = std::string("Adding session failed: ") + std::string(getEnumStatusCodeString(result));
 				output->SendMessageError(std::move(message));
@@ -279,7 +300,6 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 			result = session->connect(false);
 			if (StatusCode::isBad(result))
 			{
-				std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 				if (output) {
 					std::string message = std::string("Connecting to the server failed: ") + std::string(getEnumStatusCodeString(result));
 					output->SendMessageError(std::move(message));
@@ -292,7 +312,6 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 				std::pair<std::string, SoftingOPCToolbox5::Client::SessionPtr> pair =
 					std::make_pair<std::string, SoftingOPCToolbox5::Client::SessionPtr>(std::string(connectionID), SoftingOPCToolbox5::Client::SessionPtr(session));
 				m_sessionsList.insert(pair);
-				std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 				if (output) {
 					output->GetNewConnectionGuide(std::string(connectionID));
 				}
