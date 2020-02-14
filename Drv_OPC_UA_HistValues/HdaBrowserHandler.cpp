@@ -12,21 +12,25 @@ DrvOPCUAHistValues::BrowserHandler::BrowserHandler(std::shared_ptr<SoftingServer
 
 DrvOPCUAHistValues::BrowserHandler::~BrowserHandler()
 {
-
+	if (!m_ConnectionId.empty()) {
+		m_pSoftingInteractor->CloseConnectionWithUUID(m_ConnectionId);
+	}
 }
 
 int DrvOPCUAHistValues::BrowserHandler::Init(std::shared_ptr<ConnectionAttributes> attributes)
 {
 	m_pAttributes = attributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
+	m_pSoftingInteractor->SetOutput(shared_from_this());
 	return ODS::ERR::OK;
 }
 
 int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
 {
-	m_pSoftingInteractor->SetOutput(shared_from_this());
 	pTagList->clear();
-	m_pSoftingInteractor->OpenConnection();
+	if (m_ConnectionId.empty()) {
+		m_pSoftingInteractor->OpenConnection();
+	}
 	if (m_ConnectionId.empty()) {
 		return ODS::ERR::DB_CONNECTION_FAILED;
 	}
@@ -47,8 +51,6 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 		}
 		pTagList->push_back(sItem);
 	}
-	m_pSoftingInteractor->CloseConnectionWithUUID(m_ConnectionId);
-
 	return ODS::ERR::OK;
 }
 
