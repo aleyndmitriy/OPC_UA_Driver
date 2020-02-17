@@ -21,12 +21,13 @@ int DrvOPCUAHistValues::BrowserHandler::Init(std::shared_ptr<ConnectionAttribute
 {
 	m_pAttributes = attributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
-	m_pSoftingInteractor->SetOutput(shared_from_this());
+	
 	return ODS::ERR::OK;
 }
 
 int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& rEntry, std::vector<STagItem>* pTagList)
 {
+	m_pSoftingInteractor->SetOutput(shared_from_this());
 	pTagList->clear();
 	if (m_ConnectionId.empty()) {
 		m_pSoftingInteractor->OpenConnection();

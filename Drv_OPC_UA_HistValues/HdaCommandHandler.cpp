@@ -29,6 +29,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::Init(std::shared_ptr<ConnectionAttrib
 {
 	m_pAttributes = attributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
+	m_pSoftingInteractor->SetOutput(shared_from_this());
 	return ODS::ERR::OK;
 }
 
@@ -40,7 +41,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::Shut()
 
 int DrvOPCUAHistValues::HdaCommandHandler::HandleCommand(ODS::HdaCommand* pCommand, ODS::HdaCommandResult* pResult)
 {
-	m_pSoftingInteractor->SetOutput(shared_from_this());
+	
 	std::vector<ODS::HdaFunctionResult*> resultList;
 	ODS::HdaFunction** pList = nullptr;
 	int nCount = 0;
@@ -144,7 +145,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleCloseSession(ODS::HdaFunction* 
 		return ODS::ERR::OK;
 	}
 	else {
-		Log::GetInstance()->WriteInfo(_T("Can't closeSession,  session id %s"), (LPCTSTR)sessionId.ToString());
+		Log::GetInstance()->WriteInfo(_T("Can't close session with id %s"), (LPCTSTR)sessionId.ToString());
 		return ODS::ERR::DB_CONNECTION_FAILED;
 	}
 }
@@ -198,17 +199,12 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		std::map<int, std::vector<ParamValueList> > paramList;
 		std::string sessionID;
 		if (sessionId.IsEmpty()) {
-			m_pSoftingInteractor->OpenConnection();
-			if (m_connectionsList.empty()) {
-				return ODS::ERR::DB_CONNECTION_FAILED;
-			}
-			sessionID = m_connectionsList.at(m_connectionsList.size() - 1);
-			Log::GetInstance()->WriteInfo(_T("OpenSession existing connection,  session id %s"), (LPCTSTR)sessionID.c_str());
+			return ODS::ERR::DB_CONNECTION_FAILED;
 		}
 		else {
 			sessionID = std::string(sessionId.ToString().GetString());
 			m_pSoftingInteractor->OpenConnectionWithUUID(sessionID);
-			Log::GetInstance()->WriteInfo(_T("OpenSession ok during exec command,  session id %s"), (LPCTSTR)sessionId.ToString());
+			Log::GetInstance()->WriteInfo(_T("Open session of existing connection,  session id %s"), (LPCTSTR)sessionId.ToString());
 		}
 		std::set<std::string> tags;
 		std::chrono::time_point<std::chrono::steady_clock> startReceivingTagInfo = std::chrono::high_resolution_clock::now();
@@ -228,8 +224,8 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		endReceivingTagInfo = std::chrono::high_resolution_clock::now();
 		durationLoadingTagsParam = std::chrono::duration_cast<std::chrono::microseconds>(endReceivingTagInfo - startReceivingTagInfo);
 		Log::GetInstance()->WriteInfo(_T("Query has been executed in %d mcsec"), durationLoadingTagsParam.count());
-		m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
-		Log::GetInstance()->WriteInfo(_T("CloseSession ok after exec command,  session id %s"), (LPCTSTR)sessionId.ToString());
+		//m_pSoftingInteractor->CloseConnectionWithUUID(sessionID);
+		//Log::GetInstance()->WriteInfo(_T("CloseSession ok after exec command,  session id %s"), (LPCTSTR)sessionId.ToString());
 		return ODS::ERR::OK;
 	}
 	else {
@@ -711,6 +707,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::CloseConnectionWithGuide(std::string
 			return existingUuid == uuid; });
 		if (findIterator != m_connectionsList.cend()) {
 			m_connectionsList.erase(findIterator);
+		}
+		else {
+			Log::GetInstance()->WriteInfo(_T("Can't find session,  with session id %s"), (LPCTSTR)uuid.c_str());
 		}
 	}
 }

@@ -32,7 +32,7 @@ void SoftingServerInteractor::SetOutput(std::shared_ptr<SoftingServerInteractorO
 void SoftingServerInteractor::initApplicationDescription()
 {
 	m_AppDesc.clear();
-	std::string folder = std::string("/ODS/Dream Report/System/");
+	std::string folder = std::string("/ODS/DreamReport/System/");
 	m_AppDesc.setApplicationType(EnumApplicationType_Client);
 	m_AppDesc.setApplicationName(SoftingOPCToolbox5::LocalizedText(_T("DreamReport OpcUa Histotical Items Client"), _T("en")));
 	m_AppDesc.setApplicationUri(_T("urn:") + m_pServerAttributes->configuration.computerName + folder + std::string(OPC_UA_LIBRARY_NAME));	// The ApplicationUri should match with the URI in the application certificate
@@ -1057,16 +1057,13 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 	result = session->browseNode(&vd, &bd, refDescriptions);
 	if (StatusCode::isGood(result)) {
 		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-		if (output) {
-			std::string message = std::string("Number of references: ") + std::to_string(refDescriptions.size());
-			output->SendMessageInfo(std::move(message));
-		}
 		std::string findingName;
 		if (receivedTags.empty() == false) {
 			findingName = receivedTags.front();
 			receivedTags.pop();
 		}
 		if (findingName.empty()) {
+			std::string message;
 			for (size_t i = 0; i < refDescriptions.size(); i++)
 			{
 				std::string name = refDescriptions[i].getDisplayName()->getText();
@@ -1084,6 +1081,12 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 				if (findIterator == tags.cend()) {
 					tags.push_back(pair);
 				}
+				
+				message = message + ";" +  name;
+			}
+			if (output) {
+				message = "Tags: " + message;
+				output->SendMessageInfo(std::move(message));
 			}
 		}
 		else {
@@ -1097,6 +1100,10 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 					return;
 				}
 				devicesNode = findIterator->getNodeId();
+				if (output) {
+					std::string message = "Tag with name " + findingName + std::string(" has been selected.");
+					output->SendMessageInfo(std::move(message));
+				}
 				getTags(devicesNode, tags, receivedTags, session);
 			}
 		}
