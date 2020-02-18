@@ -129,6 +129,9 @@
     <ClCompile Include="Record.cpp">
       <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
+    <ClCompile Include="BrowseNetworkServers.cpp">
+      <Filter>Исходные файлы\Configurator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -226,10 +229,18 @@
     <ClInclude Include="Record.h">
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
+    <ClInclude Include="BrowseNetworkServers.h">
+      <Filter>Файлы заголовков\Configurator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Drv_OPC_UA_HistValues.rc">
       <Filter>Файлы ресурсов</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\filetypes.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
   </ItemGroup>
 </Project>

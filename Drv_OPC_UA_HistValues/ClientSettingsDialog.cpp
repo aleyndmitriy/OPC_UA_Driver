@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "resource.h"	
 #include "ClientSettingsDialog.h"
+#include "BrowseNetworkServers.h"
 #include "afxdialogex.h"
 #include"Log.h"
 #include "Utils.h"
@@ -228,7 +229,7 @@ void CClientSettingsDialog::OnEnChangeEditPort()
 
 void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 {
-	TCHAR szPathname[_MAX_PATH];
+	/*TCHAR szPathname[_MAX_PATH];
 	BROWSEINFOA brs;
 	brs.hwndOwner = this->m_hWnd;
 	brs.pidlRoot = NULL;
@@ -239,6 +240,15 @@ void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 	LPITEMIDLIST list = SHBrowseForFolderA(&brs);
 	if (list != NULL) {
 		m_editComputerName.SetWindowTextA(szPathname);
+	}*/
+	CBrowseNetworkServers dlg = CBrowseNetworkServers(this);
+	int response = dlg.DoModal();
+	if (response == IDOK) {
+		CString path = dlg.GetPath();
+		int len = path.GetLength();
+		if (len > 0) {
+			m_editComputerName.SetWindowTextA(path.GetBuffer(len));
+		}
 	}
 }
 

@@ -4,6 +4,7 @@
 #include"Log.h"
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
+#include"Utils.h"
 
 DrvOPCUAHistValues::BrowserHandler::BrowserHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore) : m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_ConnectionId()
 {
@@ -37,15 +38,34 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 	}
 	std::vector<std::pair<std::string, bool> > tagsName;
 	std::queue<std::string> pathQueue;
-	for (std::vector<ODS::OdsString>::const_iterator iter = rEntry.cbegin(); iter != rEntry.cend(); ++iter) {
-		std::string name(iter->GetString());
-		pathQueue.push(name);
+	std::vector<std::string> vec;
+	if (rEntry.size() == 1) {
+		std::string name(rEntry.at(0).GetString());
+		vec = split(name, std::string("/"));
+		for (std::vector<std::string>::const_iterator iterSplit = vec.cbegin(); iterSplit != vec.cend(); ++iterSplit)
+		{
+			pathQueue.push(*iterSplit);
+		}
 	}
+	else {
+		for (std::vector<ODS::OdsString>::const_iterator iter = rEntry.cbegin(); iter != rEntry.cend(); ++iter) {
+			std::string name(iter->GetString());
+			pathQueue.push(name);
+		}
+	}
+	
 	m_pSoftingInteractor->GetTags(tagsName, pathQueue, m_ConnectionId);
 	for (std::vector<std::pair<std::string, bool> >::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
 		ODS::OdsString szAddress(itr->first.c_str());
 		STagItem sItem;
-		sItem.m_vAddress.assign(rEntry.cbegin(), rEntry.cend());
+		if (rEntry.size() == 1) {
+			std::transform(vec.cbegin(), vec.cend(), std::back_inserter(sItem.m_vAddress), [](const std::string& path) {
+			return ODS::OdsString(path.c_str()); });
+		}
+		else {
+			sItem.m_vAddress.assign(rEntry.cbegin(), rEntry.cend());
+		}
+		
 		sItem.m_vAddress.push_back(szAddress);
 		if (itr->second == false) {
 			sItem.m_nType = ODS::BrowseItem::TYPE_BRANCH;

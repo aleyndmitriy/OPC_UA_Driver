@@ -162,7 +162,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>.\Drv_OPC_UA_HistValues.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>..\Drv_OPC_UA_HistValues\Libr;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OdsCoreLib.lib;TB5CPP.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Mpr.lib;OdsCoreLib.lib;TB5CPP.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -202,6 +202,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BrowseNetworkServers.cpp" />
     <ClCompile Include="BrowserHdaItem.cpp" />
     <ClCompile Include="ClientSettingsDialog.cpp" />
     <ClCompile Include="ClientSettingsDialogWrapper.cpp" />
@@ -237,6 +238,7 @@
     <None Include="res\Drv_OPC_UA_HistValues.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BrowseNetworkServers.h" />
     <ClInclude Include="BrowserHdaItem.h" />
     <ClInclude Include="ClientSettingsDialog.h" />
     <ClInclude Include="ClientSettingsDialogWrapper.h" />
@@ -269,6 +271,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Drv_OPC_UA_HistValues.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\filetypes.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
