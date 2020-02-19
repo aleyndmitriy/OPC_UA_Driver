@@ -60,6 +60,7 @@ bool SoftingServerInteractor::startApplication()
 			std::string message("Computer name is empty!");
 			output->SendWarning(std::move(message));
 		}
+		resetApplication();
 		return false;
 	}
 	m_pApp = SoftingOPCToolbox5::Application::instance();

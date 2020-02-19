@@ -88,21 +88,45 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		std::string port = std::to_string(m_connectAttributes->configuration.port);
 		m_editPort.SetWindowTextA(port.c_str());
 	}
+	if (!m_connectAttributes->configuration.serverName.empty() && m_connectAttributes->configuration.port > 0) {
+		GetConfigurationsListForSelectedServer();
+	}
 	if (!m_connectAttributes->configurationMode.serverSecurityName.empty()) {
-		std::string desc = m_connectAttributes->configurationMode.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) +
+		
+		for (int index = 0; index < m_endPointsConfigurations.size(); index++) {
+			if (m_endPointsConfigurations.at(index) == m_connectAttributes->configurationMode) {
+				m_cmbConfiguration.SetCurSel(index);
+				GetPolicyListForSelectedConfiguration();
+				break;
+			}
+		}
+		if (m_endPointsConfigurations.empty()) {
+			std::string desc = m_connectAttributes->configurationMode.serverSecurityName + std::string("#") + DrvOPCUAHistValues::GetStringFromSecurityMode(m_connectAttributes->configurationMode.securityMode) +
 			std::string("#") + m_connectAttributes->configurationMode.serverSecurityPolicy;
-		int pos = m_cmbConfiguration.AddString(desc.c_str());
-		m_cmbConfiguration.SetItemData(pos, 0);
-		m_cmbConfiguration.SetCurSel(pos);
+			int pos = m_cmbConfiguration.AddString(desc.c_str());
+			m_cmbConfiguration.SetItemData(pos, 0);
+			m_endPointsConfigurations.push_back(m_connectAttributes->configurationMode);
+		}
+		
 	}
-	m_endPointsConfigurations.push_back(m_connectAttributes->configurationMode);
 	
+
 	if (!m_connectAttributes->configurationAccess.m_policy.m_policyId.empty()) {
-		int pos = m_cmbPolicyId.AddString(m_connectAttributes->configurationAccess.m_policy.m_policyId.c_str());
-		m_cmbPolicyId.SetItemData(pos, 0);
-		m_cmbPolicyId.SetCurSel(pos);
+		
+		for (int index = 0; index < m_endPointPolicyIds.size(); index++) {
+			if (m_endPointPolicyIds.at(index) == m_connectAttributes->configurationAccess.m_policy) {
+				m_cmbPolicyId.SetCurSel(index);
+				break;
+			}
+		}
+		if (m_endPointPolicyIds.empty()) {
+			int pos = m_cmbPolicyId.AddString(m_connectAttributes->configurationAccess.m_policy.m_policyId.c_str());
+			m_cmbPolicyId.SetItemData(pos, 0);
+			m_cmbPolicyId.SetCurSel(pos);
+			m_endPointPolicyIds.push_back(m_connectAttributes->configurationAccess.m_policy);
+		}
 	}
-	m_endPointPolicyIds.push_back(m_connectAttributes->configurationAccess.m_policy);
+	
 
 	LVITEM item;
 	memset(&item, 0, sizeof(item));
@@ -171,7 +195,34 @@ void CClientSettingsDialog::SetUpInitialState()
 
 }
 // Обработчики сообщений CClientSettingsDialog
+void CClientSettingsDialog::GetConfigurationsListForSelectedServer()
+{
+	m_endPointsConfigurations.clear();
+	m_endPointPolicyIds.clear();
+	m_lstPolicyType.DeleteAllItems();
+	m_cmbPolicyId.ResetContent();
 
+	
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->ChooseCurrentServer();
+	}
+}
+
+void CClientSettingsDialog::GetPolicyListForSelectedConfiguration()
+{
+	int index = m_cmbConfiguration.GetCurSel();
+	if (index < 0 || index >= m_endPointsConfigurations.size()) {
+		return;
+	}
+
+	m_lstPolicyType.DeleteAllItems();
+	m_cmbPolicyId.ResetContent();
+
+	
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->ChooseCurrentEndPoint();
+	}
+}
 
 void CClientSettingsDialog::OnEnChangeEditComputerName()
 {
@@ -204,15 +255,8 @@ void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
 	StartLoading();
-	m_endPointsConfigurations.clear();
-	m_endPointPolicyIds.clear();
-	m_lstPolicyType.DeleteAllItems();
-	m_cmbPolicyId.ResetContent();
-	
 	ReadAttributes();
-	if (m_pSoftingInteractor) {
-		m_pSoftingInteractor->ChooseCurrentServer();
-	}
+	GetConfigurationsListForSelectedServer();
 }
 
 
@@ -269,18 +313,9 @@ void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 
 void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 {
-	int index = m_cmbConfiguration.GetCurSel();
-	if (index < 0 || index >= m_endPointsConfigurations.size()) {
-		return;
-	}
 	StartLoading();
-	m_lstPolicyType.DeleteAllItems();
-	m_cmbPolicyId.ResetContent();
-	
 	ReadAttributes();
-	if (m_pSoftingInteractor) {
-		m_pSoftingInteractor->ChooseCurrentEndPoint();
-	}
+	GetPolicyListForSelectedConfiguration();
 }
 
 void CClientSettingsDialog::OnCbnSelChangeComboPolicyId()

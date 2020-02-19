@@ -50,6 +50,8 @@ private:
 	void StartLoading();
 	void StopLoading();
 	void ReadAttributes();
+	void GetConfigurationsListForSelectedServer();
+	void GetPolicyListForSelectedConfiguration();
 	void WarningMessage(std::string message);
 	void ErrorMessage(std::string message);
 
