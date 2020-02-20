@@ -265,6 +265,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ServerHdaItem.h" />
     <ClInclude Include="SoftingApplication.h" />
+    <ClInclude Include="SoftingApplicationOutput.h" />
     <ClInclude Include="SoftingServerInteractor.h" />
     <ClInclude Include="SoftingServerInteractorOutput.h" />
     <ClInclude Include="targetver.h" />

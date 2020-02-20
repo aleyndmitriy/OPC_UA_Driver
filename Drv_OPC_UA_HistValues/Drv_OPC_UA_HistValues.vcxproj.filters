@@ -238,6 +238,9 @@
     <ClInclude Include="SoftingApplication.h">
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
+    <ClInclude Include="SoftingApplicationOutput.h">
+      <Filter>Файлы заголовков\SoftingService</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Drv_OPC_UA_HistValues.rc">
