@@ -1,7 +1,7 @@
 #include"pch.h"
 #include"DataAccessAssembly.h"
 
-DrvOPCUAHistValues::DataAccessAssembly::DataAccessAssembly():settingsDataSource(std::make_shared<XMLSettingsDataSource>()), softingDataSource(std::make_shared<SoftingServerInteractor>())
+DrvOPCUAHistValues::DataAccessAssembly::DataAccessAssembly():settingsDataSource(std::make_shared<XMLSettingsDataSource>()), softingAppInstance(std::make_shared<SoftingApplication>())
 {
 
 }
@@ -17,9 +17,9 @@ DrvOPCUAHistValues::DataAccessAssembly& DrvOPCUAHistValues::DataAccessAssembly::
 	return shared;
 }
 
-std::shared_ptr<SoftingServerInteractor> DrvOPCUAHistValues::DataAccessAssembly::GetSoftingDataSource() const
+std::shared_ptr<DrvOPCUAHistValues::SoftingApplication> DrvOPCUAHistValues::DataAccessAssembly::GetSoftingAppInstance() const
 {
-	return softingDataSource;
+	return softingAppInstance;
 }
 
 std::shared_ptr<DrvOPCUAHistValues::ISettingsDataSource> DrvOPCUAHistValues::DataAccessAssembly::GetSettingDataSource() const
@@ -30,5 +30,5 @@ std::shared_ptr<DrvOPCUAHistValues::ISettingsDataSource> DrvOPCUAHistValues::Dat
 void DrvOPCUAHistValues::DataAccessAssembly::ClearAssemblies()
 {
 	settingsDataSource.reset();
-	softingDataSource.reset();
+	softingAppInstance.reset();
 }
