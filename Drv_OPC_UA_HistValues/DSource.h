@@ -4,7 +4,7 @@
 #include "DConfigurator.h"
 #include "BrowserHdaItem.h"
 #include "ServerHdaItem.h"
-#include"DataAccessAssembly.h"
+#include "ISettingsDataSource.h"
 
 namespace DrvOPCUAHistValues
 {

@@ -2,6 +2,7 @@
 #include"SoftingApplication.h"
 #include "Utils.h"
 #include"Constants.h"
+#include<algorithm>
 
 DrvOPCUAHistValues::SoftingApplication::SoftingApplication():m_pApp(), m_AppDesc(), m_enumResult(), m_CertificateInfo(), m_pOutputList()
 {
@@ -10,7 +11,9 @@ DrvOPCUAHistValues::SoftingApplication::SoftingApplication():m_pApp(), m_AppDesc
 
 void DrvOPCUAHistValues::SoftingApplication::SetSertificate(const SecurityCertificateAccess& certificateInfo)
 {
-	m_CertificateInfo = certificateInfo;
+	if (m_pApp.isNull()) {
+		m_CertificateInfo = certificateInfo;
+	}
 }
 
 DrvOPCUAHistValues::SoftingApplication::~SoftingApplication()
@@ -20,8 +23,12 @@ DrvOPCUAHistValues::SoftingApplication::~SoftingApplication()
 
 void DrvOPCUAHistValues::SoftingApplication::AddDelegate(std::shared_ptr<SoftingApplicationOutput> delegate)
 {
-	std::vector< std::weak_ptr<SoftingApplicationOutput> >::iterator newEnd = std::remove_if(m_pOutputList.begin(), m_pOutputList.end(), [](std::weak_ptr<SoftingApplicationOutput> ptr) {
-		return ptr.expired(); });
+	std::vector< std::weak_ptr<SoftingApplicationOutput> >::iterator newEnd = std::remove_if(m_pOutputList.begin(), m_pOutputList.end(), [&](std::weak_ptr<SoftingApplicationOutput> ptr) {
+		std::shared_ptr<SoftingApplicationOutput> output = ptr.lock();
+		if (output == nullptr || output == delegate) {
+			return true;
+		}
+		return false; });
 	m_pOutputList.erase(newEnd, m_pOutputList.end());
 	m_pOutputList.push_back(delegate);
 }
@@ -142,6 +149,28 @@ bool DrvOPCUAHistValues::SoftingApplication::stopApplication()
 	return true;
 }
 
+EnumStatusCode DrvOPCUAHistValues::SoftingApplication::AddSession(SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	return  m_pApp->addSession(session);
+}
+
+EnumStatusCode DrvOPCUAHistValues::SoftingApplication::RemoveSession(SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	return  m_pApp->removeSession(session);
+}
+
+
+EnumStatusCode DrvOPCUAHistValues::SoftingApplication::FindServers(const std::string& discoveryServerUrl, const std::vector<std::string>& serverURIs, std::vector<SoftingOPCToolbox5::ApplicationDescription>& serversList)
+{
+	return  m_pApp->findServers(discoveryServerUrl, serverURIs, serversList);
+}
+
+
+EnumStatusCode DrvOPCUAHistValues::SoftingApplication::GetEndpointsFromServer(const std::string& serverUrl, const std::vector<std::string>& transportProfiles, std::vector<SoftingOPCToolbox5::EndpointDescription>& endpointDescriptions)
+{
+	return m_pApp->getEndpointsFromServer(serverUrl, transportProfiles, endpointDescriptions);
+}
+
 void DrvOPCUAHistValues::SoftingApplication::sendErrorMessageToDelegates(std::string&& message)
 {
 	std::for_each(m_pOutputList.begin(), m_pOutputList.end(), [&](std::weak_ptr<SoftingApplicationOutput> ptr) {
@@ -150,3 +179,9 @@ void DrvOPCUAHistValues::SoftingApplication::sendErrorMessageToDelegates(std::st
 		});
 }
 
+
+DrvOPCUAHistValues::SoftingApplication& DrvOPCUAHistValues::SoftingApplication::Instance()
+{
+	static SoftingApplication shared;
+	return shared;
+}

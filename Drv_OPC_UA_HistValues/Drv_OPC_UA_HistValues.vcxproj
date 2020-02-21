@@ -207,7 +207,6 @@
     <ClCompile Include="ClientSettingsDialog.cpp" />
     <ClCompile Include="ClientSettingsDialogWrapper.cpp" />
     <ClCompile Include="ConnectionAttributes.cpp" />
-    <ClCompile Include="DataAccessAssembly.cpp" />
     <ClCompile Include="DConfigurator.cpp" />
     <ClCompile Include="DSource.cpp" />
     <ClCompile Include="Export.cpp" />
@@ -245,7 +244,6 @@
     <ClInclude Include="ClientSettingsDialogWrapper.h" />
     <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="DataAccessAssembly.h" />
     <ClInclude Include="DConfigurator.h" />
     <ClInclude Include="DSource.h" />
     <ClInclude Include="Export.h" />

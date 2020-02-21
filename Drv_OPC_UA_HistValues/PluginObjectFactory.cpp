@@ -3,6 +3,7 @@
 #include <OdsErr.h>
 #include "DSource.h"
 #include"Constants.h"
+#include"XMLSettingsDataSource.h"
 
 DrvOPCUAHistValues::PluginObjectFactory& DrvOPCUAHistValues::PluginObjectFactory::GetInstance()
 {
@@ -21,7 +22,7 @@ int DrvOPCUAHistValues::PluginObjectFactory::CreateObject(const TCHAR* szObjKey,
 	if (_tcscmp(szObjKey, OPC_UA_HIST_VALUES)) {
 		return ODS::ERR::BAD_PARAM;
 	}
-	*ppPluginObj = new CDSource(DataAccessAssembly::Instance().GetSettingDataSource(), std::make_shared<SoftingServerInteractor>());
+	*ppPluginObj = new CDSource(std::make_shared<XMLSettingsDataSource>(), std::make_shared<SoftingServerInteractor>());
 	if (*ppPluginObj)
 		return ODS::ERR::OK;
 	else

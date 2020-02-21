@@ -1,183 +1,54 @@
 #include"pch.h"
 #include"SoftingServerInteractor.h"
-#include"Utils.h"
-#include"Constants.h"
 #include<algorithm>
 #include<functional>
 #include <UserIdentityToken.h>
 #include <Statics.h>
+#include "Utils.h"
+#include"Constants.h"
 
-SoftingServerInteractor::SoftingServerInteractor():
- m_pServerAttributes(), m_pOutput(), m_pApp(), m_AppDesc(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
+
+DrvOPCUAHistValues::SoftingServerInteractor::SoftingServerInteractor():
+ m_pServerAttributes(), m_pOutput(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
 {
 	
 }
 
-SoftingServerInteractor::~SoftingServerInteractor()
+DrvOPCUAHistValues::SoftingServerInteractor::~SoftingServerInteractor()
 {
-	stopApplication();
+	if (m_userToken) {
+		m_userToken->clear();
+		m_userToken.reset();
+	}
+	if (m_selectedEndPointDescription) {
+		m_selectedEndPointDescription->clear();
+		m_selectedEndPointDescription.reset();
+	}
 }
 
-void SoftingServerInteractor::SetAttributes(std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes)
+void DrvOPCUAHistValues::SoftingServerInteractor::SetAttributes(std::shared_ptr<ConnectionAttributes> attributes)
 {
 	m_pServerAttributes = attributes;
+
 }
 
-void SoftingServerInteractor::SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output)
+void DrvOPCUAHistValues::SoftingServerInteractor::SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output)
 {
 	m_pOutput.reset();
 	m_pOutput = output;
 }
 
-void SoftingServerInteractor::initApplicationDescription()
+
+bool DrvOPCUAHistValues::SoftingServerInteractor::startApplication()
 {
-	m_AppDesc.clear();
-	std::string folder = std::string("/ODS/DreamReport/System/");
-	m_AppDesc.setApplicationType(EnumApplicationType_Client);
-	m_AppDesc.setApplicationName(SoftingOPCToolbox5::LocalizedText(_T("DreamReport OpcUa Histotical Items Client"), _T("en")));
-	m_AppDesc.setApplicationUri(_T("urn:") + m_pServerAttributes->configuration.computerName + folder + std::string(OPC_UA_LIBRARY_NAME));	// The ApplicationUri should match with the URI in the application certificate
-	m_AppDesc.setProductUri(_T("urn:") + folder + std::string(OPC_UA_LIBRARY_NAME));
+	SoftingApplication::Instance().AddDelegate(shared_from_this());
+	SoftingApplication::Instance().SetSertificate(m_pServerAttributes->configurationAccess.m_certificate);
+	return SoftingApplication::Instance().StartApplication();
 }
 
-bool SoftingServerInteractor::startApplication()
-{
-	if (m_pApp.isNotNull()) {
-		return true;
-	}
-	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-	m_enumResult = SoftingOPCToolbox5::loadToolbox(NULL);
-	if (StatusCode::isBad(m_enumResult))
-	{
-		if (output) {
-			std::string message = std::string("Failed to load the SDK: ") + std::string(getEnumStatusCodeString(m_enumResult));
-			output->SendMessageError(std::move(message));
-		}
-		return false;
-	}
-	
-	if (m_pServerAttributes->configuration.computerName.empty()) {
-		if (output) {
-			std::string message("Computer name is empty!");
-			output->SendWarning(std::move(message));
-		}
-		resetApplication();
-		return false;
-	}
-	m_pApp = SoftingOPCToolbox5::Application::instance();
-	if (!m_pServerAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.empty()) {
-		SoftingOPCToolbox5::PkiStoreConfiguration storeConfiguration;
-		storeConfiguration.setCertificateTrustListLocation(m_pServerAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.c_str());
-		m_enumResult = m_pApp->setPkiStoreConfiguration(&storeConfiguration);
-		if (StatusCode::isBad(m_enumResult))
-		{
-			if (output) {
-				std::string message = std::string("Failed to set the PKI store configuration: ") + std::string(getEnumStatusCodeString(m_enumResult));
-				output->SendMessageError(std::move(message));
-			}
-			resetApplication();
-			return false;
-		}
-	}
-	initApplicationDescription();
-	m_enumResult = m_pApp->initialize(&m_AppDesc);
-	if (StatusCode::isBad(m_enumResult))
-	{
-		if (output) {
-			std::string message = std::string("Failed to initialize the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
-			output->SendMessageError(std::move(message));
-		}
-		resetApplication();
-		return false;
-	}
-	
-	if (StatusCode::isGood(m_enumResult))
-	{
-		if (m_pServerAttributes->configurationAccess.m_certificate.m_certificate.empty() == false && m_pServerAttributes->configurationAccess.m_certificate.m_privateKey.empty() == false &&
-			m_pServerAttributes->configurationAccess.m_certificate.m_password.empty() == false) {
-			m_enumResult = m_pApp->setInstanceCertificate(m_pServerAttributes->configurationAccess.m_certificate.m_certificate.c_str(),
-				m_pServerAttributes->configurationAccess.m_certificate.m_privateKey.c_str(), m_pServerAttributes->configurationAccess.m_certificate.m_password.c_str());
-			if (StatusCode::isBad(m_enumResult))
-			{
-				if (output) {
-					std::string message = std::string("Failed to load the application certificate: ") + std::string(getEnumStatusCodeString(m_enumResult));
-					output->SendMessageError(std::move(message));
-				}
-				resetApplication();
-				return false;
-			}
-		}
-		m_enumResult = m_pApp->start();
-		if (StatusCode::isBad(m_enumResult))
-		{
-			if (output) {
-				std::string message = std::string("Failed to start the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
-				output->SendMessageError(std::move(message));
-			}
-			resetApplication();
-			return false;
-		}
-	}
-	return true;
-}
 
-bool SoftingServerInteractor::stopApplication()
-{
-	if (m_pApp.isNull()) {
-		return true;
-	}
-	if (StatusCode::isGood(m_enumResult))
-	{
-		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-		m_enumResult = m_pApp->stop();
-		if (StatusCode::isBad(m_enumResult))
-		{
-			if (output) {
-				std::string message = std::string("An error occurred while stopping the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
-				output->SendMessageError(std::move(message));
-			}
-			resetApplication();
-			return false;
-		}
-		if (m_userToken) {
-			m_userToken->clear();
-			m_userToken.reset();
-		}
-		if (m_selectedEndPointDescription) {
-			m_selectedEndPointDescription->clear();
-			m_selectedEndPointDescription.reset();
-		}
 
-		m_enumResult = m_pApp->uninitialize();
-		if (StatusCode::isBad(m_enumResult))
-		{
-			if (output) {
-				std::string message = std::string("An error occurred while uninitializing the application: ") + std::string(getEnumStatusCodeString(m_enumResult));
-				output->SendMessageError(std::move(message));
-			}
-			resetApplication();
-			return false;
-		}
-		m_AppDesc.clear();
-		resetApplication();
-	}
-	return true;
-}
-
-void SoftingServerInteractor::resetApplication()
-{
-	m_pApp.reset();
-	m_enumResult = SoftingOPCToolbox5::unloadToolbox();
-	if (StatusCode::isBad(m_enumResult))
-	{
-		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-		if (output) {
-			std::string message = std::string("An error occurred while unloading the SDK:") + std::string(getEnumStatusCodeString(m_enumResult));
-			output->SendMessageError(std::move(message));
-		}
-	}
-}
-
-void SoftingServerInteractor::OpenConnection()
+void DrvOPCUAHistValues::SoftingServerInteractor::OpenConnection()
 {
 	//CPPTestServer.exe /endpointurl opc.tcp://SSBMWS015:4880
 	GUID guid;
@@ -196,7 +67,7 @@ void SoftingServerInteractor::OpenConnection()
 	OpenConnectionWithUUID(key);
 }
 
-void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connectionID)
 {
 	if (connectionID.empty() || startApplication() == false) {
 		return;
@@ -286,7 +157,7 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 		// and the first (only one) user identity token
 		result = session->setUserSecurityPolicy(m_pServerAttributes->configurationAccess.m_policy.m_securityPolicyUri);
 		result = session->setUserIdentityToken(&userIdentityToken);
-		result = m_pApp->addSession(session);
+		result = SoftingApplication::Instance().AddSession(session);
 		if (StatusCode::isBad(result))
 		{
 			if (output) {
@@ -321,7 +192,7 @@ void SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connecti
 	}
 }
 
-void SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connectionID)
 {
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
 	if (iter != m_sessionsList.end()) {
@@ -336,7 +207,7 @@ void SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connect
 				output->GetNewConnectionGuide(std::string());
 			}
 		}
-		m_pApp->removeSession(iter->second);
+		result = SoftingApplication::Instance().RemoveSession(iter->second);
 		if (StatusCode::isBad(result))
 		{
 			std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
@@ -355,7 +226,7 @@ void SoftingServerInteractor::CloseConnectionWithUUID(const std::string& connect
 	}
 }
 
-void SoftingServerInteractor::GetServers()
+void DrvOPCUAHistValues::SoftingServerInteractor::GetServers()
 {
 	if (startApplication() == false) {
 		return;
@@ -369,7 +240,7 @@ void SoftingServerInteractor::GetServers()
 	if (m_pServerAttributes->configuration.port > 0) {
 		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
 	}
-	result = m_pApp->findServers(discoveryServerUrl, serverURIs, serversList);
+	result = SoftingApplication::Instance().FindServers(discoveryServerUrl, serverURIs, serversList);
 	if (StatusCode::isBad(result) || serversList.empty())
 	{
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(result));
@@ -390,7 +261,7 @@ void SoftingServerInteractor::GetServers()
 	}
 }
 
-void SoftingServerInteractor::ChooseCurrentServer()
+void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentServer()
 {
 	if (startApplication() == false) {
 		return;
@@ -415,7 +286,7 @@ void SoftingServerInteractor::ChooseCurrentServer()
 		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
 	}
 	
-	result = m_pApp->findServers(discoveryServerUrl, serverURIs, serversList);
+	result = SoftingApplication::Instance().FindServers(discoveryServerUrl, serverURIs, serversList);
 	if (StatusCode::isBad(result) || serversList.empty())
 	{
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(result));
@@ -441,7 +312,7 @@ void SoftingServerInteractor::ChooseCurrentServer()
 			std::vector<tstring> transportProfileList;
 			std::vector<SoftingOPCToolbox5::EndpointDescription> selectedUrlEndpointDescriptions;
 			result = EnumStatusCode_Good;
-			result = m_pApp->getEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
+			result = SoftingApplication::Instance().GetEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
 			if (StatusCode::isBad(result))
 			{
 				continue;
@@ -461,7 +332,7 @@ void SoftingServerInteractor::ChooseCurrentServer()
 	}
 }
 
-void SoftingServerInteractor::ChooseCurrentEndPoint()
+void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentEndPoint()
 {
 	if (startApplication() == false) {
 		return;
@@ -488,7 +359,7 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 	if (m_pServerAttributes->configuration.port > 0) {
 		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
 	}
-	result = m_pApp->findServers(discoveryServerUrl, serverURIs, serverList);
+	result = SoftingApplication::Instance().FindServers(discoveryServerUrl, serverURIs, serverList);
 	if (StatusCode::isBad(result) || serverList.empty())
 	{
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(m_enumResult));
@@ -514,7 +385,7 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 		if (itr->length() > 0) {
 			std::vector<tstring> transportProfileList;
 			result = EnumStatusCode_Good;
-			result = m_pApp->getEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
+			result = SoftingApplication::Instance().GetEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
 			if (StatusCode::isBad(result))
 			{
 				selectedUrlEndpointDescriptions.clear();
@@ -546,7 +417,7 @@ void SoftingServerInteractor::ChooseCurrentEndPoint()
 	}
 }
 
-void SoftingServerInteractor::ChooseCurrentTokenPolicy()
+void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentTokenPolicy()
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	if (!m_selectedEndPointDescription) {
@@ -567,7 +438,7 @@ void SoftingServerInteractor::ChooseCurrentTokenPolicy()
 	}
 }
 
-void SoftingServerInteractor::chooseEndPointAndPolicyId()
+void DrvOPCUAHistValues::SoftingServerInteractor::chooseEndPointAndPolicyId()
 {
 	if (startApplication() == false) {
 		return;
@@ -596,7 +467,7 @@ void SoftingServerInteractor::chooseEndPointAndPolicyId()
 	if (m_pServerAttributes->configuration.port > 0) {
 		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
 	}
-	result = m_pApp->findServers(discoveryServerUrl, serverURIs, serverList);
+	result = SoftingApplication::Instance().FindServers(discoveryServerUrl, serverURIs, serverList);
 	if (StatusCode::isBad(result) || serverList.empty())
 	{
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(m_enumResult));
@@ -620,7 +491,7 @@ void SoftingServerInteractor::chooseEndPointAndPolicyId()
 		if (itr->length() > 0) {
 			std::vector<tstring> transportProfileList;
 			result = EnumStatusCode_Good;
-			result = m_pApp->getEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
+			result = SoftingApplication::Instance().GetEndpointsFromServer(*itr, transportProfileList, selectedUrlEndpointDescriptions);
 			if (StatusCode::isBad(result))
 			{
 				selectedUrlEndpointDescriptions.clear();
@@ -662,7 +533,7 @@ void SoftingServerInteractor::chooseEndPointAndPolicyId()
 	}
 }
 
-void SoftingServerInteractor::TestConnection()
+void DrvOPCUAHistValues::SoftingServerInteractor::TestConnection()
 {
 	OpenConnection();
 	if (!m_sessionsList.empty()) {
@@ -674,10 +545,9 @@ void SoftingServerInteractor::TestConnection()
 			output->CloseConnectionWithGuide(std::string(iter->first));
 		}
 	}
-	stopApplication();
 }
 
-void SoftingServerInteractor::BrowseSession(const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::BrowseSession(const std::string& connectionID)
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
@@ -702,7 +572,7 @@ void SoftingServerInteractor::BrowseSession(const std::string& connectionID)
 	}
 }
 
-void SoftingServerInteractor::nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	EnumStatusCode result = EnumStatusCode_Good;
 	SoftingOPCToolbox5::BrowseDescription bd;	
@@ -741,7 +611,7 @@ void SoftingServerInteractor::nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId,
 	}
 }
 
-void SoftingServerInteractor::readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	EnumStatusCode result = EnumStatusCode_Good;
 	std::vector<SoftingOPCToolbox5::ReadValueId> readIds;
@@ -774,7 +644,7 @@ void SoftingServerInteractor::readNode(const SoftingOPCToolbox5::NodeId& nodeId,
 	}
 }
 
-EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
+EnumNodeClass DrvOPCUAHistValues::SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	EnumStatusCode result = EnumStatusCode_Good;
 	EnumNodeClass nodeClass = EnumNodeClass_Node;
@@ -805,7 +675,7 @@ EnumNodeClass SoftingServerInteractor::getNodeInfo(const SoftingOPCToolbox5::Nod
 	return nodeClass;
 }
 
-bool SoftingServerInteractor::findNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session)
+bool DrvOPCUAHistValues::SoftingServerInteractor::findNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	nodeId.clear();
 	SoftingOPCToolbox5::NodeId originNodeId = SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder);
@@ -822,7 +692,7 @@ bool SoftingServerInteractor::findNode(SoftingOPCToolbox5::NodeId& nodeId, const
 }
 
 
-bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originNodeId, SoftingOPCToolbox5::NodeId& finalNodeId, const std::string& path, SoftingOPCToolbox5::Client::SessionPtr session)
+bool DrvOPCUAHistValues::SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originNodeId, SoftingOPCToolbox5::NodeId& finalNodeId, const std::string& path, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	finalNodeId.clear();
 	EnumStatusCode result = EnumStatusCode_Good;
@@ -873,7 +743,7 @@ bool SoftingServerInteractor::findNode(const SoftingOPCToolbox5::NodeId& originN
 	return false;
 }
 
-void SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
+void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
 	std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
@@ -921,7 +791,7 @@ void SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCTo
 	}
 }
 
-void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
+void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
 	const std::map<std::string, std::vector<std::string> >& fullPaths, const std::string& connectionID)
 {
 	tagsData.clear();
@@ -1007,7 +877,7 @@ void SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOP
 	}
 }
 
-void SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
 {
 	tags.clear();
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
@@ -1034,7 +904,7 @@ void SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >
 	}
 }
 
-void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	bool isFounded = false;
 	EnumStatusCode result = EnumStatusCode_Good;
@@ -1111,6 +981,30 @@ void SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::v
 	}
 }
 
+
+void DrvOPCUAHistValues::SoftingServerInteractor::SendMessageError(std::string&& message)
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (output) {
+		output->SendMessageError(std::move(message));
+	}
+}
+
+void DrvOPCUAHistValues::SoftingServerInteractor::SendWarning(std::string&& message)
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (output) {
+		output->SendWarning(std::move(message));
+	}
+}
+
+void DrvOPCUAHistValues::SoftingServerInteractor::SendMessageInfo(std::string&& message)
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (output) {
+		output->SendMessageInfo(std::move(message));
+	}
+}
 
 bool admitToAttributes(const SoftingOPCToolbox5::EndpointDescription& desc, const DrvOPCUAHistValues::ConnectionAttributes& attributes)
 {

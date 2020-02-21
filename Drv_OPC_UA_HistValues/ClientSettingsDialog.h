@@ -12,7 +12,7 @@ class CClientSettingsDialog : public CDialogEx
 	DECLARE_DYNAMIC(CClientSettingsDialog)
 
 public:
-	CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent);
+	CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent);
 	virtual ~CClientSettingsDialog();
 
 // Данные диалогового окна
@@ -27,7 +27,7 @@ protected:
 private:
 	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
-	std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
+	std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> m_pSoftingInteractor;
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> m_endPointsConfigurations;
 	std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy> m_endPointPolicyIds;
 	CEdit m_editComputerName;
