@@ -877,7 +877,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::strin
 	}
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::vector<TagInfo>& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
 {
 	tags.clear();
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
@@ -904,7 +904,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::vector<std::pair<
 	}
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<std::pair<std::string, bool> >& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<TagInfo>& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	bool isFounded = false;
 	EnumStatusCode result = EnumStatusCode_Good;
@@ -923,41 +923,50 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::No
 	bd.setIncludeSubtypes(true);
 	bd.setBrowseDirection(EnumBrowseDirection_Forward);
 	bd.setNodeClassMask(EnumNodeClass_Node);
-	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_BrowseName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
 	bd.setResultMask(resultMask);
 	result = session->browseNode(&vd, &bd, refDescriptions);
 	if (StatusCode::isGood(result)) {
-		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 		std::string findingName;
 		if (receivedTags.empty() == false) {
 			findingName = receivedTags.front();
 			receivedTags.pop();
 		}
 		if (findingName.empty()) {
-			std::string message;
 			for (size_t i = 0; i < refDescriptions.size(); i++)
 			{
 				std::string name = refDescriptions[i].getDisplayName()->getText();
 				EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
-				std::pair<std::string, bool> pair;
+				std::string desc;
+				int type = 0;
 				if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
-					pair = std::make_pair<std::string, bool>(std::string(name), true);
+					type = ODS::BrowseItem::TYPE_ITEM;
 				}
 				else {
-					pair = std::make_pair<std::string, bool>(std::string(name), false);
+					type = ODS::BrowseItem::TYPE_BRANCH;
 				}
-				std::vector<std::pair<std::string, bool> >::const_iterator findIterator =
-					std::find_if(tags.cbegin(), tags.cend(), [&](const std::pair<std::string, bool>& existingPair) {
-					return (existingPair.first == pair.first) && (existingPair.second == pair.second); });
+				std::vector<SoftingOPCToolbox5::ReadValueId> readIds;
+				SoftingOPCToolbox5::ReadValueId rvid;
+				rvid.setNodeId(refDescriptions[i].getNodeId());
+				rvid.setAttributeId(EnumAttributeId_Description);
+				readIds.push_back(rvid);
+				std::vector<SoftingOPCToolbox5::DataValue> readResults;
+				result = session->read(EnumTimestampsToReturn_Neither, readIds, 0, readResults);
+				if (StatusCode::isGood(result) && readResults.size() == 1 && StatusCode::isGood(readResults.at(0).getStatusCode()))
+				{
+					EnumDataTypeId typeId = readResults.at(0).getValue()->getDataType();
+					if (typeId == EnumNumericNodeId_LocalizedText) {
+						desc = readResults.at(0).getValue()->getLocalizedText().getText();
+					}
+				}
+				std::vector<TagInfo>::const_iterator findIterator =
+					std::find_if(tags.cbegin(), tags.cend(), [&](const TagInfo& existingTag) {
+					return (existingTag.m_strName == name) && (existingTag.m_iType == type); });
 				if (findIterator == tags.cend()) {
-					tags.push_back(pair);
+
+					tags.push_back(TagInfo(name,desc,type));
 				}
 				
-				message = message + ";" +  name;
-			}
-			if (output) {
-				message = "Tags: " + message;
-				output->SendMessageInfo(std::move(message));
 			}
 		}
 		else {
@@ -971,10 +980,6 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::No
 					return;
 				}
 				devicesNode = findIterator->getNodeId();
-				if (output) {
-					std::string message = "Tag with name " + findingName + std::string(" has been selected.");
-					output->SendMessageInfo(std::move(message));
-				}
 				getTags(devicesNode, tags, receivedTags, session);
 			}
 		}

@@ -126,6 +126,9 @@
     <ClCompile Include="SoftingApplication.cpp">
       <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
+    <ClCompile Include="TagInfo.cpp">
+      <Filter>Исходные файлы\SoftingService</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -227,6 +230,9 @@
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
     <ClInclude Include="SoftingApplicationOutput.h">
+      <Filter>Файлы заголовков\SoftingService</Filter>
+    </ClInclude>
+    <ClInclude Include="TagInfo.h">
       <Filter>Файлы заголовков\SoftingService</Filter>
     </ClInclude>
   </ItemGroup>

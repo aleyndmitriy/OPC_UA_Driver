@@ -230,6 +230,7 @@
     <ClCompile Include="ServerHdaItem.cpp" />
     <ClCompile Include="SoftingApplication.cpp" />
     <ClCompile Include="SoftingServerInteractor.cpp" />
+    <ClCompile Include="TagInfo.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="XMLSettingsDataSource.cpp" />
   </ItemGroup>
@@ -266,6 +267,7 @@
     <ClInclude Include="SoftingApplicationOutput.h" />
     <ClInclude Include="SoftingServerInteractor.h" />
     <ClInclude Include="SoftingServerInteractorOutput.h" />
+    <ClInclude Include="TagInfo.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="XMLSettingsDataSource.h" />

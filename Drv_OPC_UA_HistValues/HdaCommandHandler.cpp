@@ -137,7 +137,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleCloseSession(ODS::HdaFunction* 
 		return existingUuid == uuid; });
 	if (findIterator != m_connectionsList.cend()) {
 		m_pSoftingInteractor->CloseConnectionWithUUID(uuid);
-		Log::GetInstance()->WriteInfo(_T("CloseSession ok,  session id %s"), (LPCTSTR)sessionId.ToString());
+		Log::GetInstance()->WriteInfo(_T("Close session ok,  session id %s"), (LPCTSTR)sessionId.ToString());
 		ODS::HdaFunctionResultSession* pSession = new ODS::HdaFunctionResultSession;
 		pSession->SetContext(pFunc->GetContext());
 		pSession->SetRc(ODS::ERR::OK);

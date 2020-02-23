@@ -36,7 +36,7 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 	if (m_ConnectionId.empty()) {
 		return ODS::ERR::DB_CONNECTION_FAILED;
 	}
-	std::vector<std::pair<std::string, bool> > tagsName;
+	std::vector<TagInfo> tagsName;
 	std::queue<std::string> pathQueue;
 	std::vector<std::string> vec;
 	if (rEntry.size() == 1) {
@@ -55,8 +55,8 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 	}
 	
 	m_pSoftingInteractor->GetTags(tagsName, pathQueue, m_ConnectionId);
-	for (std::vector<std::pair<std::string, bool> >::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
-		ODS::OdsString szAddress(itr->first.c_str());
+	for (std::vector<TagInfo>::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
+		ODS::OdsString szAddress(itr->m_strName.c_str());
 		STagItem sItem;
 		if (rEntry.size() == 1) {
 			std::transform(vec.cbegin(), vec.cend(), std::back_inserter(sItem.m_vAddress), [](const std::string& path) {
@@ -67,9 +67,8 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 		}
 		
 		sItem.m_vAddress.push_back(szAddress);
-		if (itr->second == false) {
-			sItem.m_nType = ODS::BrowseItem::TYPE_BRANCH;
-		}
+		sItem.m_szDescription = ODS::OdsString(itr->m_strDescription.c_str());
+		sItem.m_nType = itr->m_iType;
 		pTagList->push_back(sItem);
 	}
 	return ODS::ERR::OK;
