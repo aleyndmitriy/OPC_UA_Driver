@@ -929,7 +929,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::No
 	bd.setIncludeSubtypes(true);
 	bd.setBrowseDirection(EnumBrowseDirection_Forward);
 	bd.setNodeClassMask(EnumNodeClass_Node);
-	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_BrowseName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
 	bd.setResultMask(resultMask);
 	result = session->browseNode(&vd, &bd, refDescriptions);
 	if (StatusCode::isGood(result)) {

@@ -14,7 +14,9 @@ DrvOPCUAHistValues::BrowserHandler::BrowserHandler(std::shared_ptr<SoftingServer
 DrvOPCUAHistValues::BrowserHandler::~BrowserHandler()
 {
 	if (!m_ConnectionId.empty()) {
-		m_pSoftingInteractor->CloseConnectionWithUUID(m_ConnectionId);
+		std::string connectionId(m_ConnectionId);
+		m_pSoftingInteractor->CloseConnectionWithUUID(connectionId);
+		Log::GetInstance()->WriteInfo(_T("Close connection with session id %s !"), (LPCTSTR)connectionId.c_str());
 	}
 }
 
@@ -22,7 +24,6 @@ int DrvOPCUAHistValues::BrowserHandler::Init(std::shared_ptr<ConnectionAttribute
 {
 	m_pAttributes = attributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
-	
 	return ODS::ERR::OK;
 }
 
@@ -32,10 +33,13 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 	pTagList->clear();
 	if (m_ConnectionId.empty()) {
 		m_pSoftingInteractor->OpenConnection();
+		if (m_ConnectionId.empty()) {
+			Log::GetInstance()->WriteInfo(_T("Can't open connection!"));
+			return ODS::ERR::DB_CONNECTION_FAILED;
+		}
+		Log::GetInstance()->WriteInfo(_T("Open connection with session id %s !"), (LPCTSTR)m_ConnectionId.c_str());
 	}
-	if (m_ConnectionId.empty()) {
-		return ODS::ERR::DB_CONNECTION_FAILED;
-	}
+	
 	std::vector<TagInfo> tagsName;
 	std::queue<std::string> pathQueue;
 	std::vector<std::string> vec;
