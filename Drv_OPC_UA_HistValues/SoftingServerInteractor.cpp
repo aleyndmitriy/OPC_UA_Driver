@@ -69,6 +69,12 @@ void DrvOPCUAHistValues::SoftingServerInteractor::OpenConnection()
 
 void DrvOPCUAHistValues::SoftingServerInteractor::OpenConnectionWithUUID(const std::string& connectionID)
 {
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
+	if (iter != m_sessionsList.end()) {
+		std::string message = std::string("Connection with id ") + connectionID + std::string(" has already been opened!");
+		output->SendMessageError(std::move(message));
+	}
 	if (connectionID.empty() || startApplication() == false) {
 		return;
 	}
@@ -78,7 +84,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::OpenConnectionWithUUID(const s
 	if (!m_selectedEndPointDescription || !m_userToken) {
 		return;
 	}
-	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	
 	EnumStatusCode result = EnumStatusCode_Good;
 	std::string endpointUrl = m_selectedEndPointDescription->getEndpointUrl();
 	if (endpointUrl.length() <= 0)

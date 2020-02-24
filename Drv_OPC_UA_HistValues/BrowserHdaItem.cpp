@@ -70,7 +70,7 @@ ODS::OdsString DrvOPCUAHistValues::BrowserHdaItem::GetAddressOld(const ODS::Item
 int DrvOPCUAHistValues::BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress* pAddress, ODS::BrowseItem** ppList, ULONG* pulCount)
 {
 	int iRes = ODS::ERR::OK;
-
+	Log::GetInstance()->WriteInfo(_T("Start browse item list..."));
 	if (ppList && pulCount)
 	{
 		std::vector<STagItem> tagList;
@@ -114,8 +114,10 @@ int DrvOPCUAHistValues::BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress
 
 		iRes = m_pBrowserHandler->GetTagList(entry, &tagList);
 		if (iRes != ODS::ERR::OK)
+		{
+			Log::GetInstance()->WriteInfo(_T("Finish browse item list with result not equaled to ok"));
 			return iRes;
-
+		}
 		*pulCount = tagList.size();
 
 		if (*pulCount)
@@ -158,7 +160,7 @@ int DrvOPCUAHistValues::BrowserHdaItem::GetBrowseItemList(const ODS::ItemAddress
 	{
 		iRes = ODS::ERR::BAD_PARAM;
 	}
-
+	Log::GetInstance()->WriteInfo(_T("Finish browse item list."));
 	return iRes;
 }
 

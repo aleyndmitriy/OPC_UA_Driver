@@ -106,7 +106,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleOpenSession(ODS::HdaFunction* p
 		Log::GetInstance()->WriteInfo(_T("OpenSession ok,  session id %s"), (LPCTSTR)sessionId.ToString());
 	}
 	pResultList->push_back(pSession);
-
+	Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
 	return ODS::ERR::OK;
 }
 
@@ -128,9 +128,15 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleCloseSession(ODS::HdaFunction* 
 		}
 	}
 	else {
+		Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
 		return ODS::ERR::BAD_PARAM;
 	}
 	pFunc->DestroyParameterList(pParam, nCount);
+	if (sessionId.IsEmpty()) {
+		Log::GetInstance()->WriteInfo(_T("Empty session id %s has been received!"), (LPCTSTR)sessionId.ToString());
+		Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
+		return ODS::ERR::BAD_PARAM;
+	}
 	std::string uuid = std::string(sessionId.ToString().GetString());
 	std::vector<std::string>::const_iterator findIterator =
 		std::find_if(m_connectionsList.cbegin(), m_connectionsList.cend(), [&](const std::string& existingUuid) {
@@ -142,10 +148,12 @@ int DrvOPCUAHistValues::HdaCommandHandler::HandleCloseSession(ODS::HdaFunction* 
 		pSession->SetContext(pFunc->GetContext());
 		pSession->SetRc(ODS::ERR::OK);
 		pResultList->push_back(pSession);
+		Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
 		return ODS::ERR::OK;
 	}
 	else {
 		Log::GetInstance()->WriteInfo(_T("Can't close session with id %s"), (LPCTSTR)sessionId.ToString());
+		Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
 		return ODS::ERR::DB_CONNECTION_FAILED;
 	}
 }
@@ -204,6 +212,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		std::string sessionID;
 		if (sessionId.IsEmpty()) {
 			Log::GetInstance()->WriteInfo(_T("Empty session id %s has been received!"), (LPCTSTR)sessionId.ToString());
+			Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
 			return ODS::ERR::DB_CONNECTION_FAILED;
 		}
 		else {
@@ -226,6 +235,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		std::chrono::microseconds durationLoadingTagsParam = std::chrono::duration_cast<std::chrono::microseconds>(endReceivingTagInfo - startReceivingTagInfo);
 		Log::GetInstance()->WriteInfo(_T("Finish reading parameters list in %d mcsec"), durationLoadingTagsParam.count());
 		if (paramList.empty()) {
+			Log::GetInstance()->WriteInfo(_T("Finish server executing commands. Empty parameters list."));
 			return ODS::ERR::DB_NO_DATA;
 		}
 		startReceivingTagInfo = std::chrono::high_resolution_clock::now();
@@ -234,6 +244,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::ExecuteCommand(ODS::HdaCommand* pComm
 		endReceivingTagInfo = std::chrono::high_resolution_clock::now();
 		durationLoadingTagsParam = std::chrono::duration_cast<std::chrono::microseconds>(endReceivingTagInfo - startReceivingTagInfo);
 		Log::GetInstance()->WriteInfo(_T("Query has been executed in %d mcsec"), durationLoadingTagsParam.count());
+		Log::GetInstance()->WriteInfo(_T("Finish server executing commands."));
 		return ODS::ERR::OK;
 	}
 	else {
