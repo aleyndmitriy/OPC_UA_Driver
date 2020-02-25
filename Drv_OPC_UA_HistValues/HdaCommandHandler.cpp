@@ -29,7 +29,6 @@ int DrvOPCUAHistValues::HdaCommandHandler::Init(std::shared_ptr<ConnectionAttrib
 {
 	m_pAttributes = attributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
-	m_pSoftingInteractor->SetOutput(shared_from_this());
 	return ODS::ERR::OK;
 }
 
@@ -41,7 +40,7 @@ int DrvOPCUAHistValues::HdaCommandHandler::Shut()
 
 int DrvOPCUAHistValues::HdaCommandHandler::HandleCommand(ODS::HdaCommand* pCommand, ODS::HdaCommandResult* pResult)
 {
-	
+	m_pSoftingInteractor->SetOutput(shared_from_this());
 	std::vector<ODS::HdaFunctionResult*> resultList;
 	ODS::HdaFunction** pList = nullptr;
 	int nCount = 0;
@@ -558,6 +557,7 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			vValue.intVal = std::stoi(itr->second.second);
 			tvq->SetValue(vValue);
 			::VariantClear(&vValue);
+			DrvOPCUAHistValues::Log::GetInstance()->WriteInfoDebug(_T("Int32 result  %d !"), vValue.intVal);
 			break;
 		case EnumNumericNodeId_Int64:
 			::VariantInit(&vValue);
@@ -607,6 +607,11 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			dataTime.wSecond = timeStampStruct->wSecond;
 			dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
 			break;
+		case EnumNumericNodeId_LocalizedText:
+			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
+		break;
+		case EnumNumericNodeId_String:
+			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
 		default:
 			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
 			break;

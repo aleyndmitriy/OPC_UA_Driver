@@ -537,6 +537,10 @@ void CClientSettingsDialog::ReadAttributes()
 	int len = m_editComputerName.GetWindowTextLengthA();
 	m_editComputerName.GetWindowTextA(str);
 	m_connectAttributes->configuration.computerName = std::string(str.GetBuffer(len));
+	if(m_connectAttributes->configuration.computerName.empty()) {
+		m_connectAttributes->configuration.computerName = std::string("localhost");
+		m_editComputerName.SetWindowTextA(m_connectAttributes->configuration.computerName.c_str());
+	}
 	str.ReleaseBuffer();
 	str.Empty();
 	len = m_cmbServerName.GetWindowTextLengthA();

@@ -6,7 +6,7 @@
 #include <Statics.h>
 #include "Utils.h"
 #include"Constants.h"
-
+#include"Log.h"
 
 DrvOPCUAHistValues::SoftingServerInteractor::SoftingServerInteractor():
  m_pServerAttributes(), m_pOutput(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
@@ -1221,8 +1221,8 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	break;
 	case EnumNumericNodeId_Int32:
 	{
-		valueStr = dataValue.getValue()->toString();
 		int intVal = dataValue.getValue()->getInt32();
+		DrvOPCUAHistValues::Log::GetInstance()->WriteInfoDebug(_T("Int32Value  %d !"), intVal);
 		valueStr = std::to_string(intVal);
 	}
 	break;
@@ -1267,6 +1267,16 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	{
 		float floatVale = dataValue.getValue()->getFloat();
 		valueStr = std::to_string(floatVale);
+	}
+	break;
+	case EnumNumericNodeId_LocalizedText:
+	{
+		valueStr = dataValue.getValue()->getLocalizedText().getText();
+	}
+	break;
+	case EnumNumericNodeId_String:
+	{
+		valueStr = dataValue.getValue()->getString();
 	}
 	break;
 	default:
