@@ -41,7 +41,7 @@ namespace DrvOPCUAHistValues
 		void ExecuteQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, const std::map<int, std::vector<ParamValueList> >& paramList,
 			const std::set<std::string>& tagsForQuery, std::vector<ODS::HdaFunctionResult*>* pResultList, const SYSTEMTIME& startTime,
 			const SYSTEMTIME& endTime, const std::string& sessionId);
-		ODS::Tvq* CreateTvqFromRecord(const Record& record, bool* condition) const;
+		ODS::Tvq* CreateTvqFromRecord(const Record& record) const;
 		bool AdjustConditions(const std::vector<TagCondition>& condition, const std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const Record& record);
 	};
 }

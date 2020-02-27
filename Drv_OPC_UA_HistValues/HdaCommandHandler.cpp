@@ -317,7 +317,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 							if (AdjustConditions(queriesIterator->second.at(index).GetConditions(), tagsData, *itr)) {
 								condition = true;
 							}
-							ODS::Tvq* tvq = CreateTvqFromRecord(*itr, nullptr);
+							ODS::Tvq* tvq = CreateTvqFromRecord(*itr);
 							SYSTEMTIME tm = tvq->GetTimestampLoc();
 							if (tm.wYear != 0) {
 								if (itr == tagsIterator->second.cbegin()) {
@@ -339,6 +339,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 								}
 							}
 							pFuncResult->AddTvq(tvq);
+							conditions.push_back(condition);
 						}
 						bool* conditionsList = new bool[conditions.size()];
 						for (size_t conditionItr = 0; conditionItr < conditions.size(); ++conditionItr) {
@@ -365,7 +366,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
 							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
-						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr, nullptr);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
@@ -379,7 +380,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
 							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
-						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr, nullptr);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
@@ -392,7 +393,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
 						Record avgRecord = RecordAvg(record, tagsIterator->second.size());
-						ODS::Tvq* tvq = CreateTvqFromRecord(avgRecord, nullptr);
+						ODS::Tvq* tvq = CreateTvqFromRecord(avgRecord);
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
 					}
@@ -403,7 +404,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
-						ODS::Tvq* tvq = CreateTvqFromRecord(record, nullptr);
+						ODS::Tvq* tvq = CreateTvqFromRecord(record);
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
 					}
@@ -416,7 +417,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
 							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
-						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr, nullptr);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
@@ -430,7 +431,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
 							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
-						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr, nullptr);
+						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
@@ -445,7 +446,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 							if (!AdjustConditions(queriesIterator->second.at(index).GetConditions(), tagsData, *itr)) {
 								continue;
 							}
-							ODS::Tvq* tvq = CreateTvqFromRecord(*itr, nullptr);
+							ODS::Tvq* tvq = CreateTvqFromRecord(*itr);
 							SYSTEMTIME tm = tvq->GetTimestampLoc();
 							if (tm.wYear != 0) {
 								if (itr == tagsIterator->second.cbegin()) {
@@ -521,13 +522,15 @@ bool DrvOPCUAHistValues::HdaCommandHandler::AdjustConditions(const std::vector<T
 	return false;
 }
 
-ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Record& record, bool* condition) const
+ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Record& record) const
 {
 	VARIANT vValue;
 	std::string str;
 	const SYSTEMTIME* timeStampStruct = nullptr;
 	SYSTEMTIME dataTime = { 0 };
 	SYSTEMTIME localDataTime = { 0 };
+	SYSTEMTIME valDataTime = { 0 };
+	SYSTEMTIME localValDataTime = { 0 };
 	float val = 0.0;
 	bool bitVal = false;
 	ODS::Tvq* tvq = new ODS::Tvq();
@@ -598,14 +601,31 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			::VariantClear(&vValue);
 			break;
 		case EnumNumericNodeId_DateTime:
-			timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
-			dataTime.wYear = timeStampStruct->wYear;
-			dataTime.wMonth = timeStampStruct->wMonth;
-			dataTime.wDay = timeStampStruct->wDay;
-			dataTime.wHour = timeStampStruct->wHour;
-			dataTime.wMinute = timeStampStruct->wMinute;
-			dataTime.wSecond = timeStampStruct->wSecond;
-			dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
+			if (itr->first == std::string(OPC_UA_SERVER_TIMESTAMP)) {
+				timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
+				dataTime.wYear = timeStampStruct->wYear;
+				dataTime.wMonth = timeStampStruct->wMonth;
+				dataTime.wDay = timeStampStruct->wDay;
+				dataTime.wHour = timeStampStruct->wHour;
+				dataTime.wMinute = timeStampStruct->wMinute;
+				dataTime.wSecond = timeStampStruct->wSecond;
+				dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
+			}
+			else {
+				timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
+				valDataTime.wYear = timeStampStruct->wYear;
+				valDataTime.wMonth = timeStampStruct->wMonth;
+				valDataTime.wDay = timeStampStruct->wDay;
+				valDataTime.wHour = timeStampStruct->wHour;
+				valDataTime.wMinute = timeStampStruct->wMinute;
+				valDataTime.wSecond = timeStampStruct->wSecond;
+				valDataTime.wMilliseconds = timeStampStruct->wMilliseconds;
+				ODS::TimeUtils::SysTimeUtcToLocal(valDataTime, &localValDataTime);
+				if (localValDataTime.wYear != 0) {
+					ODS::OdsString str = ODS::TimeUtils::CreateIsoTimeStringFromSysTime(localValDataTime, true);
+					tvq->SetValue(ODS::Data::Value(str.GetString()));
+				}
+			}
 			break;
 		case EnumNumericNodeId_LocalizedText:
 			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));

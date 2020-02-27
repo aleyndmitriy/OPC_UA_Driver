@@ -757,6 +757,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 	
 	std::vector<SoftingOPCToolbox5::NumericRange> indexRanges(nodesToRead.size(), SoftingOPCToolbox5::NumericRange());
 	std::vector<SoftingOPCToolbox5::HistoryReadValueId> historyReadValueIds;
+	std::vector<SoftingOPCToolbox5::ByteString> historyReadValueContinuationPoints(nodesToRead.size(), SoftingOPCToolbox5::ByteString());
 	std::transform(nodesToRead.cbegin(), nodesToRead.cend(), std::back_inserter(historyReadValueIds), [](const SoftingOPCToolbox5::NodeId& nodeId) {
 		SoftingOPCToolbox5::HistoryReadValueId historyReadValueId;
 		historyReadValueId.setNodeId(&nodeId);
@@ -768,12 +769,13 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 	readRawDetails.setReturnBounds(false);
 	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
 	EnumStatusCode result = EnumStatusCode_Bad;
-	result = session->historyReadRaw(EnumTimestampsToReturn_Both, false, historyReadValueIds, &readRawDetails, historyReadResults);
+	result = session->historyReadRaw(EnumTimestampsToReturn_Server, false, historyReadValueIds, &readRawDetails, historyReadResults);
 	historicalValuesOfNodes.clear();
 	if (StatusCode::isSUCCEEDED(result))
 	{
-		for (std::vector<SoftingOPCToolbox5::HistoryReadDataResult>::const_iterator itr = historyReadResults.cbegin(); itr != historyReadResults.cend(); ++itr) {
-			EnumStatusCode operationResult = itr->getStatusCode();
+		size_t resultSize = historyReadResults.size();
+		for (size_t indexOfResult = 0; indexOfResult < resultSize; ++indexOfResult) {
+			EnumStatusCode operationResult = historyReadResults.at(indexOfResult).getStatusCode();
 			if (StatusCode::isBad(operationResult)) {
 				if (output) {
 					std::string message = std::string("Operation of the HistoryRead service call returned an unexpected status code ") + std::string(getEnumStatusCodeString(operationResult));
@@ -782,11 +784,44 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 				return;
 			}
 			std::vector<SoftingOPCToolbox5::DataValue> values;
-			OTUInt32 sizeOfData = itr->getNumberOfValues();
+			OTUInt32 sizeOfData = historyReadResults.at(indexOfResult).getNumberOfValues();
 			for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
 			{
-				values.push_back(itr->getValue(valueIndex));
+				values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
 			}
+			
+			SoftingOPCToolbox5::ByteString conPoint = historyReadResults.at(indexOfResult).getContinuationPoint();
+			size_t lenOfContinuatinPoint = conPoint.getSize();
+			while (lenOfContinuatinPoint > 0) {
+				historyReadValueIds.at(indexOfResult).setContinuationPoint(conPoint);
+				std::vector<SoftingOPCToolbox5::HistoryReadValueId> vecId{ historyReadValueIds.at(indexOfResult) };
+				std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadContinuationResults;
+				result = session->historyReadRaw(EnumTimestampsToReturn_Server, false, vecId, &readRawDetails, historyReadContinuationResults);
+				if (StatusCode::isSUCCEEDED(result))
+				{
+					size_t resultSize = historyReadContinuationResults.size();
+					for (size_t indexOfResult = 0; indexOfResult < resultSize; ++indexOfResult) {
+						EnumStatusCode operationResult = historyReadContinuationResults.at(indexOfResult).getStatusCode();
+						if (StatusCode::isBad(operationResult)) {
+							if (output) {
+								std::string message = std::string("Operation of the HistoryRead service call returned an unexpected status code ") + std::string(getEnumStatusCodeString(operationResult));
+								output->SendMessageInfo(std::move(message));
+							}
+							break;
+						}
+						OTUInt32 sizeOfData = historyReadContinuationResults.at(indexOfResult).getNumberOfValues();
+						for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
+						{
+							values.push_back(historyReadContinuationResults.at(indexOfResult).getValue(valueIndex));
+						}
+					}
+					conPoint = historyReadContinuationResults.at(indexOfResult).getContinuationPoint();
+					lenOfContinuatinPoint = conPoint.getSize();
+				}
+				else {
+					lenOfContinuatinPoint = 0;
+				}
+			};
 			historicalValuesOfNodes.push_back(values);
 		}
 	}
@@ -1191,6 +1226,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 {
 	DrvOPCUAHistValues::Record record;
 	EnumDataTypeId type = dataValue.getValue()->getDataType();
+	EnumStatusCode status = dataValue.getValue()->getStatusCode();
 	SYSTEMTIME serverDataTime = { 0 };
 	serverDataTime.wYear = dataValue.getServerTimestamp()->yearGMT();
 	serverDataTime.wMonth = dataValue.getServerTimestamp()->monthGMT();
@@ -1297,6 +1333,21 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	case EnumNumericNodeId_String:
 	{
 		valueStr = dataValue.getValue()->getString();
+	}
+	break;
+	case EnumNumericNodeId_DateTime:
+	{
+		SYSTEMTIME valueDataTime = { 0 };
+		SoftingOPCToolbox5::DateTime dateTime = dataValue.getValue()->getDateTime();
+		valueDataTime.wYear = dateTime.yearGMT();
+		valueDataTime.wMonth = dateTime.monthGMT();
+		valueDataTime.wDay = dateTime.dayGMT();
+		valueDataTime.wHour = dateTime.hourGMT();
+		valueDataTime.wMinute = dateTime.minuteGMT();
+		valueDataTime.wSecond = dateTime.secondGMT();
+		valueDataTime.wMilliseconds = dateTime.milliSecondGMT();
+		char* strValPtr = reinterpret_cast<char*>(&valueDataTime);
+		valueStr = std::string(strValPtr, sizeof(SYSTEMTIME));
 	}
 	break;
 	default:
