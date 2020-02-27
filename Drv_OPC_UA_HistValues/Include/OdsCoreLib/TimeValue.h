@@ -51,24 +51,38 @@ public:
 	void SetKindUtc();
 	void SetKindLocal();
 
-	static SYSTEMTIME ToSystemTime(const ODS::Data::TimeValue& rT);
-	static ODS::Data::TimeValue ToTimeValue(const SYSTEMTIME& rSt);
+	int GetDst() const;
+	void SetDst(int nDst); // -1 not set, 1 - dst is in effect, 0 dst is not active
 
-	static ODS::Data::TimeValue Create(USHORT y, BYTE m, BYTE d, BYTE h, BYTE min, BYTE sec, USHORT milli);
+	static SYSTEMTIME ToSystemTime(const ODS::Data::TimeValue& rT);
+	static ODS::Data::TimeValue ToTimeValue(const SYSTEMTIME& rSt, int nDST = -1);
+
+	static ODS::Data::TimeValue Create(USHORT y, BYTE m, BYTE d, BYTE h, BYTE min, BYTE sec, USHORT milli, int nDST = -1);
 	static ODS::Data::TimeValue CreateEmpty();
 
 	SYSTEMTIME ToSystemTime() const;
-	void FromSystemTime(const SYSTEMTIME& rSt);
+	void FromSystemTime(const SYSTEMTIME& rSt, int nDST = -1);
 
 private:
 
 	USHORT m_Year;   // 2017
-	BYTE   m_Month;  // 1 - 12
+
+	struct MF // month and flags
+	{
+		unsigned char m_Month    : 4; // 1 - 12
+		unsigned char m_UTC      : 1;
+		unsigned char m_DstSet   : 1;
+		unsigned char m_DST      : 1;
+		unsigned char m_Reserve1 : 1;
+	};
+
+	MF     m_MF;
 	BYTE   m_Day;    // 1 - 31
 	BYTE   m_Hour;   // 0 - 24
 	BYTE   m_Minute; // 0 - 59
 	USHORT m_Milli;  // 0 - 59999, 59 seconds 999 milliseconds
 };
+
 
 }}  // namespace
 

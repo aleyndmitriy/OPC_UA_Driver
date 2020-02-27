@@ -34,6 +34,7 @@ namespace DrvOPCUAHistValues
 		void SendMessageError(std::string&& message) override;
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
+		void GetAggregateFunctions(SoftingOPCToolbox5::Client::SessionPtr session);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pServerAttributes;
 		std::weak_ptr<SoftingServerInteractorOutput> m_pOutput;

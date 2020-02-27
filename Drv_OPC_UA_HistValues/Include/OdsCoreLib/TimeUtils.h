@@ -55,9 +55,12 @@ ODS_CORE_LIB_EXP int SysTimeCompare(const SYSTEMTIME& rFirst, const SYSTEMTIME& 
 
 /**
    @brief Convert system time which is local time to number of millieseconds since 1970 UTC
+   @param [in] rSysTime System time to convert
+   @param [out] pul64Millisec Milliseconds since 1970-01-01 00:00:00 UTC
+   @param [in] nDstOn 1 - DST is in effect, 0 - DST is not active, -1 - DST is not defined
    @return error code
 */
-ODS_CORE_LIB_EXP int SysTimeLocalToUlong64(const SYSTEMTIME& rSysTime, ULONG64* pul64Millisec);
+ODS_CORE_LIB_EXP int SysTimeLocalToUlong64(const SYSTEMTIME& rSysTime, ULONG64* pul64Millisec, int nDstOn = -1);
 
 /**
    @brief Convert system time which is UTC time to number of millieseconds since 1970 UTC
@@ -66,16 +69,22 @@ ODS_CORE_LIB_EXP int SysTimeLocalToUlong64(const SYSTEMTIME& rSysTime, ULONG64* 
 ODS_CORE_LIB_EXP int SysTimeUtcToUlong64(const SYSTEMTIME& rSysTime, ULONG64* pul64Millisec);
 
 /**
-   @brief Convert ULONG64 with milliseconds to system time UTC
-   @return error code
+	@brief Convert ULONG64 with milliseconds to system time UTC
+	@param [in] ul64Millisec Milliseconds since 1970-01-01 00:00:00 UTC
+	@param [out] pSysTime SystemTime structure to be filled
+	@param [out] pnDstOn This parameter is ignored and not used because the time is UTC
+	@return error code
 */
-ODS_CORE_LIB_EXP int Ulong64ToSysTimeUtc(ULONG64 ul64Millisec, SYSTEMTIME* pSysTime);
+ODS_CORE_LIB_EXP int Ulong64ToSysTimeUtc(ULONG64 ul64Millisec, SYSTEMTIME* pSysTime, int* pnDstOn = nullptr);
 
 /**
    @brief Convert ULONG64 with milliseconds to system time Local
+   @param [in] ul64Millisec Milliseconds since 1970-01-01 00:00:00 UTC
+   @param [out] pSysTime SystemTime structure to be filled
+   @param [out] pnDstOn 1 - DST is in effect, 0 - DST is not active, -1 - DST is not defined
    @return error code
 */
-ODS_CORE_LIB_EXP int Ulong64ToSysTimeLocal(ULONG64 ul64Millisec, SYSTEMTIME* pSysTime);
+ODS_CORE_LIB_EXP int Ulong64ToSysTimeLocal(ULONG64 ul64Millisec, SYSTEMTIME* pSysTime, int* pnDstOn = nullptr);
 
 /**
    @brief Retrieve ISO time string

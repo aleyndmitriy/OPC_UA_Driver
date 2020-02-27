@@ -51,6 +51,7 @@ bool DrvOPCUAHistValues::SoftingServerInteractor::startApplication()
 void DrvOPCUAHistValues::SoftingServerInteractor::OpenConnection()
 {
 	//CPPTestServer.exe /endpointurl opc.tcp://SSBMWS015:4880
+	//CPPTestServer.exe /endpointurl opc.tcp://DESKTOP-10HG5II:4880
 	GUID guid;
 	if (CoCreateGuid(&guid) != S_OK) {
 		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
@@ -992,6 +993,25 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::No
 	}
 }
 
+
+void DrvOPCUAHistValues::SoftingServerInteractor::GetAggregateFunctions(SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	bool isFounded = false;
+	EnumStatusCode result = EnumStatusCode_Good;
+	std::vector<SoftingOPCToolbox5::BrowseDescription> bdList;
+	SoftingOPCToolbox5::ViewDescription vd;
+	std::vector<SoftingOPCToolbox5::BrowseResult> results;
+	SoftingOPCToolbox5::BrowseDescription bd;
+	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_Aggregates);
+	bd.setIncludeSubtypes(true);
+	bd.setBrowseDirection(EnumBrowseDirection_Forward);
+	bd.setNodeClassMask(EnumNodeClass_Node);
+	EnumResultMask resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	bd.setResultMask(resultMask);
+	bdList.push_back(bd);
+	result = session->browse(&vd, bdList, 0, results);
+	
+}
 
 void DrvOPCUAHistValues::SoftingServerInteractor::SendMessageError(std::string&& message)
 {
