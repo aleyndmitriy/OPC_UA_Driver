@@ -46,7 +46,7 @@
     <Filter Include="Файлы заголовков\SoftingService">
       <UniqueIdentifier>{28791640-ebf5-41b2-ad18-c91c4350e833}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Файлы заголовков\Plugin\SoftingService">
+    <Filter Include="Исходные файлы\SoftingService">
       <UniqueIdentifier>{b55a7ba8-f477-4efd-a1cb-2608605fff3b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -97,7 +97,7 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="SoftingServerInteractor.cpp">
-      <Filter>Файлы заголовков\Plugin\SoftingService</Filter>
+      <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
     <ClCompile Include="HdaCommandHandler.cpp">
       <Filter>Исходные файлы\Server</Filter>
@@ -118,16 +118,16 @@
       <Filter>Исходные файлы\Server</Filter>
     </ClCompile>
     <ClCompile Include="Record.cpp">
-      <Filter>Файлы заголовков\Plugin\SoftingService</Filter>
+      <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
     <ClCompile Include="BrowseNetworkServers.cpp">
       <Filter>Исходные файлы\Configurator</Filter>
     </ClCompile>
     <ClCompile Include="SoftingApplication.cpp">
-      <Filter>Файлы заголовков\Plugin\SoftingService</Filter>
+      <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
     <ClCompile Include="TagInfo.cpp">
-      <Filter>Файлы заголовков\Plugin\SoftingService</Filter>
+      <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
