@@ -274,8 +274,8 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 {
 	SYSTEMTIME localStartDataTime = { 0 };
 	SYSTEMTIME localEndDataTime = { 0 };
-	ODS::TimeUtils::SysTimeUtcToLocal(startTime, &localStartDataTime);
-	ODS::TimeUtils::SysTimeUtcToLocal(endTime, &localEndDataTime);
+	ODS::TimeUtils::SysTimeLocalToUtc(startTime, &localStartDataTime);
+	ODS::TimeUtils::SysTimeLocalToUtc(endTime, &localEndDataTime);
 	std::map<std::string, std::vector<std::string> > fullPaths;
 	for (std::set<std::string>::const_iterator queriesIterator = tagsForQuery.cbegin(); queriesIterator != tagsForQuery.cend(); ++queriesIterator) {
 		std::pair<std::string, std::vector<std::string> > pair = std::make_pair<std::string, std::vector<std::string> >(std::string(*queriesIterator),split(*queriesIterator,std::string("/")));
@@ -322,7 +322,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 							if (tm.wYear != 0) {
 								if (itr == tagsIterator->second.cbegin()) {
 
-									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localStartDataTime) < 0) {
+									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localStartDataTime) <= 0) {
 										ODS::TvqListElementDescription desc;
 										desc.m_nIndex = 0;
 										desc.m_ulFlags = ODS::TvqListElementDescription::PREV_POINT;
@@ -330,7 +330,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 									}
 								}
 								if (itr == tagsIterator->second.cend() - 1) {
-									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localEndDataTime) > 0) {
+									if (ODS::TimeUtils::SysTimeCompare(tvq->GetTimestampLoc(), localEndDataTime) >= 0) {
 										ODS::TvqListElementDescription desc;
 										desc.m_nIndex = tagsIterator->second.size() - 1;
 										desc.m_ulFlags = ODS::TvqListElementDescription::POST_POINT;
