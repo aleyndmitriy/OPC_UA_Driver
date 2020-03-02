@@ -14,6 +14,7 @@
 #include<numeric>
 #include<functional>
 #include<chrono>
+#include<algorithm>
 
 DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
 {

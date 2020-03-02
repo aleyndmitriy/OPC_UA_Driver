@@ -60,6 +60,7 @@ public:
 	afx_msg void OnEnUpdateEditComputerName();
 	afx_msg void OnCbnDropdownComboSelectServer();
 	afx_msg void OnCbnSelchangeComboSelectServer();
+	afx_msg void OnBtnClickedServerPropertyButton();
 	afx_msg void OnEnChangeEditPort();
 	afx_msg void OnBtnClickedButtonBrowseNetwork();
 	afx_msg void OnBtnClickedButtonDiscoverServers();

@@ -4,6 +4,7 @@
 #include"Log.h"
 #include<OdsCoreLib/TimeUtils.h>
 #include <OdsErr.h>
+#include<algorithm>
 #include"Utils.h"
 
 DrvOPCUAHistValues::BrowserHandler::BrowserHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore) : m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_ConnectionId()
@@ -39,31 +40,40 @@ int DrvOPCUAHistValues::BrowserHandler::GetTagList(std::vector<ODS::OdsString>& 
 		}
 		Log::GetInstance()->WriteInfo(_T("Open connection with session id %s !"), (LPCTSTR)m_ConnectionId.c_str());
 	}
-	
-	std::vector<TagInfo> tagsName;
-	std::queue<std::string> pathQueue;
-	std::vector<std::string> vec;
+	std::set<TagInfo> tagsName;
+	std::vector<std::pair<std::string, unsigned short> > vec;
+	std::vector<std::string> splitVec;
+	/*if (rEntry.empty()) {
+		std::vector<std::string> temp;
+		std::vector<HierarchicalTagInfo> hierarchicalTagsName;
+		m_pSoftingInteractor->GetHierarchicalTags(hierarchicalTagsName,  m_ConnectionId);
+		std::transform(hierarchicalTagsName.cbegin(), hierarchicalTagsName.cend(), std::back_inserter(*pTagList), mapFromHierarchicalTagInfo);
+		return ODS::ERR::OK;
+	}*/
 	if (rEntry.size() == 1) {
 		std::string name(rEntry.at(0).GetString());
-		vec = split(name, std::string("/"));
-		for (std::vector<std::string>::const_iterator iterSplit = vec.cbegin(); iterSplit != vec.cend(); ++iterSplit)
-		{
-			pathQueue.push(*iterSplit);
-		}
+		splitVec = split(name, std::string("/"));
+		std::transform(splitVec.cbegin(), splitVec.cend(), std::back_inserter(vec), [](const std::string& path) {
+			size_t posFirstPartOfName = path.find(':');
+			std::string nameIndexStr = path.substr(0, posFirstPartOfName);
+			return (std::make_pair<std::string, unsigned short>(path.substr(posFirstPartOfName + 1, path.size() - 1), (unsigned short)std::stoul(nameIndexStr)));
+			});
 	}
 	else {
-		for (std::vector<ODS::OdsString>::const_iterator iter = rEntry.cbegin(); iter != rEntry.cend(); ++iter) {
-			std::string name(iter->GetString());
-			pathQueue.push(name);
-		}
+		std::transform(rEntry.cbegin(), rEntry.cend(), std::back_inserter(vec), [](const ODS::OdsString& path) {
+			std::string fullName(path.GetString());
+			size_t posFirstPartOfName = fullName.find(':');
+			std::string nameIndexStr = fullName.substr(0, posFirstPartOfName);
+			return (std::make_pair<std::string, unsigned short>(fullName.substr(posFirstPartOfName + 1, fullName.size() - 1), (unsigned short)std::stoul(nameIndexStr)));
+			});
 	}
 	
-	m_pSoftingInteractor->GetTags(tagsName, pathQueue, m_ConnectionId);
-	for (std::vector<TagInfo>::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
+	m_pSoftingInteractor->GetTagsByPath(tagsName, vec, m_ConnectionId);
+	for (std::set<TagInfo>::const_iterator itr = tagsName.cbegin(); itr != tagsName.cend(); ++itr) {
 		ODS::OdsString szAddress(itr->m_strName.c_str());
 		STagItem sItem;
 		if (rEntry.size() == 1) {
-			std::transform(vec.cbegin(), vec.cend(), std::back_inserter(sItem.m_vAddress), [](const std::string& path) {
+			std::transform(splitVec.cbegin(), splitVec.cend(), std::back_inserter(sItem.m_vAddress), [](const std::string& path) {
 			return ODS::OdsString(path.c_str()); });
 		}
 		else {
@@ -117,4 +127,15 @@ void DrvOPCUAHistValues::BrowserHandler::GetNewConnectionGuide(std::string&& uui
 void DrvOPCUAHistValues::BrowserHandler::CloseConnectionWithGuide(std::string&& uuid)
 {
 	m_ConnectionId.clear();
+}
+
+DrvOPCUAHistValues::STagItem DrvOPCUAHistValues::mapFromHierarchicalTagInfo(const HierarchicalTagInfo& tag)
+{
+	STagItem item;
+	item.m_szDescription = ODS::OdsString(tag.m_strDescription.c_str());
+	item.m_nType = tag.m_iType;
+	std::transform(tag.m_strAddress.cbegin(), tag.m_strAddress.cend(), std::back_inserter(item.m_vAddress), [](const std::string& addr) {
+		ODS::OdsString odsAddr(addr.c_str());
+		return odsAddr; });
+	return item;
 }

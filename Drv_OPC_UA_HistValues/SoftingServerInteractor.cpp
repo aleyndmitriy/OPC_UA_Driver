@@ -919,7 +919,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::strin
 	}
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::vector<TagInfo>& tags, std::queue<std::string>& receivedTags, const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::set<TagInfo>& tags, std::vector<std::string>& receivedTags, const std::string& connectionID)
 {
 	tags.clear();
 	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
@@ -946,7 +946,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetTags(std::vector<TagInfo>& 
 	}
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<TagInfo>& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::NodeId& nodeId, std::set<TagInfo>& tags, std::vector<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	bool isFounded = false;
 	EnumStatusCode result = EnumStatusCode_Good;
@@ -965,57 +965,29 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::No
 	bd.setIncludeSubtypes(true);
 	bd.setBrowseDirection(EnumBrowseDirection_Forward);
 	bd.setNodeClassMask(EnumNodeClass_Node);
-	resultMask = EnumResultMask_ReferenceType | EnumResultMask_DisplayName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	resultMask = EnumResultMask_ReferenceType | EnumResultMask_BrowseName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
 	bd.setResultMask(resultMask);
 	result = session->browseNode(&vd, &bd, refDescriptions);
 	if (StatusCode::isGood(result)) {
 		std::string findingName;
 		if (receivedTags.empty() == false) {
 			findingName = receivedTags.front();
-			receivedTags.pop();
+			receivedTags.erase(receivedTags.begin());
 		}
 		if (findingName.empty()) {
 			for (size_t i = 0; i < refDescriptions.size(); i++)
 			{
-				std::string name = refDescriptions[i].getDisplayName()->getText();
-				EnumNodeClass nodeClass = refDescriptions[i].getNodeClass();
-				std::string desc;
-				int type = 0;
-				if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
-					type = ODS::BrowseItem::TYPE_ITEM;
-				}
-				else {
-					type = ODS::BrowseItem::TYPE_BRANCH;
-				}
-				std::vector<SoftingOPCToolbox5::ReadValueId> readIds;
-				SoftingOPCToolbox5::ReadValueId rvid;
-				rvid.setNodeId(refDescriptions[i].getNodeId());
-				rvid.setAttributeId(EnumAttributeId_Description);
-				readIds.push_back(rvid);
-				std::vector<SoftingOPCToolbox5::DataValue> readResults;
-				result = session->read(EnumTimestampsToReturn_Neither, readIds, 0, readResults);
-				if (StatusCode::isGood(result) && readResults.size() == 1 && StatusCode::isGood(readResults.at(0).getStatusCode()))
-				{
-					EnumDataTypeId typeId = readResults.at(0).getValue()->getDataType();
-					if (typeId == EnumNumericNodeId_LocalizedText) {
-						desc = readResults.at(0).getValue()->getLocalizedText().getText();
-					}
-				}
-				std::vector<TagInfo>::const_iterator findIterator =
-					std::find_if(tags.cbegin(), tags.cend(), [&](const TagInfo& existingTag) {
-					return (existingTag.m_strName == name) && (existingTag.m_iType == type); });
-				if (findIterator == tags.cend()) {
-
-					tags.push_back(TagInfo(name,desc,type));
-				}
-				
+				TagInfo tag = readNodeInfo(refDescriptions[i], session);
+				tags.insert(tag);
 			}
 		}
 		else {
 			std::vector<SoftingOPCToolbox5::ReferenceDescription>::const_iterator findIterator = 
 				std::find_if(refDescriptions.cbegin(), refDescriptions.cend(), [&](const SoftingOPCToolbox5::ReferenceDescription& desc) {
-				std::string name(desc.getDisplayName()->getText());
-				return name == findingName; });
+				std::string name = desc.getBrowseName()->getName();
+				unsigned int nameSpaceIndex = desc.getBrowseName()->getNamespaceIndex();
+				std::string fullName = std::to_string(nameSpaceIndex) + std::string(":") + name;
+				return fullName == findingName; });
 			if (findIterator != refDescriptions.cend()) {
 				EnumNodeClass nodeClass = findIterator->getNodeClass();
 				if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
@@ -1025,6 +997,191 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getTags(SoftingOPCToolbox5::No
 				getTags(devicesNode, tags, receivedTags, session);
 			}
 		}
+	}
+}
+
+DrvOPCUAHistValues::TagInfo DrvOPCUAHistValues::SoftingServerInteractor::readNodeInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	std::string name = refDesc.getBrowseName()->getName();
+	unsigned int nameSpaceIndex = refDesc.getBrowseName()->getNamespaceIndex();
+	std::string fullName = std::to_string(nameSpaceIndex) + std::string(":") + name;
+	EnumNodeClass nodeClass = refDesc.getNodeClass();
+	std::string desc;
+	int type = 0;
+	if (nodeClass == EnumNodeClass_Variable || nodeClass == EnumNodeClass_VariableType) {
+		type = ODS::BrowseItem::TYPE_ITEM;
+	}
+	else {
+		type = ODS::BrowseItem::TYPE_BRANCH;
+	}
+	std::vector<SoftingOPCToolbox5::ReadValueId> readIds;
+	SoftingOPCToolbox5::ReadValueId rvid;
+	rvid.setNodeId(refDesc.getNodeId());
+	rvid.setAttributeId(EnumAttributeId_Description);
+	readIds.push_back(rvid);
+	std::vector<SoftingOPCToolbox5::DataValue> readResults;
+	EnumStatusCode result = session->read(EnumTimestampsToReturn_Neither, readIds, 0, readResults);
+	if (StatusCode::isGood(result) && readResults.size() == 1 && StatusCode::isGood(readResults.at(0).getStatusCode()))
+	{
+		EnumDataTypeId typeId = readResults.at(0).getValue()->getDataType();
+		if (typeId == EnumNumericNodeId_LocalizedText) {
+			desc = readResults.at(0).getValue()->getLocalizedText().getText();
+		}
+	}
+	TagInfo tag(fullName, desc, type);
+	return tag;
+}
+
+void DrvOPCUAHistValues::SoftingServerInteractor::GetTagsByPath(std::set<TagInfo>& tags, const std::vector<std::pair<std::string, unsigned short> >& tagsPath, const std::string& connectionID)
+{
+	if (tagsPath.empty()) {
+		GetTags(tags, std::vector<std::string>(), connectionID);
+		return;
+	}
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
+	if (iter != m_sessionsList.end()) {
+		if (iter->second.isNull() || iter->second->isConnected() == false)
+		{
+			if (output) {
+				std::string message("The session is not connected... connect it before calling this function!");
+				output->SendWarning(std::move(message));
+			}
+			return;
+		}
+	}
+
+	std::vector<SoftingOPCToolbox5::BrowsePath> allBrowsePaths;
+	SoftingOPCToolbox5::BrowsePath currentBrowsePath;
+	SoftingOPCToolbox5::RelativePath currentRelativePath;
+	SoftingOPCToolbox5::RelativePathElement currentElement;
+	currentBrowsePath.setStartingNode(SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder));
+	for (std::vector<std::pair<std::string, unsigned short> >::const_iterator itr = tagsPath.cbegin(); itr != tagsPath.cend(); ++itr) {
+		currentElement.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
+		currentElement.setIncludeSubtypes(true);   // use the exact reference type
+		currentElement.setIsInverse(false);         // use forward references
+		currentElement.setTargetName(SoftingOPCToolbox5::QualifiedName(itr->first, itr->second));
+		currentRelativePath.addElement(currentElement);
+		currentElement.clear();
+	}
+	currentBrowsePath.setRelativePath(currentRelativePath);
+	allBrowsePaths.push_back(currentBrowsePath);
+	std::vector<SoftingOPCToolbox5::BrowsePathResult> browsePathResults;
+	EnumStatusCode result = iter->second->translateBrowsePathToNodeIds(allBrowsePaths, browsePathResults);
+	if (StatusCode::isGood(result) && browsePathResults.empty() == false)
+	{
+		if (StatusCode::isGood(browsePathResults.at(0).getStatusCode()))
+		{
+			size_t targetCount = browsePathResults.at(0).getTargetCount();
+			for (unsigned int j = 0; j < targetCount; j++)
+			{
+				const SoftingOPCToolbox5::IBrowsePathTarget* tmpBrowseTarget = browsePathResults.at(0).getTarget(j);
+				SoftingOPCToolbox5::BrowseDescription bd;
+				SoftingOPCToolbox5::ViewDescription vd;
+				SoftingOPCToolbox5::NodeId devicesNode;
+				std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;
+				EnumResultMask resultMask = 0;
+				bd.setNodeId(tmpBrowseTarget->getTargetId());
+				bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
+				bd.setIncludeSubtypes(true);
+				bd.setBrowseDirection(EnumBrowseDirection_Forward);
+				bd.setNodeClassMask(EnumNodeClass_Node);
+				resultMask = EnumResultMask_BrowseName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+				bd.setResultMask(resultMask);
+				result = iter->second->browseNode(&vd, &bd, refDescriptions);
+				size_t refSize = refDescriptions.size();
+				if (StatusCode::isGood(result)) {
+					if (output) {
+						std::string message = std::string("Ref description number is:") + std::to_string(refSize);
+						output->SendWarning(std::move(message));
+					}
+					for (size_t i = 0; i < refSize; i++)
+					{
+						TagInfo tag = readNodeInfo(refDescriptions[i], iter->second);
+						tags.insert(tag);
+					}
+					if (output) {
+						std::string message = std::string("finish read refDescriptions:");
+						output->SendWarning(std::move(message));
+					}
+				}
+				break;
+			}
+		}
+		else
+		{
+			result = browsePathResults.at(0).getStatusCode();
+			if (output) {
+				std::string message = std::string("Invalid status code") + std::string(getEnumStatusCodeString(result));
+				output->SendWarning(std::move(message));
+			}
+		}
+	}
+}
+
+
+void DrvOPCUAHistValues::SoftingServerInteractor::GetHierarchicalTags(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID)
+{
+	tags.clear();
+	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
+	if (iter != m_sessionsList.end()) {
+		if (iter->second.isNull() || iter->second->isConnected() == false)
+		{
+			std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+			if (output) {
+				std::string message("The session is not connected... connect it before calling this function!");
+				output->SendWarning(std::move(message));
+			}
+			return;
+		}
+		SoftingOPCToolbox5::NodeId devicesNode;
+		devicesNode.setNull();
+		getHierarchicalTags(&devicesNode, tags, std::vector<std::string>(), iter->second);
+	}
+	else {
+		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+		if (output) {
+			std::string message("There is no any sessions with such ID!");
+			output->SendWarning(std::move(message));
+		}
+	}
+}
+
+void DrvOPCUAHistValues::SoftingServerInteractor::getHierarchicalTags(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	bool isFounded = false;
+	EnumStatusCode result = EnumStatusCode_Good;
+	SoftingOPCToolbox5::BrowseDescription bd;
+	SoftingOPCToolbox5::ViewDescription vd;
+	SoftingOPCToolbox5::NodeId devicesNode;
+	std::vector<SoftingOPCToolbox5::ReferenceDescription> refDescriptions;
+	EnumResultMask resultMask = 0;
+	if (nodeId->isNull()) {
+		bd.setNodeId(SoftingOPCToolbox5::NodeId(EnumNumericNodeId_RootFolder));
+	}
+	else {
+		bd.setNodeId(nodeId);
+	}
+	bd.setReferenceTypeId(SoftingOPCToolbox5::Statics::ReferenceTypeId_HierarchicalReferences);
+	bd.setIncludeSubtypes(true);
+	bd.setBrowseDirection(EnumBrowseDirection_Forward);
+	bd.setNodeClassMask(EnumNodeClass_Node);
+	resultMask = EnumResultMask_ReferenceType | EnumResultMask_BrowseName | EnumResultMask_TypeDefinition | EnumResultMask_NodeClass;
+	bd.setResultMask(resultMask);
+	result = session->browseNode(&vd, &bd, refDescriptions);
+	if (StatusCode::isGood(result)) {
+			for (size_t i = 0; i < refDescriptions.size(); i++)
+			{
+				TagInfo tag = readNodeInfo(refDescriptions[i], session);
+				std::vector<std::string> vec(parentTags);
+				vec.push_back(tag.m_strName);
+				if (tag.m_iType == ODS::BrowseItem::TYPE_ITEM) {
+					tags.push_back(HierarchicalTagInfo(vec, tag.m_strDescription, tag.m_iType));
+				}
+				else {
+					getHierarchicalTags(refDescriptions[i].getNodeId(), tags, vec, session);
+				}
+			}	
 	}
 }
 

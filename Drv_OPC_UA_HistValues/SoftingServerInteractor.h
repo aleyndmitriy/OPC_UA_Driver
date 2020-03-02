@@ -2,7 +2,7 @@
 
 #include"SoftingApplication.h"
 #include<map>
-#include<queue>
+#include<set>
 #include"SoftingServerInteractorOutput.h"
 #include "Record.h"
 #include"TagInfo.h"
@@ -28,7 +28,9 @@ namespace DrvOPCUAHistValues
 		void OpenConnection();
 		void TestConnection();
 		void BrowseSession(const std::string& connectionID);
-		void GetTags(std::vector<TagInfo>& tags, std::queue<std::string>& tagsPath, const std::string& connectionID);
+		void GetTags(std::set<TagInfo>& tags, std::vector<std::string>& tagsPath, const std::string& connectionID);
+		void GetTagsByPath(std::set<TagInfo>& tags, const std::vector<std::pair<std::string,unsigned short> >& tagsPath, const std::string& connectionID);
+		void GetHierarchicalTags(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID);
 		void GetRecords(std::map<std::string, std::vector<Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
 			const std::map<std::string, std::vector<std::string> >& fullPaths, const std::string& connectionID);
 		void SendMessageError(std::string&& message) override;
@@ -49,9 +51,11 @@ namespace DrvOPCUAHistValues
 		void readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 		bool findNode(const SoftingOPCToolbox5::NodeId& originNodeId, SoftingOPCToolbox5::NodeId& finalNodeId, const std::string& path, SoftingOPCToolbox5::Client::SessionPtr session);
 		bool findNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session);
-		void getTags(SoftingOPCToolbox5::NodeId& nodeId, std::vector<TagInfo>& tags, std::queue<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session);
+		void getTags(SoftingOPCToolbox5::NodeId& nodeId, std::set<TagInfo>& tags, std::vector<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session);
+		void getHierarchicalTags(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session);
 		void getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session);
+		TagInfo readNodeInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session);
 	};
 }
 

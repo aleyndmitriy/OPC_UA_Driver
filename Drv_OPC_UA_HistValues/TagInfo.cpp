@@ -7,14 +7,29 @@ DrvOPCUAHistValues::TagInfo::TagInfo(const std::string& name, const std::string&
 
 }
 
-DrvOPCUAHistValues::TagInfo::TagInfo() : TagInfo(std::string(), std::string(), ODS::BrowseItem::TYPE_ITEM)
+DrvOPCUAHistValues::TagInfo::~TagInfo()
+{
+	m_strName.clear();
+	m_strDescription.clear();
+	m_iType = 0;
+}
+
+
+
+bool DrvOPCUAHistValues::operator < (const DrvOPCUAHistValues::TagInfo& lhs, const DrvOPCUAHistValues::TagInfo& rhs)
+{
+	return lhs.m_strName < rhs.m_strName;
+}
+
+DrvOPCUAHistValues::HierarchicalTagInfo::HierarchicalTagInfo(const std::vector<std::string>& address, const std::string& desc, int type):
+	m_strAddress(address), m_strDescription(desc), m_iType(type)
 {
 
 }
 
-DrvOPCUAHistValues::TagInfo::~TagInfo()
+DrvOPCUAHistValues::HierarchicalTagInfo::~HierarchicalTagInfo()
 {
-	m_strName.clear();
+	m_strAddress.clear();
 	m_strDescription.clear();
 	m_iType = 0;
 }

@@ -42,4 +42,6 @@ namespace DrvOPCUAHistValues
 		std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 		std::string m_ConnectionId;
 	};
+
+	STagItem mapFromHierarchicalTagInfo(const HierarchicalTagInfo& tag);
 }

@@ -70,6 +70,7 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CClientSettingsDialog::OnBtnClickedOk)
 	ON_BN_CLICKED(IDC_BUTTON_PKI_STORE_PATH, &CClientSettingsDialog::OnBtnClickedButtonPkiStorePath)
 	ON_CBN_SELCHANGE(IDC_COMBO_POLICY_ID, &CClientSettingsDialog::OnCbnSelChangeComboPolicyId)
+	ON_BN_CLICKED(IDC_SERVER_PROPERTY_BUTTON, &CClientSettingsDialog::OnBtnClickedServerPropertyButton)
 END_MESSAGE_MAP()
 
 
@@ -495,6 +496,19 @@ void CClientSettingsDialog::OnBtnClickedButtonTestConnection()
 	}
 }
 
+void CClientSettingsDialog::OnBtnClickedServerPropertyButton()
+{
+	CString str;
+	int len = m_cmbServerName.GetWindowTextLengthA();
+	m_cmbServerName.GetWindowTextA(str);
+	str.Trim();
+	if (str.IsEmpty()) {
+		return;
+	}
+	StartLoading();
+	ReadAttributes();
+	GetConfigurationsListForSelectedServer();
+}
 
 void CClientSettingsDialog::OnBtnClickedCancel()
 {
@@ -687,7 +701,5 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 {
 	
 }
-
-
 
 
