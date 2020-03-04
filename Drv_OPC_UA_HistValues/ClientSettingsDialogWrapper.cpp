@@ -52,6 +52,11 @@ void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetPolicyIds(std::vector<D
 	m_pMFCdialog->GetPolicyIds(std::move(policyIds));
 }
 
+void DrvOPCUAHistValues::ClientSettingsDialogWrapper::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
+{
+	m_pMFCdialog->SelectFoundedServer(compName,port, serverName);
+}
+
 void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_pMFCdialog->GetNewConnectionGuide(std::move(uuid));

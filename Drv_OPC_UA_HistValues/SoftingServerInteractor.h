@@ -37,6 +37,7 @@ namespace DrvOPCUAHistValues
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
 		void GetAggregateFunctions(SoftingOPCToolbox5::Client::SessionPtr session);
+		void GetServerPropertyByEndPoint(const std::string& endPointName);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pServerAttributes;
 		std::weak_ptr<SoftingServerInteractorOutput> m_pOutput;
@@ -45,6 +46,8 @@ namespace DrvOPCUAHistValues
 		std::unique_ptr<SoftingOPCToolbox5::UserTokenPolicy> m_userToken;
 		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
 		bool startApplication();
+		EnumStatusCode getServersByEndPoint(const std::string& endPointName);
+		EnumStatusCode chooseCurrentServer(const std::string& endPointName, const std::vector<std::string>& serverURIs);
 		void chooseEndPointAndPolicyId();
 		EnumNodeClass getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 		void nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
@@ -56,6 +59,7 @@ namespace DrvOPCUAHistValues
 		void getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session);
 		TagInfo readNodeInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session);
+
 	};
 }
 

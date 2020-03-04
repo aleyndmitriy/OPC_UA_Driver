@@ -729,6 +729,10 @@ void DrvOPCUAHistValues::HdaCommandHandler::GetPolicyIds(std::vector<DrvOPCUAHis
 
 }
 
+void DrvOPCUAHistValues::HdaCommandHandler::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
+{
+
+}
 
 void DrvOPCUAHistValues::HdaCommandHandler::GetNewConnectionGuide(std::string&& uuid)
 {

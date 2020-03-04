@@ -35,6 +35,7 @@ namespace DrvOPCUAHistValues
 		void GetServers(std::vector<std::string>&& servers) override;
 		void GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers) override;
 		void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds) override;
+		void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName) override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
 		void CloseConnectionWithGuide(std::string&& uuid) override;
 	private:

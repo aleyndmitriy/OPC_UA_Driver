@@ -119,6 +119,11 @@ void DrvOPCUAHistValues::BrowserHandler::GetPolicyIds(std::vector<DrvOPCUAHistVa
 
 }
 
+void DrvOPCUAHistValues::BrowserHandler::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
+{
+
+}
+
 void DrvOPCUAHistValues::BrowserHandler::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_ConnectionId = uuid;

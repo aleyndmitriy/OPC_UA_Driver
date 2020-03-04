@@ -506,8 +506,14 @@ void CClientSettingsDialog::OnBtnClickedServerPropertyButton()
 		return;
 	}
 	StartLoading();
-	ReadAttributes();
-	GetConfigurationsListForSelectedServer();
+	std::string endPointName = std::string(str.GetBuffer(str.GetLength()));
+	m_endPointsConfigurations.clear();
+	m_endPointPolicyIds.clear();
+	m_lstPolicyType.DeleteAllItems();
+	m_cmbPolicyId.ResetContent();
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->GetServerPropertyByEndPoint(endPointName);
+	}
 }
 
 void CClientSettingsDialog::OnBtnClickedCancel()
@@ -687,6 +693,18 @@ void CClientSettingsDialog::GetPolicyIds(std::vector<DrvOPCUAHistValues::Securit
 		m_cmbPolicyId.SetItemData(pos, index++);
 	}
 	StopLoading();
+}
+
+void CClientSettingsDialog::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
+{
+	
+	m_editComputerName.SetWindowTextA(compName.c_str());
+	std::string strPort = std::to_string(port);
+	m_editPort.SetWindowTextA(strPort.c_str());
+	if (m_cmbServerName.GetCount() > 0) {
+		m_cmbServerName.SetCurSel(0);
+	}
+	ReadAttributes();
 }
 
 void CClientSettingsDialog::GetNewConnectionGuide(std::string&& uuid)

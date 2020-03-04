@@ -84,6 +84,7 @@ public:
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);
 	void GetServers(std::vector<std::string>&& servers);
+	void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName);
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
 	void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds);
 	void GetNewConnectionGuide(std::string&& uuid);
