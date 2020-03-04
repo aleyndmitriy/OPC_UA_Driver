@@ -33,5 +33,7 @@ namespace DrvOPCUAHistValues {
 		HierarchicalTagInfo(HierarchicalTagInfo&& src) = default;
 		HierarchicalTagInfo& operator=(HierarchicalTagInfo&& src) = default;
 	};
+
+	bool operator < (const DrvOPCUAHistValues::HierarchicalTagInfo& lhs, const DrvOPCUAHistValues::HierarchicalTagInfo& rhs);
 }
 

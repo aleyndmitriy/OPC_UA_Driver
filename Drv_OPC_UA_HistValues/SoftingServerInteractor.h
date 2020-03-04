@@ -27,16 +27,15 @@ namespace DrvOPCUAHistValues
 		void CloseConnectionWithUUID(const std::string& connectionID);
 		void OpenConnection();
 		void TestConnection();
-		void BrowseSession(const std::string& connectionID);
 		void GetTags(std::set<TagInfo>& tags, std::vector<std::string>& tagsPath, const std::string& connectionID);
-		void GetTagsByPath(std::set<TagInfo>& tags, const std::vector<std::pair<std::string,unsigned short> >& tagsPath, const std::string& connectionID);
-		void GetHierarchicalTags(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID);
+		//void GetTagsByPath(std::set<TagInfo>& tags, const std::vector<std::pair<std::string,unsigned short> >& tagsPath, const std::string& connectionID);
+		//void GetHierarchicalTags(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID);
 		void GetRecords(std::map<std::string, std::vector<Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
 			const std::map<std::string, std::vector<std::string> >& fullPaths, const std::string& connectionID);
 		void SendMessageError(std::string&& message) override;
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
-		void GetAggregateFunctions(SoftingOPCToolbox5::Client::SessionPtr session);
+		void GetAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID);
 		void GetServerPropertyByEndPoint(const std::string& endPointName);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pServerAttributes;
@@ -49,16 +48,15 @@ namespace DrvOPCUAHistValues
 		EnumStatusCode getServersByEndPoint(const std::string& endPointName);
 		EnumStatusCode chooseCurrentServer(const std::string& endPointName, const std::vector<std::string>& serverURIs);
 		void chooseEndPointAndPolicyId();
-		EnumNodeClass getNodeInfo(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
-		void nodeWalk(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
-		void readNode(const SoftingOPCToolbox5::NodeId& nodeId, SoftingOPCToolbox5::Client::SessionPtr session);
 		bool findNode(const SoftingOPCToolbox5::NodeId& originNodeId, SoftingOPCToolbox5::NodeId& finalNodeId, const std::string& path, SoftingOPCToolbox5::Client::SessionPtr session);
 		bool findNode(SoftingOPCToolbox5::NodeId& nodeId, const std::vector<std::string>& fullPath, SoftingOPCToolbox5::Client::SessionPtr session);
 		void getTags(SoftingOPCToolbox5::NodeId& nodeId, std::set<TagInfo>& tags, std::vector<std::string>& receivedTags, SoftingOPCToolbox5::Client::SessionPtr session);
-		void getHierarchicalTags(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session);
+		//void getHierarchicalTags(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session);
 		void getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session);
 		TagInfo readNodeInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session);
+		TagInfo readAggregateInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session);
+		void getAggregateNodes(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session);
 
 	};
 }
