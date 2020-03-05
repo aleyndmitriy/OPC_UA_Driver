@@ -12,7 +12,7 @@ class CClientSettingsDialog : public CDialogEx
 	DECLARE_DYNAMIC(CClientSettingsDialog)
 
 public:
-	CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent);
+	CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, std::shared_ptr<DrvOPCUAHistValues::DataTypeAttributes> dataAttributes, CWnd* pParent);
 	virtual ~CClientSettingsDialog();
 
 // Данные диалогового окна
@@ -27,6 +27,7 @@ protected:
 private:
 	std::function<ODS::UI::IAbstractUIFacrory * (void)> m_uiFactoryGetter;
 	std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> m_connectAttributes;
+	std::shared_ptr<DrvOPCUAHistValues::DataTypeAttributes> m_dataAttributes;
 	std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> m_pSoftingInteractor;
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> m_endPointsConfigurations;
 	std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy> m_endPointPolicyIds;
@@ -58,8 +59,8 @@ private:
 public:
 	afx_msg void OnEnChangeEditComputerName();
 	afx_msg void OnEnUpdateEditComputerName();
-	afx_msg void OnCbnDropdownComboSelectServer();
 	afx_msg void OnCbnSelchangeComboSelectServer();
+	afx_msg void OnCbnEditChangeComboSelectServer();
 	afx_msg void OnBtnClickedServerPropertyButton();
 	afx_msg void OnEnChangeEditPort();
 	afx_msg void OnBtnClickedButtonBrowseNetwork();
@@ -83,7 +84,7 @@ public:
 	void SendMessageError(std::string&& message);
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);
-	void GetServers(std::vector<std::string>&& servers);
+	void GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl);
 	void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName);
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
 	void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds);

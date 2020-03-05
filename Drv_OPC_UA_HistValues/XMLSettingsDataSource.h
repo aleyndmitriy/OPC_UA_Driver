@@ -11,9 +11,9 @@ namespace DrvOPCUAHistValues
 		XMLSettingsDataSource(XMLSettingsDataSource&& src) = delete;
 		XMLSettingsDataSource& operator=(const XMLSettingsDataSource& rhs) = delete;
 		XMLSettingsDataSource& operator=(XMLSettingsDataSource&& rhs) = delete;
-		bool Save(const ConnectionAttributes& attributes, std::ostream& stream) override;
-		bool Load(ConnectionAttributes& attributes, std::istream& stream) override;
-		bool LoadAttributesString(const char* source, size_t length, ConnectionAttributes& attributes) override;
+		bool Save(const ConnectionAttributes& connectionAttributes, const DataTypeAttributes& dataAttributes, std::ostream& stream) override;
+		bool Load(ConnectionAttributes& connectionAttributes, DataTypeAttributes& dataAttributes, std::istream& stream) override;
+		bool LoadAttributesString(const char* source, size_t length, ConnectionAttributes& connectionAttributes, DataTypeAttributes& dataAttributes) override;
 		~XMLSettingsDataSource() {};
 	};
 }

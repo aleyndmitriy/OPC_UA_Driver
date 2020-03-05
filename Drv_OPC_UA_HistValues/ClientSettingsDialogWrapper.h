@@ -8,13 +8,13 @@ namespace DrvOPCUAHistValues
 	class ClientSettingsDialogWrapper : public SoftingServerInteractorOutput, public std::enable_shared_from_this<ClientSettingsDialogWrapper>
 	{
 	public:
-		ClientSettingsDialogWrapper(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingDataStore, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, HWND parentWindow);
+		ClientSettingsDialogWrapper(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingDataStore, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, std::shared_ptr<DataTypeAttributes> dataAttributes, HWND parentWindow);
 		~ClientSettingsDialogWrapper();
 		int DoModal();
 		void SendMessageError(std::string&& message) override;
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
-		void GetServers(std::vector<std::string>&& servers) override;
+		void GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl) override;
 		void GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers) override;
 		void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds) override;
 		void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName) override;

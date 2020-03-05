@@ -1,12 +1,13 @@
 #include"pch.h"
 #include"ClientSettingsDialogWrapper.h"
 
-DrvOPCUAHistValues::ClientSettingsDialogWrapper::ClientSettingsDialogWrapper(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingDataStore, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, HWND parentWindow):m_pMFCdialog(nullptr)
+DrvOPCUAHistValues::ClientSettingsDialogWrapper::ClientSettingsDialogWrapper(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<SoftingServerInteractor> softingDataStore, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, std::shared_ptr<DataTypeAttributes> dataAttributes, HWND parentWindow):m_pMFCdialog(nullptr)
 {
 	CWnd* parent = CWnd::FromHandle(parentWindow);
 	m_softingDataStore = softingDataStore;
 	m_softingDataStore->SetAttributes(attributes);
-	m_pMFCdialog = new CClientSettingsDialog(uiFactiryGetter, softingDataStore, attributes, parent);
+	m_softingDataStore->SetDataAttributes(dataAttributes);
+	m_pMFCdialog = new CClientSettingsDialog(uiFactiryGetter, softingDataStore, attributes, dataAttributes, parent);
 }
 
 DrvOPCUAHistValues::ClientSettingsDialogWrapper::~ClientSettingsDialogWrapper()
@@ -37,9 +38,9 @@ void DrvOPCUAHistValues::ClientSettingsDialogWrapper::SendMessageInfo(std::strin
 	m_pMFCdialog->SendMessageInfo(std::move(message));
 }
 
-void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetServers(std::vector<std::string>&& servers)
+void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl)
 {
-	m_pMFCdialog->GetServers(std::move(servers));
+	m_pMFCdialog->GetServers(std::move(servers), std::move(discoveryUrl));
 }
 
 void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers)

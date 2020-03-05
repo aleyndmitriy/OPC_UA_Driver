@@ -18,6 +18,7 @@ namespace DrvOPCUAHistValues
 		int DestroyResult(ODS::HdaCommandResult* pResult) override;
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pAttributes;
+		std::shared_ptr<DataTypeAttributes> m_pDataAttributes;
 		std::shared_ptr<ISettingsDataSource> m_settingsDataStore;
 		std::shared_ptr<HdaCommandHandler> m_commandHandler;
 	};

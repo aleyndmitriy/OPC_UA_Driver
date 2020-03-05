@@ -13,8 +13,8 @@
 
 IMPLEMENT_DYNAMIC(CClientSettingsDialog, CDialogEx)
 
-CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, CWnd* pParent)
-	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_pSoftingInteractor(softingInteractor), m_endPointsConfigurations(), m_endPointPolicyIds()
+CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, std::shared_ptr<DrvOPCUAHistValues::DataTypeAttributes> dataAttributes, CWnd* pParent)
+	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_dataAttributes(dataAttributes), m_pSoftingInteractor(softingInteractor), m_endPointsConfigurations(), m_endPointPolicyIds()
 {
 	
 }
@@ -22,6 +22,7 @@ CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIF
 CClientSettingsDialog::~CClientSettingsDialog()
 {
 	m_connectAttributes.reset();
+	m_dataAttributes.reset();
 	m_pSoftingInteractor.reset();
 }
 
@@ -49,7 +50,6 @@ void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT_COMPUTER_NAME, &CClientSettingsDialog::OnEnChangeEditComputerName)
 	ON_EN_UPDATE(IDC_EDIT_COMPUTER_NAME, &CClientSettingsDialog::OnEnUpdateEditComputerName)
-	ON_CBN_DROPDOWN(IDC_COMBO_SELECT_SERVER, &CClientSettingsDialog::OnCbnDropdownComboSelectServer)
 	ON_CBN_SELCHANGE(IDC_COMBO_SELECT_SERVER, &CClientSettingsDialog::OnCbnSelchangeComboSelectServer)
 	ON_EN_CHANGE(IDC_EDIT_PORT, &CClientSettingsDialog::OnEnChangeEditPort)
 	ON_BN_CLICKED(IDC_BUTTON_BROWSE_NETWORK, &CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork)
@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_PKI_STORE_PATH, &CClientSettingsDialog::OnBtnClickedButtonPkiStorePath)
 	ON_CBN_SELCHANGE(IDC_COMBO_POLICY_ID, &CClientSettingsDialog::OnCbnSelChangeComboPolicyId)
 	ON_BN_CLICKED(IDC_SERVER_PROPERTY_BUTTON, &CClientSettingsDialog::OnBtnClickedServerPropertyButton)
+	ON_CBN_EDITCHANGE(IDC_COMBO_SELECT_SERVER, &CClientSettingsDialog::OnCbnEditChangeComboSelectServer)
 END_MESSAGE_MAP()
 
 
@@ -246,12 +247,18 @@ void CClientSettingsDialog::OnEnUpdateEditComputerName()
 	// TODO:  Добавьте код элемента управления
 }
 
-
-void CClientSettingsDialog::OnCbnDropdownComboSelectServer()
+void CClientSettingsDialog::OnCbnEditChangeComboSelectServer()
 {
-	
+	if (m_cmbServerName.GetCount() > 0) {
+		m_cmbServerName.ResetContent();
+	}
+	m_cmbConfiguration.ResetContent();
+	m_cmbPolicyId.ResetContent();
+	m_lstPolicyType.DeleteAllItems();
+	m_endPointsConfigurations.clear();
+	m_endPointPolicyIds.clear();
+	m_connectAttributes->configurationMode.serverSecurityName.clear();
 }
-
 
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
@@ -581,7 +588,9 @@ void CClientSettingsDialog::ReadAttributes()
 	std::string fullName = std::string(str.GetBuffer(len));
 	size_t posFirstPartOfName = fullName.find('#');
 	std::string servName = fullName.substr(0, posFirstPartOfName);
-	m_connectAttributes->configurationMode.serverSecurityName = servName;
+	if (!servName.empty()) {
+		m_connectAttributes->configurationMode.serverSecurityName = servName;
+	}
 	if (posFirstPartOfName != std::string::npos) {
 		size_t posSecondPartOfName = fullName.rfind('#');
 		servName = fullName.substr(posSecondPartOfName + 1, fullName.size() - posSecondPartOfName);
@@ -654,7 +663,7 @@ void CClientSettingsDialog::SendMessageInfo(std::string&& message)
 	
 }
 
-void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
+void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl)
 {
 	m_cmbServerName.ResetContent();
 	size_t index = 0;
@@ -663,6 +672,8 @@ void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers)
 		int pos = m_cmbServerName.AddString(itr->c_str());
 		m_cmbServerName.SetItemData(pos, index++);
 	}
+	
+	m_connectAttributes->configurationMode.serverSecurityName = discoveryUrl;
 	StopLoading();
 }
 
@@ -719,5 +730,8 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 {
 	
 }
+
+
+
 
 

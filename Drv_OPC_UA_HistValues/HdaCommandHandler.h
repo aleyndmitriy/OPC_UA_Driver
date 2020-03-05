@@ -16,11 +16,12 @@ namespace DrvOPCUAHistValues
 		HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore);
 		HdaCommandHandler() = delete;
 		~HdaCommandHandler();
-		int Init(std::shared_ptr<ConnectionAttributes> attributes);
+		int Init(std::shared_ptr<ConnectionAttributes> attributes, std::shared_ptr<DataTypeAttributes> dataAttributes);
 		int Shut();
 		int HandleCommand(ODS::HdaCommand* pCommand, ODS::HdaCommandResult* pResult);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pAttributes;
+		std::shared_ptr<DataTypeAttributes> m_pDataAttributes;
 		std::shared_ptr<SoftingServerInteractor> m_pSoftingInteractor;
 		std::vector<std::string> m_connectionsList;
 		int ExecuteCommand(ODS::HdaCommand* pCommand, ODS::HdaFunction* funcList, int listSize, std::vector<ODS::HdaFunctionResult*>* pResultList);
@@ -30,7 +31,7 @@ namespace DrvOPCUAHistValues
 		void SendMessageError(std::string&& message) override;
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
-		void GetServers(std::vector<std::string>&& servers) override;
+		void GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl) override;
 		void GetEndPoints(std::vector<ServerSecurityModeConfiguration>&& servers) override;
 		void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds) override;
 		void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName) override;

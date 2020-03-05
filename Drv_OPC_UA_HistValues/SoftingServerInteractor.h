@@ -18,6 +18,7 @@ namespace DrvOPCUAHistValues
 		SoftingServerInteractor& operator=(SoftingServerInteractor&& src) = delete;
 		~SoftingServerInteractor();
 		void SetAttributes(std::shared_ptr<ConnectionAttributes> attributes);
+		void SetDataAttributes(std::shared_ptr<DataTypeAttributes> attributes);
 		void SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output);
 		void GetServers();
 		void ChooseCurrentServer();
@@ -39,6 +40,7 @@ namespace DrvOPCUAHistValues
 		void GetServerPropertyByEndPoint(const std::string& endPointName);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pServerAttributes;
+		std::shared_ptr<DataTypeAttributes> m_pDataAttributes;
 		std::weak_ptr<SoftingServerInteractorOutput> m_pOutput;
 		EnumStatusCode m_enumResult;
 		std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;

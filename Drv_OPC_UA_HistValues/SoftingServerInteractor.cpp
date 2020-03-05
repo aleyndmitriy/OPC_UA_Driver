@@ -9,7 +9,7 @@
 #include"Log.h"
 
 DrvOPCUAHistValues::SoftingServerInteractor::SoftingServerInteractor():
- m_pServerAttributes(), m_pOutput(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
+ m_pServerAttributes(), m_pDataAttributes(), m_pOutput(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
 {
 	
 }
@@ -30,6 +30,11 @@ void DrvOPCUAHistValues::SoftingServerInteractor::SetAttributes(std::shared_ptr<
 {
 	m_pServerAttributes = attributes;
 
+}
+
+void DrvOPCUAHistValues::SoftingServerInteractor::SetDataAttributes(std::shared_ptr<DataTypeAttributes> attributes)
+{
+	m_pDataAttributes = attributes;
 }
 
 void DrvOPCUAHistValues::SoftingServerInteractor::SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output)
@@ -247,7 +252,7 @@ EnumStatusCode DrvOPCUAHistValues::SoftingServerInteractor::getServersByEndPoint
 		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 		if (output) {
 			output->SendMessageError(std::move(message));
-			output->GetServers(std::move(vec));
+			output->GetServers(std::move(vec),std::string());
 		}
 		return EnumStatusCode_BadNotFound;
 	}
@@ -256,7 +261,7 @@ EnumStatusCode DrvOPCUAHistValues::SoftingServerInteractor::getServersByEndPoint
 		return name; });
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	if (output) {
-		output->GetServers(std::move(vec));
+		output->GetServers(std::move(vec), std::string(endPointName));
 	}
 	return result;
 }
@@ -278,10 +283,11 @@ void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentServer()
 	if (startApplication() == false) {
 		return;
 	}
-	std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
+	std::string discoveryServerUrl = m_pServerAttributes->configurationMode.serverSecurityName;
+	/*std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
 	if (m_pServerAttributes->configuration.port > 0) {
 		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
-	}
+	}*/
 	std::vector<std::string> serverURIs;
 	serverURIs.push_back(m_pServerAttributes->configuration.serverName);
 	chooseCurrentServer(discoveryServerUrl, serverURIs);
@@ -291,7 +297,16 @@ void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentServer()
 EnumStatusCode DrvOPCUAHistValues::SoftingServerInteractor::chooseCurrentServer(const std::string& endPointName, const std::vector<std::string>& serverURIs)
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> endpointDescriptionsString;
+	if (endPointName.empty()) {
+		if (output) {
+			std::string message("Server discovery URL is empty!");
+			output->SendWarning(std::move(message));
+			output->GetEndPoints(std::move(endpointDescriptionsString));
+		}
+		return EnumStatusCode_BadNotFound;
+	}
 	if (m_pServerAttributes->configuration.serverName.empty()) {
 		std::string message("Select sever!");
 		if (output) {
@@ -368,7 +383,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetServerPropertyByEndPoint(co
 		std::string message = std::string("Finding registered severs failed: ") + std::string(getEnumStatusCodeString(result));
 		if (output) {
 			output->SendMessageError(std::move(message));
-			output->GetServers(std::move(vec));
+			output->GetServers(std::move(vec),std::string());
 		}
 		return;
 	}
@@ -376,7 +391,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetServerPropertyByEndPoint(co
 		std::string name(desc.getApplicationUri());
 		return name; });
 	if (output) {
-		output->GetServers(std::move(vec));
+		output->GetServers(std::move(vec), std::string(endPointName));
 	}
 	std::vector<tstring> discoveryUrls;
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> endpointDescriptionsString;
@@ -449,10 +464,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentEndPoint()
 	std::vector<std::string> serverURIs;
 	serverURIs.push_back(m_pServerAttributes->configuration.serverName);
 	std::vector<SoftingOPCToolbox5::ApplicationDescription> serverList;
-	std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
-	if (m_pServerAttributes->configuration.port > 0) {
-		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
-	}
+	std::string discoveryServerUrl = m_pServerAttributes->configurationMode.serverSecurityName;
 	result = SoftingApplication::Instance().FindServers(discoveryServerUrl, serverURIs, serverList);
 	if (StatusCode::isBad(result) || serverList.empty())
 	{
@@ -557,10 +569,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::chooseEndPointAndPolicyId()
 	std::vector<std::string> serverURIs;
 	serverURIs.push_back(m_pServerAttributes->configuration.serverName);
 	std::vector<SoftingOPCToolbox5::ApplicationDescription> serverList;
-	std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
-	if (m_pServerAttributes->configuration.port > 0) {
-		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
-	}
+	std::string discoveryServerUrl = m_pServerAttributes->configurationMode.serverSecurityName;
 	result = SoftingApplication::Instance().FindServers(discoveryServerUrl, serverURIs, serverList);
 	if (StatusCode::isBad(result) || serverList.empty())
 	{

@@ -7,7 +7,7 @@
 #include<HdaCommand.h>
 
 DrvOPCUAHistValues::ServerHdaItem::ServerHdaItem(std::shared_ptr<ISettingsDataSource> settingsDataStore, std::shared_ptr<SoftingServerInteractor> softingDataStore):
-	m_pAttributes(nullptr), m_settingsDataStore(settingsDataStore), m_commandHandler(std::make_shared<HdaCommandHandler>(softingDataStore))
+	m_pAttributes(nullptr), m_pDataAttributes(nullptr), m_settingsDataStore(settingsDataStore), m_commandHandler(std::make_shared<HdaCommandHandler>(softingDataStore))
 {
 
 }
@@ -24,8 +24,9 @@ int DrvOPCUAHistValues::ServerHdaItem::Init(TCHAR* szCfgString)
 		size_t len = _tcslen(szCfgString);
 		if (len > 0) {
 			m_pAttributes = std::make_shared<ConnectionAttributes>();
-			m_settingsDataStore->LoadAttributesString(szCfgString, len, *m_pAttributes);
-			m_commandHandler->Init(m_pAttributes);
+			m_pDataAttributes = std::make_shared<DataTypeAttributes>();
+			m_settingsDataStore->LoadAttributesString(szCfgString, len, *m_pAttributes, *m_pDataAttributes);
+			m_commandHandler->Init(m_pAttributes, m_pDataAttributes);
 		}
 		
 	}

@@ -16,7 +16,7 @@
 #include<chrono>
 #include<algorithm>
 
-DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
+DrvOPCUAHistValues::HdaCommandHandler::HdaCommandHandler(std::shared_ptr<SoftingServerInteractor> softingDataStore): m_pAttributes(nullptr), m_pDataAttributes(nullptr), m_pSoftingInteractor(softingDataStore), m_connectionsList()
 {
 
 }
@@ -26,10 +26,12 @@ DrvOPCUAHistValues::HdaCommandHandler::~HdaCommandHandler()
 
 }
 
-int DrvOPCUAHistValues::HdaCommandHandler::Init(std::shared_ptr<ConnectionAttributes> attributes)
+int DrvOPCUAHistValues::HdaCommandHandler::Init(std::shared_ptr<ConnectionAttributes> attributes, std::shared_ptr<DataTypeAttributes> dataAttributes)
 {
 	m_pAttributes = attributes;
+	m_pDataAttributes = dataAttributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
+	m_pSoftingInteractor->SetDataAttributes(dataAttributes);
 	return ODS::ERR::OK;
 }
 
@@ -714,7 +716,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::SendMessageInfo(std::string&& messag
 
 }
 
-void DrvOPCUAHistValues::HdaCommandHandler::GetServers(std::vector<std::string>&& servers)
+void DrvOPCUAHistValues::HdaCommandHandler::GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl)
 {
 
 }

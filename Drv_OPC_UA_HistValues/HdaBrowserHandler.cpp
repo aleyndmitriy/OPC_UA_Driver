@@ -21,10 +21,12 @@ DrvOPCUAHistValues::BrowserHandler::~BrowserHandler()
 	}
 }
 
-int DrvOPCUAHistValues::BrowserHandler::Init(std::shared_ptr<ConnectionAttributes> attributes)
+int DrvOPCUAHistValues::BrowserHandler::Init(std::shared_ptr<ConnectionAttributes> attributes, std::shared_ptr<DataTypeAttributes> dataAttributes)
 {
 	m_pAttributes = attributes;
+	m_pDataAttributes = dataAttributes;
 	m_pSoftingInteractor->SetAttributes(attributes);
+	m_pSoftingInteractor->SetDataAttributes(dataAttributes);
 	return ODS::ERR::OK;
 }
 
@@ -93,7 +95,7 @@ void DrvOPCUAHistValues::BrowserHandler::SendMessageInfo(std::string&& message)
 	Log::GetInstance()->WriteInfo(_T(message.c_str()));
 }
 
-void DrvOPCUAHistValues::BrowserHandler::GetServers(std::vector<std::string>&& servers)
+void DrvOPCUAHistValues::BrowserHandler::GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl)
 {
 
 }

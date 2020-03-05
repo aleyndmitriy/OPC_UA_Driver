@@ -26,14 +26,23 @@
 #define IDC_EDIT_USER_PASSWORD          1019
 #define IDC_NETWORK_TREE                1020
 #define IDC_SERVER_PROPERTY_BUTTON      1021
+#define IDC_COMBO_READ_TYPE             1022
+#define IDC_AGGREGATE_BOX               1023
+#define IDC_COMBO_AGGREGATE             1024
+#define IDC_SPIN_INTERVAL               1025
+#define IDC_EDIT_PROCESSING_INTERVAL    1026
+#define IDC_EDIT_DATA_QUALITY           1027
+#define IDC_STATIC_AGGREGATE            1028
+#define IDC_STATIC_INTERVAL             1029
+#define IDC_STATIC_MS                   1030
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        105
+#define _APS_NEXT_RESOURCE_VALUE        106
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           1008
 #endif
 #endif

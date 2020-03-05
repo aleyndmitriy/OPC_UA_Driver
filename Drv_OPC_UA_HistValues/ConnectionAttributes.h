@@ -143,4 +143,11 @@ namespace DrvOPCUAHistValues
 
 	bool operator==(const ConnectionAttributes& lhs, const ConnectionAttributes& rhs);
 	bool operator!=(const ConnectionAttributes& lhs, const ConnectionAttributes& rhs);
+
+	struct DataTypeAttributes {
+		int m_iProcessed;
+		std::pair<std::string, int> m_pAggregateType;
+		double m_dProcessingInterval;
+		std::vector<unsigned int> m_vDataQuantities;
+	};
 }
