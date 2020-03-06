@@ -177,13 +177,14 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		m_editPkiStorePath.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.c_str());
 	}
 
-
+	m_cmbReadType.SetCurSel(m_dataAttributes->m_iProcessed);
 	if (m_dataAttributes->m_iProcessed) {
 		ShowDataReadTypeView(TRUE);
 		int pos = m_cmbAggregateType.AddString(m_dataAttributes->m_pAggregateType.first.c_str());
 		m_cmbAggregateType.SetItemData(pos, m_dataAttributes->m_pAggregateType.second);
 		m_cmbAggregateType.SetCurSel(pos);
-		m_editProcessingInterval.SetWindowTextA(std::to_string(m_dataAttributes->m_dProcessingInterval).c_str());
+		unsigned int interval = (unsigned int)m_dataAttributes->m_dProcessingInterval;
+		m_editProcessingInterval.SetWindowTextA(std::to_string(interval).c_str());
 	}
 
 	if (!m_dataAttributes->m_vDataQuantities.empty()) {
@@ -533,6 +534,7 @@ void CClientSettingsDialog::OnCbnSelChangeComboAggregate()
 
 void CClientSettingsDialog::OnCbnDropDownComboAggregate()
 {
+	m_cmbAggregateType.ResetContent();
 	StartLoading();
 	ReadAttributes();
 	if (m_pSoftingInteractor) {
@@ -793,17 +795,19 @@ void CClientSettingsDialog::ReadAttributes()
 
 void CClientSettingsDialog::SendMessageError(std::string&& message)
 {
+	StopLoading();
 	ErrorMessage(message);
 }
 
 void CClientSettingsDialog::SendWarning(std::string&& message)
 {
+	StopLoading();
 	WarningMessage(message);
 }
 
 void CClientSettingsDialog::SendMessageInfo(std::string&& message)
 {
-	
+	StopLoading();
 }
 
 void CClientSettingsDialog::GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl)
@@ -852,7 +856,6 @@ void CClientSettingsDialog::GetPolicyIds(std::vector<DrvOPCUAHistValues::Securit
 
 void CClientSettingsDialog::GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates)
 {
-	m_cmbAggregateType.ResetContent();
 	for (std::vector<std::pair<std::string, int> >::const_iterator itr = aggregates.cbegin(); itr != aggregates.cend(); ++itr)
 	{
 		int pos = m_cmbAggregateType.AddString(itr->first.c_str());
@@ -875,9 +878,9 @@ void CClientSettingsDialog::SelectFoundedServer(const std::string& compName, uns
 
 void CClientSettingsDialog::GetNewConnectionGuide(std::string&& uuid)
 {
-	StopLoading();
-	if (!uuid.empty()) {
-		WarningMessage(std::string("Connection Test Succeed!"));
+	
+	if (uuid.empty()) {
+		//WarningMessage(std::string("Connection Test Succeed!"));
 	}
 }
 

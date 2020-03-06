@@ -92,7 +92,7 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Load(ConnectionAttributes& conne
 	std::vector<unsigned int> qualities;
 	for (pugi::xml_node qualityNode = qualitiesNode.child("Quality"); qualityNode; qualityNode = qualityNode.next_sibling("Quality"))
 	{
-		unsigned int quality = qualitiesNode.attribute("Value").as_uint();
+		unsigned int quality = qualityNode.attribute("Value").as_uint();
 		qualities.push_back(quality);
 	}
 	dataAttributes.m_vDataQuantities.clear();
@@ -156,7 +156,7 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::LoadAttributesString(const char*
 	std::vector<unsigned int> qualities;
 	for (pugi::xml_node qualityNode = qualitiesNode.child("Quality"); qualityNode; qualityNode = qualityNode.next_sibling("Quality"))
 	{
-		unsigned int quality = qualitiesNode.attribute("Value").as_uint();
+		unsigned int quality = qualityNode.attribute("Value").as_uint();
 		qualities.push_back(quality);
 	}
 	dataAttributes.m_vDataQuantities.clear();

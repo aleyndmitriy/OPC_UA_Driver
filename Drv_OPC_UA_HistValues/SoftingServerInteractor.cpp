@@ -640,12 +640,13 @@ void DrvOPCUAHistValues::SoftingServerInteractor::TestConnection()
 {
 	OpenConnection();
 	if (!m_sessionsList.empty()) {
-		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::const_iterator iter = m_sessionsList.cbegin();
-		CloseConnectionWithUUID(iter->first);
 		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 		if (output) {
-			output->CloseConnectionWithGuide(std::string(iter->first));
+			std::string message = std::string("Connection Test Succeed!");
+			output->SendWarning(std::move(message));
 		}
+		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::const_iterator iter = m_sessionsList.cbegin();
+		CloseConnectionWithUUID(iter->first);
 	}
 }
 
@@ -1111,7 +1112,6 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetAggregates()
 			}
 			output->GetAggregates(std::move(vec));
 		}
-		
 	}
 }
 
