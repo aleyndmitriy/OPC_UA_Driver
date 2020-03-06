@@ -46,6 +46,12 @@ private:
 	CEdit m_editPkiStorePath;
 	CButton m_btnPkiStorePath;
 	CComboBox m_cmbPolicyId;
+	CComboBox m_cmbAggregateType;
+	CEdit m_editProcessingInterval;
+	CSpinButtonCtrl m_spinTimeInterval;
+	CComboBox m_cmbReadType;
+	CEdit m_editDataQuality;
+
 	BOOL OnInitDialog() override;
 	void SetUpInitialState();
 	void StartLoading();
@@ -55,6 +61,7 @@ private:
 	void GetPolicyListForSelectedConfiguration();
 	void WarningMessage(std::string message);
 	void ErrorMessage(std::string message);
+	void ShowDataReadTypeView(BOOL bShow);
 
 public:
 	afx_msg void OnEnChangeEditComputerName();
@@ -81,6 +88,10 @@ public:
 	afx_msg void OnCbnSelChangeComboPolicyId();
 	afx_msg void OnBtnClickedCancel();
 	afx_msg void OnBtnClickedOk();
+	afx_msg void OnCbnSelChangeComboAggregate();
+	afx_msg void OnCbnDropDownComboAggregate();
+	afx_msg void OnDeltaPosSpinInterval(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnCbnSelChangeComboReadType();
 	void SendMessageError(std::string&& message);
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);
@@ -89,5 +100,5 @@ public:
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
 	void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds);
 	void GetNewConnectionGuide(std::string&& uuid);
-	void CloseConnectionWithGuide(std::string&& uuid);	
+	void CloseConnectionWithGuide(std::string&& uuid);
 };

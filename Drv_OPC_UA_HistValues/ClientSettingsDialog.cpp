@@ -44,6 +44,11 @@ void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_PKI_STORE_PATH, m_btnPkiStorePath);
 	DDX_Control(pDX, IDC_COMBO_POLICY_ID, m_cmbPolicyId);
 	DDX_Control(pDX, IDC_EDIT_USER_PASSWORD, m_editUserPassword);
+	DDX_Control(pDX, IDC_COMBO_AGGREGATE, m_cmbAggregateType);
+	DDX_Control(pDX, IDC_EDIT_PROCESSING_INTERVAL, m_editProcessingInterval);
+	DDX_Control(pDX, IDC_SPIN_INTERVAL, m_spinTimeInterval);
+	DDX_Control(pDX, IDC_COMBO_READ_TYPE, m_cmbReadType);
+	DDX_Control(pDX, IDC_EDIT_DATA_QUALITY, m_editDataQuality);
 }
 
 
@@ -72,6 +77,10 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO_POLICY_ID, &CClientSettingsDialog::OnCbnSelChangeComboPolicyId)
 	ON_BN_CLICKED(IDC_SERVER_PROPERTY_BUTTON, &CClientSettingsDialog::OnBtnClickedServerPropertyButton)
 	ON_CBN_EDITCHANGE(IDC_COMBO_SELECT_SERVER, &CClientSettingsDialog::OnCbnEditChangeComboSelectServer)
+	ON_CBN_SELCHANGE(IDC_COMBO_AGGREGATE, &CClientSettingsDialog::OnCbnSelChangeComboAggregate)
+	ON_CBN_DROPDOWN(IDC_COMBO_AGGREGATE, &CClientSettingsDialog::OnCbnDropDownComboAggregate)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_INTERVAL, &CClientSettingsDialog::OnDeltaPosSpinInterval)
+	ON_CBN_SELCHANGE(IDC_COMBO_READ_TYPE, &CClientSettingsDialog::OnCbnSelChangeComboReadType)
 END_MESSAGE_MAP()
 
 
@@ -196,6 +205,18 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editPkiStorePath.Clear();
 
 }
+
+void CClientSettingsDialog::ShowDataReadTypeView(BOOL bShow)
+{
+	GetDlgItem(IDC_AGGREGATE_BOX)->ShowWindow(bShow);
+	GetDlgItem(IDC_STATIC_AGGREGATE)->ShowWindow(bShow);
+	GetDlgItem(IDC_STATIC_INTERVAL)->ShowWindow(bShow);
+	GetDlgItem(IDC_STATIC_MS)->ShowWindow(bShow);
+	m_cmbAggregateType.ShowWindow(bShow);
+	m_editProcessingInterval.ShowWindow(bShow);
+	m_spinTimeInterval.ShowWindow(bShow);
+}
+
 // Обработчики сообщений CClientSettingsDialog
 void CClientSettingsDialog::GetConfigurationsListForSelectedServer()
 {
@@ -454,6 +475,33 @@ void CClientSettingsDialog::OnEnUpdateEditPrivateKey()
 	// с флагом ENM_UPDATE ORed в маске lParam mask.
 
 	// TODO:  Добавьте код элемента управления
+}
+
+
+void CClientSettingsDialog::OnCbnSelChangeComboAggregate()
+{
+	// TODO: добавьте свой код обработчика уведомлений
+}
+
+
+void CClientSettingsDialog::OnCbnDropDownComboAggregate()
+{
+	// TODO: добавьте свой код обработчика уведомлений
+}
+
+
+void CClientSettingsDialog::OnDeltaPosSpinInterval(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	// TODO: добавьте свой код обработчика уведомлений
+	*pResult = 0;
+}
+
+
+
+void CClientSettingsDialog::OnCbnSelChangeComboReadType()
+{
+	// TODO: добавьте свой код обработчика уведомлений
 }
 
 
