@@ -92,6 +92,7 @@ public:
 	afx_msg void OnCbnDropDownComboAggregate();
 	afx_msg void OnDeltaPosSpinInterval(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnCbnSelChangeComboReadType();
+	afx_msg void OnEnUpdateEditDataQuality();
 	void SendMessageError(std::string&& message);
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);
@@ -99,6 +100,8 @@ public:
 	void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName);
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
 	void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds);
+	void GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates);
 	void GetNewConnectionGuide(std::string&& uuid);
 	void CloseConnectionWithGuide(std::string&& uuid);
+	
 };

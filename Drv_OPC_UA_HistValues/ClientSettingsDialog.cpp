@@ -81,6 +81,7 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_CBN_DROPDOWN(IDC_COMBO_AGGREGATE, &CClientSettingsDialog::OnCbnDropDownComboAggregate)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_INTERVAL, &CClientSettingsDialog::OnDeltaPosSpinInterval)
 	ON_CBN_SELCHANGE(IDC_COMBO_READ_TYPE, &CClientSettingsDialog::OnCbnSelChangeComboReadType)
+	ON_EN_UPDATE(IDC_EDIT_DATA_QUALITY, &CClientSettingsDialog::OnEnUpdateEditDataQuality)
 END_MESSAGE_MAP()
 
 
@@ -175,6 +176,24 @@ BOOL CClientSettingsDialog::OnInitDialog()
 	if (!m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.empty() && m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.size() > 0) {
 		m_editPkiStorePath.SetWindowTextA(m_connectAttributes->configurationAccess.m_certificate.m_pkiTrustedPath.c_str());
 	}
+
+
+	if (m_dataAttributes->m_iProcessed) {
+		ShowDataReadTypeView(TRUE);
+		int pos = m_cmbAggregateType.AddString(m_dataAttributes->m_pAggregateType.first.c_str());
+		m_cmbAggregateType.SetItemData(pos, m_dataAttributes->m_pAggregateType.second);
+		m_cmbAggregateType.SetCurSel(pos);
+		m_editProcessingInterval.SetWindowTextA(std::to_string(m_dataAttributes->m_dProcessingInterval).c_str());
+	}
+
+	if (!m_dataAttributes->m_vDataQuantities.empty()) {
+		std::string quantities;
+		for (std::vector<unsigned int>::const_iterator itr = m_dataAttributes->m_vDataQuantities.cbegin(); itr != m_dataAttributes->m_vDataQuantities.cend(); ++itr) {
+			quantities = quantities + std::to_string(*itr) + std::string(",");
+		}
+		quantities.pop_back();
+		m_editDataQuality.SetWindowTextA(quantities.c_str());
+	}
 	return TRUE;
 }
 
@@ -204,6 +223,13 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editPkiStorePath.SetSel(0, -1);
 	m_editPkiStorePath.Clear();
 
+	m_cmbReadType.SetCurSel(0);
+	m_cmbAggregateType.ResetContent();
+	m_editProcessingInterval.SetSel(0, -1);
+	m_editProcessingInterval.Clear();
+	m_editDataQuality.SetSel(0, -1);
+	m_editDataQuality.Clear();
+	ShowDataReadTypeView(FALSE);
 }
 
 void CClientSettingsDialog::ShowDataReadTypeView(BOOL bShow)
@@ -478,6 +504,27 @@ void CClientSettingsDialog::OnEnUpdateEditPrivateKey()
 }
 
 
+void CClientSettingsDialog::OnEnUpdateEditDataQuality()
+{
+	int selStart = -1;
+	int selEnd = -1;
+	int res = ::SendMessage(m_editDataQuality.m_hWnd, EM_GETSEL, (WPARAM)(&selStart), (LPARAM)(&selEnd));
+	if ((selStart == selEnd) && selStart != 0)
+	{
+		CString str;
+		int len = m_editDataQuality.GetWindowTextLengthA();
+		m_editDataQuality.GetWindowTextA(str);
+		char currentSymbol = str[selStart - 1];
+		if (((currentSymbol != '\0') && (!_istdigit(currentSymbol) && (currentSymbol != ','))) )
+		{
+			str.Delete(selStart - 1, 1);
+			m_editDataQuality.SetWindowTextA(str);
+			::SendMessage(m_editDataQuality.m_hWnd, EM_SETSEL, (WPARAM)(selStart - 1), (LPARAM)(selEnd - 1));
+		}
+	}
+}
+
+
 void CClientSettingsDialog::OnCbnSelChangeComboAggregate()
 {
 	// TODO: добавьте свой код обработчика уведомлений
@@ -486,7 +533,11 @@ void CClientSettingsDialog::OnCbnSelChangeComboAggregate()
 
 void CClientSettingsDialog::OnCbnDropDownComboAggregate()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	StartLoading();
+	ReadAttributes();
+	if (m_pSoftingInteractor) {
+		m_pSoftingInteractor->GetAggregates();
+	}
 }
 
 
@@ -501,7 +552,13 @@ void CClientSettingsDialog::OnDeltaPosSpinInterval(NMHDR* pNMHDR, LRESULT* pResu
 
 void CClientSettingsDialog::OnCbnSelChangeComboReadType()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	BOOL isProcessed = m_cmbReadType.GetCurSel();
+	if (!isProcessed) {
+		m_cmbAggregateType.ResetContent();
+		m_editProcessingInterval.SetSel(0, -1);
+		m_editProcessingInterval.Clear();
+	}
+	ShowDataReadTypeView(isProcessed);
 }
 
 
@@ -692,6 +749,44 @@ void CClientSettingsDialog::ReadAttributes()
 	str.ReleaseBuffer();
 	str.Empty();
 
+	m_dataAttributes->m_iProcessed = m_cmbReadType.GetCurSel();
+
+	if (m_dataAttributes->m_iProcessed) {
+		int index = m_cmbAggregateType.GetCurSel();
+		int identifier =  (int)m_cmbAggregateType.GetItemData(index);
+		len = m_cmbAggregateType.GetWindowTextLengthA();
+		m_cmbAggregateType.GetWindowTextA(str);
+		m_dataAttributes->m_pAggregateType = std::make_pair<std::string, int>(std::string(str.GetBuffer(len)),std::move(identifier));
+		str.ReleaseBuffer();
+		str.Empty();
+		len = m_editProcessingInterval.GetWindowTextLengthA();
+		m_editProcessingInterval.GetWindowTextA(str);
+		std::string intervalStr = std::string(str.GetBuffer(len));
+		if (!intervalStr.empty()) {
+			m_dataAttributes->m_dProcessingInterval = std::stod(intervalStr);
+		}
+		str.ReleaseBuffer();
+		str.Empty();
+	}
+	else {
+		m_dataAttributes->m_pAggregateType = std::make_pair<std::string, int>(std::string(), 0);
+		m_dataAttributes->m_dProcessingInterval = 0;
+	}
+	len = m_editDataQuality.GetWindowTextLengthA();
+	m_editDataQuality.GetWindowTextA(str);
+	std::string quantities = std::string(str.GetBuffer(len));
+	str.ReleaseBuffer();
+	str.Empty();
+	m_dataAttributes->m_vDataQuantities.clear();
+	std::vector<std::string> quantitiesVec = split(quantities, std::string(","));
+	if (!quantitiesVec.empty()) {
+		for (std::vector<std::string>::const_iterator itr = quantitiesVec.cbegin(); itr != quantitiesVec.cend(); ++itr) {
+			if (itr->empty() == false && itr->size() > 0) {
+				unsigned int quantity = std::stoul(*itr);
+				m_dataAttributes->m_vDataQuantities.push_back(quantity);
+			}
+		}
+	}
 }
 
 
@@ -754,6 +849,18 @@ void CClientSettingsDialog::GetPolicyIds(std::vector<DrvOPCUAHistValues::Securit
 	StopLoading();
 }
 
+
+void CClientSettingsDialog::GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates)
+{
+	m_cmbAggregateType.ResetContent();
+	for (std::vector<std::pair<std::string, int> >::const_iterator itr = aggregates.cbegin(); itr != aggregates.cend(); ++itr)
+	{
+		int pos = m_cmbAggregateType.AddString(itr->first.c_str());
+		m_cmbAggregateType.SetItemData(pos, itr->second);
+	}
+	StopLoading();
+}
+
 void CClientSettingsDialog::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
 {
 	
@@ -778,8 +885,3 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 {
 	
 }
-
-
-
-
-

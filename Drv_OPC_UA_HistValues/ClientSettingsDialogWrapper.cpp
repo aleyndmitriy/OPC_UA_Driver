@@ -53,6 +53,11 @@ void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetPolicyIds(std::vector<D
 	m_pMFCdialog->GetPolicyIds(std::move(policyIds));
 }
 
+void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates)
+{
+	m_pMFCdialog->GetAggregates(std::move(aggregates));
+}
+
 void DrvOPCUAHistValues::ClientSettingsDialogWrapper::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
 {
 	m_pMFCdialog->SelectFoundedServer(compName,port, serverName);

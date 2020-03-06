@@ -110,6 +110,12 @@ void DrvOPCUAHistValues::BrowserHandler::GetPolicyIds(std::vector<DrvOPCUAHistVa
 
 }
 
+void DrvOPCUAHistValues::BrowserHandler::GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates)
+{
+
+}
+
+
 void DrvOPCUAHistValues::BrowserHandler::SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName)
 {
 

@@ -641,8 +641,6 @@ void DrvOPCUAHistValues::SoftingServerInteractor::TestConnection()
 	OpenConnection();
 	if (!m_sessionsList.empty()) {
 		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::const_iterator iter = m_sessionsList.cbegin();
-		//std::vector<HierarchicalTagInfo> tags;
-		//GetAggregateFunctions(tags,iter->first);
 		CloseConnectionWithUUID(iter->first);
 		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 		if (output) {
@@ -1006,7 +1004,7 @@ DrvOPCUAHistValues::TagInfo DrvOPCUAHistValues::SoftingServerInteractor::readAgg
 		return TagInfo(name, std::string(), -1);
 	}
 	unsigned int identifier = refDesc.getNodeId()->getIdentifier().getUInt32();
-	if (identifier < EnumNumericNodeId_AggregateFunctionType || identifier > EnumNumericNodeId_AggregateFunction_WorstQuality) {
+	if (identifier < EnumNumericNodeId_AggregateFunction_Interpolative || identifier > EnumNumericNodeId_AggregateFunction_WorstQuality) {
 		return TagInfo(name, std::string(), -1);
 	}
 	std::vector<SoftingOPCToolbox5::ReadValueId> readIds;
@@ -1027,32 +1025,14 @@ DrvOPCUAHistValues::TagInfo DrvOPCUAHistValues::SoftingServerInteractor::readAgg
 	return TagInfo(name, desc, (int)identifier);
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::GetAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID)
+void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	tags.clear();
-	std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::iterator iter = m_sessionsList.find(connectionID);
-	if (iter != m_sessionsList.end()) {
-		if (iter->second.isNull() || iter->second->isConnected() == false)
-		{
-			std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-			if (output) {
-				std::string message("The session is not connected... connect it before calling this function!");
-				output->SendWarning(std::move(message));
-			}
-			return;
-		}
-		SoftingOPCToolbox5::NodeId devicesNode;
-		devicesNode.setNull();
-		getAggregateNodes(&devicesNode, tags, std::vector<std::string>(), iter->second);
-	}
-	else {
-		std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-		if (output) {
-			std::string message("There is no any sessions with such ID!");
-			output->SendWarning(std::move(message));
-		}
-	}
+	SoftingOPCToolbox5::NodeId devicesNode;
+	devicesNode.setNull();
+	getAggregateNodes(&devicesNode, tags, std::vector<std::string>(), session);
 }
+
 
 void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateNodes(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session)
 {
@@ -1089,6 +1069,49 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateNodes(SoftingOPCTo
 				getAggregateNodes(refDescriptions[i].getNodeId(), tags, vec, session);
 			}
 		}
+	}
+}
+
+
+void DrvOPCUAHistValues::SoftingServerInteractor::GetAggregates()
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (m_selectedEndPointDescription) {
+		m_selectedEndPointDescription->clear();
+	}
+	m_selectedEndPointDescription.reset();
+	if (m_userToken) {
+		m_userToken->clear();
+	}
+	m_userToken.reset();
+	OpenConnection();
+	if (!m_sessionsList.empty()) {
+		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr>::const_iterator iter = m_sessionsList.cbegin();
+		if (iter->second.isNull() || iter->second->isConnected() == false)
+		{
+			if (output) {
+				std::string message("The session is not connected... connect it before calling this function!");
+				output->SendWarning(std::move(message));
+			}
+			return;
+		}
+		std::vector<HierarchicalTagInfo> tags;
+		getAggregateFunctions(tags, iter->second);
+		CloseConnectionWithUUID(iter->first);
+		if (output) {
+			std::vector<std::pair<std::string, int> > vec;
+			for (std::vector<HierarchicalTagInfo>::const_iterator iter = tags.cbegin(); iter != tags.cend(); iter++) {
+				std::vector<std::pair<std::string, int> >::const_iterator findIterator =
+					std::find_if(vec.cbegin(), vec.cend(), [&](const std::pair<std::string, int>& desc) {
+					return (desc.first == iter->m_strAddress.back() && desc.second == iter->m_iType); });
+				if (findIterator == vec.cend()) {
+					int type = iter->m_iType;
+					vec.push_back(std::make_pair<std::string,int>(std::string(iter->m_strAddress.back()),std::move(type)));
+				}
+			}
+			output->GetAggregates(std::move(vec));
+		}
+		
 	}
 }
 

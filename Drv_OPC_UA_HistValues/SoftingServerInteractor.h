@@ -21,6 +21,7 @@ namespace DrvOPCUAHistValues
 		void SetDataAttributes(std::shared_ptr<DataTypeAttributes> attributes);
 		void SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output);
 		void GetServers();
+		void GetAggregates();
 		void ChooseCurrentServer();
 		void ChooseCurrentEndPoint();
 		void ChooseCurrentTokenPolicy();
@@ -36,7 +37,6 @@ namespace DrvOPCUAHistValues
 		void SendMessageError(std::string&& message) override;
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
-		void GetAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, const std::string& connectionID);
 		void GetServerPropertyByEndPoint(const std::string& endPointName);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pServerAttributes;
@@ -57,6 +57,7 @@ namespace DrvOPCUAHistValues
 		void getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session);
 		TagInfo readNodeInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session);
+		void getAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, SoftingOPCToolbox5::Client::SessionPtr session);
 		TagInfo readAggregateInfo(const SoftingOPCToolbox5::ReferenceDescription& refDesc, SoftingOPCToolbox5::Client::SessionPtr session);
 		void getAggregateNodes(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session);
 
