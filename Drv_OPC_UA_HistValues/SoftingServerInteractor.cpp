@@ -820,7 +820,11 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(c
 		return;
 	}
 	SoftingOPCToolbox5::NodeId node = getAggregateNode(m_pDataAttributes->m_pAggregateType, session);
-
+	if (output) {
+		std::string message = std::string("Aggregate function: ") + m_pDataAttributes->m_pAggregateType.first + std::string("; Processing interval: ") +
+			std::to_string(unsigned int(m_pDataAttributes->m_dProcessingInterval));
+		output->SendWarning(std::move(message));
+	}
 	if (node.isNull()) {
 		if (output) {
 			std::string message("Can't find aggregate function");
@@ -1432,6 +1436,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	DrvOPCUAHistValues::Record record;
 	EnumDataTypeId type = dataValue.getValue()->getDataType();
 	EnumStatusCode status = dataValue.getValue()->getStatusCode();
+	record.SetStatus((int)status);
 	SYSTEMTIME serverDataTime = { 0 };
 	serverDataTime.wYear = dataValue.getServerTimestamp()->yearGMT();
 	serverDataTime.wMonth = dataValue.getServerTimestamp()->monthGMT();

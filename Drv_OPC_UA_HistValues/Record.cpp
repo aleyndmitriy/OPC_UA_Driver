@@ -3,6 +3,12 @@
 #include"Constants.h"
 #include<OdsCoreLib/TimeUtils.h>
 
+
+DrvOPCUAHistValues::Record::Record():recordData(),status(0)
+{
+
+}
+
 std::pair<typename DrvOPCUAHistValues::Record::const_iterator, bool> DrvOPCUAHistValues::Record::insert(std::string colName, short dataType, std::string value)
 {
 	typename DrvOPCUAHistValues::Record::FieldData val = std::make_pair(dataType, value);
@@ -10,6 +16,15 @@ std::pair<typename DrvOPCUAHistValues::Record::const_iterator, bool> DrvOPCUAHis
 	return recordData.insert(rec);
 }
 
+int DrvOPCUAHistValues::Record::GetStatus() const
+{
+	return status;
+}
+
+void DrvOPCUAHistValues::Record::SetStatus(int iStatus)
+{
+	status = iStatus;
+}
 
 const typename DrvOPCUAHistValues::Record::FieldData& DrvOPCUAHistValues::Record::at(const std::string& key) const
 {

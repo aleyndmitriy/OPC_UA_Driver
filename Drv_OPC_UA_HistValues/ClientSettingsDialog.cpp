@@ -184,7 +184,7 @@ BOOL CClientSettingsDialog::OnInitDialog()
 		m_cmbAggregateType.SetItemData(pos, m_dataAttributes->m_pAggregateType.second);
 		m_cmbAggregateType.SetCurSel(pos);
 		unsigned int interval = (unsigned int)m_dataAttributes->m_dProcessingInterval;
-		m_editProcessingInterval.SetWindowTextA(std::to_string(interval).c_str());
+		SetDlgItemInt(IDC_EDIT_PROCESSING_INTERVAL,interval, FALSE);
 	}
 
 	if (!m_dataAttributes->m_vDataQuantities.empty()) {
@@ -231,6 +231,7 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editDataQuality.SetSel(0, -1);
 	m_editDataQuality.Clear();
 	ShowDataReadTypeView(FALSE);
+	m_spinTimeInterval.SetBuddy(&m_editProcessingInterval);
 }
 
 void CClientSettingsDialog::ShowDataReadTypeView(BOOL bShow)
@@ -511,12 +512,21 @@ void CClientSettingsDialog::OnEnUpdateEditDataQuality()
 		int len = m_editDataQuality.GetWindowTextLengthA();
 		m_editDataQuality.GetWindowTextA(str);
 		char currentSymbol = str[selStart - 1];
-		if (((currentSymbol != '\0') && (!_istdigit(currentSymbol) && (currentSymbol != ','))) )
+		if (((currentSymbol != '\0') && (!_istdigit(currentSymbol) && (currentSymbol != ',') && (currentSymbol != 'x'))) || ((selStart == 1) && (str[0] != '0')) || ((selStart == 2) && (str[1] != 'x')) )
 		{
 			str.Delete(selStart - 1, 1);
 			m_editDataQuality.SetWindowTextA(str);
 			::SendMessage(m_editDataQuality.m_hWnd, EM_SETSEL, (WPARAM)(selStart - 1), (LPARAM)(selEnd - 1));
 		}
+		if (selStart >= 3) {
+			if ((currentSymbol == 'x' && str[selStart - 2] != '0') ||  (currentSymbol != '0' && str[selStart - 2] == ',')) {
+				str.Delete(selStart - 1, 1);
+				m_editDataQuality.SetWindowTextA(str);
+				::SendMessage(m_editDataQuality.m_hWnd, EM_SETSEL, (WPARAM)(selStart - 1), (LPARAM)(selEnd - 1));
+			}
+		}
+		
+
 	}
 }
 
@@ -543,7 +553,14 @@ void CClientSettingsDialog::OnCbnDropDownComboAggregate()
 void CClientSettingsDialog::OnDeltaPosSpinInterval(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
-	// TODO: добавьте свой код обработчика уведомлений
+	BOOL isGood = FALSE;
+	unsigned int res = GetDlgItemInt(IDC_EDIT_PROCESSING_INTERVAL, &isGood, FALSE);
+	if (isGood) {
+		res -= pNMUpDown->iDelta;
+		if (res > 0) {
+			SetDlgItemInt(IDC_EDIT_PROCESSING_INTERVAL, res, FALSE);
+		}
+	}
 	*pResult = 0;
 }
 
@@ -759,14 +776,11 @@ void CClientSettingsDialog::ReadAttributes()
 		m_dataAttributes->m_pAggregateType = std::make_pair<std::string, int>(std::string(str.GetBuffer(len)),std::move(identifier));
 		str.ReleaseBuffer();
 		str.Empty();
-		len = m_editProcessingInterval.GetWindowTextLengthA();
-		m_editProcessingInterval.GetWindowTextA(str);
-		std::string intervalStr = std::string(str.GetBuffer(len));
-		if (!intervalStr.empty()) {
-			m_dataAttributes->m_dProcessingInterval = std::stod(intervalStr);
+		BOOL isGood = FALSE;
+		unsigned int res = GetDlgItemInt(IDC_EDIT_PROCESSING_INTERVAL, &isGood, FALSE);
+		if (isGood) {
+			m_dataAttributes->m_dProcessingInterval = (double)res;
 		}
-		str.ReleaseBuffer();
-		str.Empty();
 	}
 	else {
 		m_dataAttributes->m_pAggregateType = std::make_pair<std::string, int>(std::string(), 0);
