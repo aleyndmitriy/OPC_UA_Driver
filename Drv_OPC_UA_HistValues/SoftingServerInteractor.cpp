@@ -800,6 +800,118 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 	}
 }
 
+void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
+	std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
+	if (m_pDataAttributes->m_dProcessingInterval <= 0) {
+		if (output) {
+			std::string message("The processing interval is empty!");
+			output->SendWarning(std::move(message));
+		}
+		return;
+	}
+	if (m_pDataAttributes->m_pAggregateType.first.empty() || m_pDataAttributes->m_pAggregateType.second < EnumNumericNodeId_AggregateFunction_Interpolative || 
+		m_pDataAttributes->m_pAggregateType.second > EnumNumericNodeId_AggregateFunction_WorstQuality) {
+		if (output) {
+			std::string message("Choose aggregate function!");
+			output->SendWarning(std::move(message));
+		}
+		return;
+	}
+	SoftingOPCToolbox5::NodeId node = getAggregateNode(m_pDataAttributes->m_pAggregateType, session);
+
+	if (node.isNull()) {
+		if (output) {
+			std::string message("Can't find aggregate function");
+			output->SendWarning(std::move(message));
+		}
+		return;
+	}
+	std::vector<SoftingOPCToolbox5::NumericRange> indexRanges(nodesToRead.size(), SoftingOPCToolbox5::NumericRange());
+	std::vector<SoftingOPCToolbox5::HistoryReadValueId> historyReadValueIds;
+	std::vector<SoftingOPCToolbox5::ByteString> historyReadValueContinuationPoints(nodesToRead.size(), SoftingOPCToolbox5::ByteString());
+	std::transform(nodesToRead.cbegin(), nodesToRead.cend(), std::back_inserter(historyReadValueIds), [](const SoftingOPCToolbox5::NodeId& nodeId) {
+		SoftingOPCToolbox5::HistoryReadValueId historyReadValueId;
+		historyReadValueId.setNodeId(&nodeId);
+		return historyReadValueId; });
+	SoftingOPCToolbox5::ReadProcessedDetails details;
+	details.setStartTime(&startTime);
+	details.setEndTime(&endTime);
+	details.setProcessingInterval(m_pDataAttributes->m_dProcessingInterval);
+	SoftingOPCToolbox5::AggregateConfiguration aggregateConfiguration;
+	aggregateConfiguration.setUseServerCapabilitiesDefaults(true);
+	aggregateConfiguration.setTreatUncertainAsBad(false);
+	aggregateConfiguration.setPercentDataBad(100);
+	aggregateConfiguration.setPercentDataGood(0);
+	aggregateConfiguration.setUseSlopedExtrapolation(true);
+	details.setAggregateConfiguration(aggregateConfiguration);
+	details.addAggregateType(&node);
+	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
+	EnumStatusCode result = session->historyReadProcessed(EnumTimestampsToReturn_Server, false, historyReadValueIds, &details, historyReadResults);
+	historicalValuesOfNodes.clear();
+	if (StatusCode::isSUCCEEDED(result))
+	{
+		size_t resultSize = historyReadResults.size();
+		for (size_t indexOfResult = 0; indexOfResult < resultSize; ++indexOfResult) {
+			EnumStatusCode operationResult = historyReadResults.at(indexOfResult).getStatusCode();
+			if (StatusCode::isBad(operationResult)) {
+				if (output) {
+					std::string message = std::string("Operation of the HistoryRead service call returned an unexpected status code ") + std::string(getEnumStatusCodeString(operationResult));
+					output->SendMessageInfo(std::move(message));
+				}
+				return;
+			}
+			std::vector<SoftingOPCToolbox5::DataValue> values;
+			OTUInt32 sizeOfData = historyReadResults.at(indexOfResult).getNumberOfValues();
+			for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
+			{
+				values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+			}
+
+			SoftingOPCToolbox5::ByteString conPoint = historyReadResults.at(indexOfResult).getContinuationPoint();
+			size_t lenOfContinuatinPoint = conPoint.getSize();
+			while (lenOfContinuatinPoint > 0) {
+				historyReadValueIds.at(indexOfResult).setContinuationPoint(conPoint);
+				std::vector<SoftingOPCToolbox5::HistoryReadValueId> vecId{ historyReadValueIds.at(indexOfResult) };
+				std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadContinuationResults;
+				result = session->historyReadProcessed(EnumTimestampsToReturn_Server, false, vecId, &details, historyReadContinuationResults);
+				if (StatusCode::isSUCCEEDED(result))
+				{
+					size_t resultSize = historyReadContinuationResults.size();
+					for (size_t indexOfResult = 0; indexOfResult < resultSize; ++indexOfResult) {
+						EnumStatusCode operationResult = historyReadContinuationResults.at(indexOfResult).getStatusCode();
+						if (StatusCode::isBad(operationResult)) {
+							if (output) {
+								std::string message = std::string("Operation of the HistoryRead service call returned an unexpected status code ") + std::string(getEnumStatusCodeString(operationResult));
+								output->SendMessageInfo(std::move(message));
+							}
+							break;
+						}
+						OTUInt32 sizeOfData = historyReadContinuationResults.at(indexOfResult).getNumberOfValues();
+						for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
+						{
+							values.push_back(historyReadContinuationResults.at(indexOfResult).getValue(valueIndex));
+						}
+					}
+					conPoint = historyReadContinuationResults.at(indexOfResult).getContinuationPoint();
+					lenOfContinuatinPoint = conPoint.getSize();
+				}
+				else {
+					lenOfContinuatinPoint = 0;
+				}
+			};
+			historicalValuesOfNodes.push_back(values);
+		}
+	}
+	else {
+		if (output) {
+			std::string message = std::string("Can not find any processed values for nodes ");
+			output->SendMessageInfo(std::move(message));
+		}
+	}
+}
+
 void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::string, std::vector<DrvOPCUAHistValues::Record> >& tagsData, const SYSTEMTIME& startTime, const SYSTEMTIME& endTime,
 	const std::map<std::string, std::vector<std::string> >& fullPaths, const std::string& connectionID)
 {
@@ -853,7 +965,13 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::strin
 			softingEndTime.set(end);
 
 			std::vector< std::vector<SoftingOPCToolbox5::DataValue> > historicalValuesOfNodes;
-			getHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes,iter->second);
+			if (m_pDataAttributes->m_iProcessed) {
+				getProcessedHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes, iter->second);
+			}
+			else {
+				getHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes, iter->second);
+			}
+
 			if (historicalValuesOfNodes.empty()) {
 				if (output) {
 					std::string message("There is no any data for all tags!");
@@ -1026,16 +1144,17 @@ DrvOPCUAHistValues::TagInfo DrvOPCUAHistValues::SoftingServerInteractor::readAgg
 	return TagInfo(name, desc, (int)identifier);
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateFunctions(std::vector<HierarchicalTagInfo>& tags, std::vector<SoftingOPCToolbox5::NodeId>& aggregateNodes, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	tags.clear();
 	SoftingOPCToolbox5::NodeId devicesNode;
 	devicesNode.setNull();
-	getAggregateNodes(&devicesNode, tags, std::vector<std::string>(), session);
+	getAggregateNodes(&devicesNode, tags, std::vector<std::string>(), aggregateNodes, session);
 }
 
 
-void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateNodes(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags, SoftingOPCToolbox5::Client::SessionPtr session)
+void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateNodes(SoftingOPCToolbox5::INodeId* nodeId, std::vector<HierarchicalTagInfo>& tags, const std::vector<std::string>& parentTags,
+	std::vector<SoftingOPCToolbox5::NodeId>& aggregateNodes, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	bool isFounded = false;
 	EnumStatusCode result = EnumStatusCode_Good;
@@ -1065,14 +1184,32 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getAggregateNodes(SoftingOPCTo
 			vec.push_back(tag.m_strName);
 			if (tag.m_iType != -1) {
 				tags.push_back(HierarchicalTagInfo(vec, tag.m_strDescription, tag.m_iType));
+				aggregateNodes.push_back(refDescriptions[i].getNodeId());
 			}
 			else {
-				getAggregateNodes(refDescriptions[i].getNodeId(), tags, vec, session);
+				getAggregateNodes(refDescriptions[i].getNodeId(), tags, vec, aggregateNodes, session);
 			}
 		}
 	}
 }
 
+SoftingOPCToolbox5::NodeId DrvOPCUAHistValues::SoftingServerInteractor::getAggregateNode(const std::pair<std::string, int>& aggregateType, SoftingOPCToolbox5::Client::SessionPtr session)
+{
+	std::vector<HierarchicalTagInfo> tags;
+	std::vector<SoftingOPCToolbox5::NodeId> aggregateNodes;
+	SoftingOPCToolbox5::NodeId node;
+	getAggregateFunctions(tags, aggregateNodes, session);
+	if (tags.empty() || aggregateNodes.empty() || aggregateNodes.size() != tags.size()) {
+		
+		return node;
+	}
+	for (size_t index = 0; index < tags.size(); ++index) {
+		if (aggregateType.first == tags.at(index).m_strAddress.back() || aggregateType.second == tags.at(index).m_iType) {
+			return aggregateNodes.at(index);
+		}
+	}
+	return node;
+}
 
 void DrvOPCUAHistValues::SoftingServerInteractor::GetAggregates()
 {
@@ -1097,7 +1234,8 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetAggregates()
 			return;
 		}
 		std::vector<HierarchicalTagInfo> tags;
-		getAggregateFunctions(tags, iter->second);
+		std::vector<SoftingOPCToolbox5::NodeId> aggregateNodes;
+		getAggregateFunctions(tags, aggregateNodes, iter->second);
 		CloseConnectionWithUUID(iter->first);
 		if (output) {
 			std::vector<std::pair<std::string, int> > vec;

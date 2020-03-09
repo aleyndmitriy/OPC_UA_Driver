@@ -31,6 +31,7 @@ private:
 	std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> m_pSoftingInteractor;
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> m_endPointsConfigurations;
 	std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy> m_endPointPolicyIds;
+	std::vector<std::pair<std::string, int> > m_aggregates;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;
@@ -62,6 +63,7 @@ private:
 	void WarningMessage(std::string message);
 	void ErrorMessage(std::string message);
 	void ShowDataReadTypeView(BOOL bShow);
+	void ClearAggregateListView();
 
 public:
 	afx_msg void OnEnChangeEditComputerName();

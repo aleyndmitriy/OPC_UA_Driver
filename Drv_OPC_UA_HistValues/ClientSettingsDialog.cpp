@@ -14,7 +14,7 @@
 IMPLEMENT_DYNAMIC(CClientSettingsDialog, CDialogEx)
 
 CClientSettingsDialog::CClientSettingsDialog(std::function<ODS::UI::IAbstractUIFacrory * (void)> uiFactiryGetter, std::shared_ptr<DrvOPCUAHistValues::SoftingServerInteractor> softingInteractor, std::shared_ptr<DrvOPCUAHistValues::ConnectionAttributes> attributes, std::shared_ptr<DrvOPCUAHistValues::DataTypeAttributes> dataAttributes, CWnd* pParent)
-	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_dataAttributes(dataAttributes), m_pSoftingInteractor(softingInteractor), m_endPointsConfigurations(), m_endPointPolicyIds()
+	: CDialogEx(IDD_CLIENT_SETTINGS_DLG, pParent), m_uiFactoryGetter(uiFactiryGetter), m_connectAttributes(attributes), m_dataAttributes(dataAttributes), m_pSoftingInteractor(softingInteractor), m_endPointsConfigurations(), m_endPointPolicyIds(), m_aggregates()
 {
 	
 }
@@ -276,12 +276,7 @@ void CClientSettingsDialog::GetPolicyListForSelectedConfiguration()
 
 void CClientSettingsDialog::OnEnChangeEditComputerName()
 {
-	// TODO:  Если это элемент управления RICHEDIT, то элемент управления не будет
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// функция и вызов CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Добавьте код элемента управления
+	ClearAggregateListView();
 }
 
 
@@ -300,6 +295,7 @@ void CClientSettingsDialog::OnCbnEditChangeComboSelectServer()
 	if (m_cmbServerName.GetCount() > 0) {
 		m_cmbServerName.ResetContent();
 	}
+	ClearAggregateListView();
 	m_cmbConfiguration.ResetContent();
 	m_cmbPolicyId.ResetContent();
 	m_lstPolicyType.DeleteAllItems();
@@ -310,6 +306,7 @@ void CClientSettingsDialog::OnCbnEditChangeComboSelectServer()
 
 void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 {
+	ClearAggregateListView();
 	StartLoading();
 	ReadAttributes();
 	GetConfigurationsListForSelectedServer();
@@ -318,12 +315,7 @@ void CClientSettingsDialog::OnCbnSelchangeComboSelectServer()
 
 void CClientSettingsDialog::OnEnChangeEditPort()
 {
-	// TODO:  Если это элемент управления RICHEDIT, то элемент управления не будет
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// функция и вызов CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Добавьте код элемента управления
+	ClearAggregateListView();
 }
 
 
@@ -341,6 +333,7 @@ void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 	if (list != NULL) {
 		m_editComputerName.SetWindowTextA(szPathname);
 	}*/
+	ClearAggregateListView();
 	CBrowseNetworkServers dlg = CBrowseNetworkServers(this);
 	int response = dlg.DoModal();
 	if (response == IDOK) {
@@ -356,6 +349,7 @@ void CClientSettingsDialog::OnBtnClickedButtonBrowseNetwork()
 void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 {
 	StartLoading();
+	ClearAggregateListView();
 	ReadAttributes();
 	m_cmbConfiguration.ResetContent();
 	m_cmbPolicyId.ResetContent();
@@ -369,6 +363,7 @@ void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 
 void CClientSettingsDialog::OnCbnSelChangeComboConfiguration()
 {
+	ClearAggregateListView();
 	StartLoading();
 	ReadAttributes();
 	GetPolicyListForSelectedConfiguration();
@@ -534,11 +529,13 @@ void CClientSettingsDialog::OnCbnSelChangeComboAggregate()
 
 void CClientSettingsDialog::OnCbnDropDownComboAggregate()
 {
-	m_cmbAggregateType.ResetContent();
-	StartLoading();
-	ReadAttributes();
-	if (m_pSoftingInteractor) {
-		m_pSoftingInteractor->GetAggregates();
+	if (m_aggregates.empty()) {
+		m_cmbAggregateType.ResetContent();
+		StartLoading();
+		ReadAttributes();
+		if (m_pSoftingInteractor) {
+			m_pSoftingInteractor->GetAggregates();
+		}
 	}
 }
 
@@ -620,6 +617,7 @@ void CClientSettingsDialog::OnBtnClickedServerPropertyButton()
 		return;
 	}
 	StartLoading();
+
 	std::string endPointName = std::string(str.GetBuffer(str.GetLength()));
 	m_endPointsConfigurations.clear();
 	m_endPointPolicyIds.clear();
@@ -791,6 +789,11 @@ void CClientSettingsDialog::ReadAttributes()
 	}
 }
 
+void CClientSettingsDialog::ClearAggregateListView()
+{
+	m_aggregates.clear();
+	m_cmbAggregateType.ResetContent();
+}
 
 
 void CClientSettingsDialog::SendMessageError(std::string&& message)
@@ -856,10 +859,12 @@ void CClientSettingsDialog::GetPolicyIds(std::vector<DrvOPCUAHistValues::Securit
 
 void CClientSettingsDialog::GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates)
 {
+	ClearAggregateListView();
 	for (std::vector<std::pair<std::string, int> >::const_iterator itr = aggregates.cbegin(); itr != aggregates.cend(); ++itr)
 	{
 		int pos = m_cmbAggregateType.AddString(itr->first.c_str());
 		m_cmbAggregateType.SetItemData(pos, itr->second);
+		m_aggregates.push_back(*itr);
 	}
 	StopLoading();
 }
