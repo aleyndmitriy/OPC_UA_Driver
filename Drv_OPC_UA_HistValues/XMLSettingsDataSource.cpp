@@ -34,9 +34,9 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Save(const ConnectionAttributes&
 	processedNode.append_attribute("Identifier").set_value(dataAttributes.m_pAggregateType.second);
 	processedNode.append_attribute("Interval").set_value(dataAttributes.m_dProcessingInterval);
 	pugi::xml_node qualitiesNode = rootNode.append_child("DataQualities");
-	for (std::vector<unsigned int>::const_iterator itr = dataAttributes.m_vDataQuantities.cbegin(); itr != dataAttributes.m_vDataQuantities.cend(); ++itr) {
+	for (std::vector<std::string>::const_iterator itr = dataAttributes.m_vDataQuantities.cbegin(); itr != dataAttributes.m_vDataQuantities.cend(); ++itr) {
 		pugi::xml_node qualityNode = qualitiesNode.append_child("Quality");
-		qualityNode.append_attribute("Value").set_value(*itr);
+		qualityNode.append_attribute("Value").set_value(itr->c_str());
 	}
 	doc.save(stream);
 	return true;
@@ -89,10 +89,10 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::Load(ConnectionAttributes& conne
 	int indexAggregateType = processedNode.attribute("Identifier").as_int();
 	double interval = processedNode.attribute("Interval").as_double();
 	pugi::xml_node qualitiesNode = rootNode.child("DataQualities");
-	std::vector<unsigned int> qualities;
+	std::vector<std::string> qualities;
 	for (pugi::xml_node qualityNode = qualitiesNode.child("Quality"); qualityNode; qualityNode = qualityNode.next_sibling("Quality"))
 	{
-		unsigned int quality = qualityNode.attribute("Value").as_uint();
+		std::string quality = std::string(qualityNode.attribute("Value").as_string());
 		qualities.push_back(quality);
 	}
 	dataAttributes.m_vDataQuantities.clear();
@@ -153,10 +153,10 @@ bool DrvOPCUAHistValues::XMLSettingsDataSource::LoadAttributesString(const char*
 	int indexAggregateType = processedNode.attribute("Identifier").as_int();
 	double interval = processedNode.attribute("Interval").as_double();
 	pugi::xml_node qualitiesNode = rootNode.child("DataQualities");
-	std::vector<unsigned int> qualities;
+	std::vector<std::string> qualities;
 	for (pugi::xml_node qualityNode = qualitiesNode.child("Quality"); qualityNode; qualityNode = qualityNode.next_sibling("Quality"))
 	{
-		unsigned int quality = qualityNode.attribute("Value").as_uint();
+		std::string  quality = std::string(qualityNode.attribute("Value").as_string());
 		qualities.push_back(quality);
 	}
 	dataAttributes.m_vDataQuantities.clear();

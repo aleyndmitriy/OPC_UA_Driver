@@ -189,8 +189,8 @@ BOOL CClientSettingsDialog::OnInitDialog()
 
 	if (!m_dataAttributes->m_vDataQuantities.empty()) {
 		std::string quantities;
-		for (std::vector<unsigned int>::const_iterator itr = m_dataAttributes->m_vDataQuantities.cbegin(); itr != m_dataAttributes->m_vDataQuantities.cend(); ++itr) {
-			quantities = quantities + std::to_string(*itr) + std::string(",");
+		for (std::vector<std::string>::const_iterator itr = m_dataAttributes->m_vDataQuantities.cbegin(); itr != m_dataAttributes->m_vDataQuantities.cend(); ++itr) {
+			quantities = quantities + *itr + std::string(",");
 		}
 		quantities.pop_back();
 		m_editDataQuality.SetWindowTextA(quantities.c_str());
@@ -512,21 +512,21 @@ void CClientSettingsDialog::OnEnUpdateEditDataQuality()
 		int len = m_editDataQuality.GetWindowTextLengthA();
 		m_editDataQuality.GetWindowTextA(str);
 		char currentSymbol = str[selStart - 1];
-		if (((currentSymbol != '\0') && (!_istdigit(currentSymbol) && (currentSymbol != ',') && (currentSymbol != 'x'))) || ((selStart == 1) && (str[0] != '0')) || ((selStart == 2) && (str[1] != 'x')) )
+		bool isNoHex = !_istdigit(currentSymbol) && (currentSymbol != ',') && (currentSymbol != 'x') && (currentSymbol != 'a') && (currentSymbol != 'b') &&
+			(currentSymbol != 'c') && (currentSymbol != 'd') && (currentSymbol != 'e') && (currentSymbol != 'f');
+		if (isNoHex || ((selStart == 1) && (str[0] != '0')) || ((selStart == 2) && (str[1] != 'x')) )
 		{
 			str.Delete(selStart - 1, 1);
 			m_editDataQuality.SetWindowTextA(str);
 			::SendMessage(m_editDataQuality.m_hWnd, EM_SETSEL, (WPARAM)(selStart - 1), (LPARAM)(selEnd - 1));
 		}
 		if (selStart >= 3) {
-			if ((currentSymbol == 'x' && str[selStart - 2] != '0') ||  (currentSymbol != '0' && str[selStart - 2] == ',')) {
+			if ((currentSymbol == 'x' && str[selStart - 2] != '0') || ((currentSymbol == 'x' && str[selStart - 3] != ',')) ||  (currentSymbol != '0' && str[selStart - 2] == ',') || (currentSymbol != 'x' && str[selStart - 2] == '0') && str[selStart - 3] == ',') {
 				str.Delete(selStart - 1, 1);
 				m_editDataQuality.SetWindowTextA(str);
 				::SendMessage(m_editDataQuality.m_hWnd, EM_SETSEL, (WPARAM)(selStart - 1), (LPARAM)(selEnd - 1));
 			}
 		}
-		
-
 	}
 }
 
@@ -796,8 +796,7 @@ void CClientSettingsDialog::ReadAttributes()
 	if (!quantitiesVec.empty()) {
 		for (std::vector<std::string>::const_iterator itr = quantitiesVec.cbegin(); itr != quantitiesVec.cend(); ++itr) {
 			if (itr->empty() == false && itr->size() > 0) {
-				unsigned int quantity = std::stoul(*itr);
-				m_dataAttributes->m_vDataQuantities.push_back(quantity);
+				m_dataAttributes->m_vDataQuantities.push_back(*itr);
 			}
 		}
 	}

@@ -148,6 +148,6 @@ namespace DrvOPCUAHistValues
 		int m_iProcessed;
 		std::pair<std::string, int> m_pAggregateType;
 		double m_dProcessingInterval;
-		std::vector<unsigned int> m_vDataQuantities;
+		std::vector<std::string> m_vDataQuantities;
 	};
 }
