@@ -7,9 +7,10 @@
 #include "Utils.h"
 #include"Constants.h"
 #include"Log.h"
+#include<exception>
 
 DrvOPCUAHistValues::SoftingServerInteractor::SoftingServerInteractor():
- m_pServerAttributes(), m_pDataAttributes(), m_pOutput(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList()
+ m_pServerAttributes(), m_pDataAttributes(), m_pOutput(), m_enumResult(), m_selectedEndPointDescription(nullptr), m_userToken(nullptr), m_sessionsList(), m_isGoodInclude(false), m_isBadInclude(false), m_isUncertainInclude(false)
 {
 	
 }
@@ -35,6 +36,28 @@ void DrvOPCUAHistValues::SoftingServerInteractor::SetAttributes(std::shared_ptr<
 void DrvOPCUAHistValues::SoftingServerInteractor::SetDataAttributes(std::shared_ptr<DataTypeAttributes> attributes)
 {
 	m_pDataAttributes = attributes;
+	if (m_pDataAttributes->m_vDataQuantities.empty()) {
+		m_isGoodInclude = true;
+	}
+	else {
+		for (std::vector<std::string>::const_iterator itr = m_pDataAttributes->m_vDataQuantities.cbegin(); itr != m_pDataAttributes->m_vDataQuantities.cend(); ++itr) {
+			try {
+				unsigned int mask = std::stoul(*itr, nullptr, 16);
+				if (StatusCode::isBad(mask)) {
+					m_isBadInclude = true;
+				}
+				else if (StatusCode::isUncertain(mask)) {
+					m_isUncertainInclude = true;
+				}
+				else {
+					m_isGoodInclude = true;
+				}
+			}
+			catch(std::exception &e) {
+				m_isGoodInclude = true;
+			}
+		}
+	}
 }
 
 void DrvOPCUAHistValues::SoftingServerInteractor::SetOutput(std::shared_ptr<SoftingServerInteractorOutput> output)
@@ -754,7 +777,10 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 			OTUInt32 sizeOfData = historyReadResults.at(indexOfResult).getNumberOfValues();
 			for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
 			{
-				values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+				EnumStatusCode code = historyReadResults.at(indexOfResult).getValue(valueIndex)->getStatusCode();
+				if ((m_isGoodInclude && StatusCode::isGood(code)) || (m_isBadInclude && StatusCode::isBad(code)) || (m_isUncertainInclude && StatusCode::isUncertain(code))) {
+					values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+				}
 			}
 			
 			SoftingOPCToolbox5::ByteString conPoint = historyReadResults.at(indexOfResult).getContinuationPoint();
@@ -779,7 +805,10 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 						OTUInt32 sizeOfData = historyReadContinuationResults.at(indexOfResult).getNumberOfValues();
 						for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
 						{
-							values.push_back(historyReadContinuationResults.at(indexOfResult).getValue(valueIndex));
+							EnumStatusCode code = historyReadResults.at(indexOfResult).getValue(valueIndex)->getStatusCode();
+							if ((m_isGoodInclude && StatusCode::isGood(code)) || (m_isBadInclude && StatusCode::isBad(code)) || (m_isUncertainInclude && StatusCode::isUncertain(code))) {
+								values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+							}
 						}
 					}
 					conPoint = historyReadContinuationResults.at(indexOfResult).getContinuationPoint();
@@ -870,7 +899,10 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(c
 			OTUInt32 sizeOfData = historyReadResults.at(indexOfResult).getNumberOfValues();
 			for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
 			{
-				values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+				EnumStatusCode code = historyReadResults.at(indexOfResult).getValue(valueIndex)->getStatusCode();
+				if ((m_isGoodInclude && StatusCode::isGood(code)) || (m_isBadInclude && StatusCode::isBad(code)) || (m_isUncertainInclude && StatusCode::isUncertain(code))) {
+					values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+				}
 			}
 
 			SoftingOPCToolbox5::ByteString conPoint = historyReadResults.at(indexOfResult).getContinuationPoint();
@@ -895,7 +927,10 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(c
 						OTUInt32 sizeOfData = historyReadContinuationResults.at(indexOfResult).getNumberOfValues();
 						for (OTUInt32 valueIndex = 0; valueIndex < sizeOfData; valueIndex++)
 						{
-							values.push_back(historyReadContinuationResults.at(indexOfResult).getValue(valueIndex));
+							EnumStatusCode code = historyReadResults.at(indexOfResult).getValue(valueIndex)->getStatusCode();
+							if ((m_isGoodInclude && StatusCode::isGood(code)) || (m_isBadInclude && StatusCode::isBad(code)) || (m_isUncertainInclude && StatusCode::isUncertain(code))) {
+								values.push_back(historyReadResults.at(indexOfResult).getValue(valueIndex));
+							}
 						}
 					}
 					conPoint = historyReadContinuationResults.at(indexOfResult).getContinuationPoint();

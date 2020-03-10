@@ -44,6 +44,9 @@ namespace DrvOPCUAHistValues
 		std::unique_ptr<SoftingOPCToolbox5::EndpointDescription> m_selectedEndPointDescription;
 		std::unique_ptr<SoftingOPCToolbox5::UserTokenPolicy> m_userToken;
 		std::map<std::string, SoftingOPCToolbox5::Client::SessionPtr> m_sessionsList;
+		bool m_isGoodInclude;
+		bool m_isBadInclude;
+		bool m_isUncertainInclude;
 		bool startApplication();
 		EnumStatusCode getServersByEndPoint(const std::string& endPointName);
 		EnumStatusCode chooseCurrentServer(const std::string& endPointName, const std::vector<std::string>& serverURIs);

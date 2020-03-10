@@ -703,12 +703,12 @@ DrvOPCUAHistValues::ParamValueList DrvOPCUAHistValues::HdaCommandHandler::GetPar
 }
 void DrvOPCUAHistValues::HdaCommandHandler::SendMessageError(std::string&& message)
 {
-
+	Log::GetInstance()->WriteError(_T(message.c_str()));
 }
 
 void DrvOPCUAHistValues::HdaCommandHandler::SendWarning(std::string&& message)
 {
-
+	Log::GetInstance()->WriteInfo(_T(message.c_str()));
 }
 
 void DrvOPCUAHistValues::HdaCommandHandler::SendMessageInfo(std::string&& message)
