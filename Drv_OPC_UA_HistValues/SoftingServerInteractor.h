@@ -35,7 +35,8 @@ namespace DrvOPCUAHistValues
 		void SendMessageError(std::string&& message) override;
 		void SendWarning(std::string&& message) override;
 		void SendMessageInfo(std::string&& message) override;
-		void GetServerPropertyByEndPoint(const std::string& endPointName);
+		void GetServerPropertyByEndPoint(const std::string& endPointName, bool isDialog);
+		void GetServerPropertyByUrn(const std::string& urn);
 	private:
 		std::shared_ptr<ConnectionAttributes> m_pServerAttributes;
 		std::shared_ptr<DataTypeAttributes> m_pDataAttributes;

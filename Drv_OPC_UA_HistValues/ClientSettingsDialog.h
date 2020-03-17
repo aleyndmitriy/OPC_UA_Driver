@@ -52,6 +52,7 @@ private:
 	CSpinButtonCtrl m_spinTimeInterval;
 	CComboBox m_cmbReadType;
 	CEdit m_editDataQuality;
+	CButton m_btnConfig;
 
 	BOOL OnInitDialog() override;
 	void SetUpInitialState();
@@ -95,6 +96,7 @@ public:
 	afx_msg void OnDeltaPosSpinInterval(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnCbnSelChangeComboReadType();
 	afx_msg void OnEnUpdateEditDataQuality();
+	afx_msg void OnBtnClickedButtonConfiguration();
 	void SendMessageError(std::string&& message);
 	void SendWarning(std::string&& message);
 	void SendMessageInfo(std::string&& message);
@@ -105,5 +107,4 @@ public:
 	void GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates);
 	void GetNewConnectionGuide(std::string&& uuid);
 	void CloseConnectionWithGuide(std::string&& uuid);
-	
 };

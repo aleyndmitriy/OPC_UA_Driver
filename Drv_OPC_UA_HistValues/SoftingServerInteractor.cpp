@@ -330,14 +330,6 @@ EnumStatusCode DrvOPCUAHistValues::SoftingServerInteractor::chooseCurrentServer(
 		}
 		return EnumStatusCode_BadNotFound;
 	}
-	if (m_pServerAttributes->configuration.serverName.empty()) {
-		std::string message("Select sever!");
-		if (output) {
-			output->SendWarning(std::move(message));
-			output->GetEndPoints(std::move(endpointDescriptionsString));
-		}
-		return EnumStatusCode_BadNotFound;
-	}
 	EnumStatusCode result = EnumStatusCode_Good;
 	
 	std::vector<SoftingOPCToolbox5::ApplicationDescription> serversList;
@@ -389,7 +381,7 @@ EnumStatusCode DrvOPCUAHistValues::SoftingServerInteractor::chooseCurrentServer(
 	return result;
 }
 
-void DrvOPCUAHistValues::SoftingServerInteractor::GetServerPropertyByEndPoint(const std::string& endPointName)
+void DrvOPCUAHistValues::SoftingServerInteractor::GetServerPropertyByEndPoint(const std::string& endPointName, bool isDialog)
 {
 	if (startApplication() == false) {
 		return;
@@ -459,9 +451,25 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetServerPropertyByEndPoint(co
 		unsigned int port = std::stoul(strPort);
 		if (output) {
 			output->SelectFoundedServer(compName,port,vec.front());
+
 		}
 	}
 	
+}
+
+void DrvOPCUAHistValues::SoftingServerInteractor::GetServerPropertyByUrn(const std::string& urn)
+{
+	if (startApplication() == false) {
+		return;
+	}
+	
+	std::string discoveryServerUrl = std::string("opc.tcp://") + m_pServerAttributes->configuration.computerName;
+	if (m_pServerAttributes->configuration.port > 0) {
+		discoveryServerUrl = discoveryServerUrl + std::string(":") + std::to_string(m_pServerAttributes->configuration.port) + std::string("/");
+	}
+	std::vector<std::string> serverURIs;
+	serverURIs.push_back(urn);
+	chooseCurrentServer(discoveryServerUrl, serverURIs);
 }
 
 void DrvOPCUAHistValues::SoftingServerInteractor::ChooseCurrentEndPoint()
@@ -1471,7 +1479,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	DrvOPCUAHistValues::Record record;
 	EnumDataTypeId type = dataValue.getValue()->getDataType();
 	EnumStatusCode status = dataValue.getValue()->getStatusCode();
-	record.SetStatus((int)status);
+	record.SetStatus((unsigned int)status);
 	SYSTEMTIME serverDataTime = { 0 };
 	serverDataTime.wYear = dataValue.getServerTimestamp()->yearGMT();
 	serverDataTime.wMonth = dataValue.getServerTimestamp()->monthGMT();
@@ -1583,7 +1591,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	case EnumNumericNodeId_DateTime:
 	{
 		SYSTEMTIME valueDataTime = { 0 };
-		SoftingOPCToolbox5::DateTime dateTime = dataValue.getValue()->getDateTime();
+		SoftingOPCToolbox5::DateTime dateTime = dataValue.getValue()->getDataType();
 		valueDataTime.wYear = dateTime.yearGMT();
 		valueDataTime.wMonth = dateTime.monthGMT();
 		valueDataTime.wDay = dateTime.dayGMT();

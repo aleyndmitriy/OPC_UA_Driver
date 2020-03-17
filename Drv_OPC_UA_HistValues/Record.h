@@ -20,8 +20,8 @@ namespace DrvOPCUAHistValues {
 		const_iterator cend() const;
 		const_iterator findColumnValue(const std::string& key) const;
 		size_t GetColumnNumber() const;
-		int GetStatus() const;
-		void SetStatus(int iStatus);
+		unsigned int GetStatus() const;
+		void SetStatus(unsigned int iStatus);
 		~Record();
 		friend bool operator==(const Record& lhs, const Record& rhs);
 		friend bool operator!=(const Record& lhs, const Record& rhs);
@@ -31,7 +31,7 @@ namespace DrvOPCUAHistValues {
 		friend bool operator>=(const Record& lhs, const Record& rhs);
 	protected:
 		std::map<std::string, FieldData> recordData;
-		int status;
+		unsigned int status;
 	};
 
 	bool operator==(const Record& lhs, const Record& rhs);

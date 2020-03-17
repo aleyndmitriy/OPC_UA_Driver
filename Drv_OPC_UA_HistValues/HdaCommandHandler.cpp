@@ -639,7 +639,17 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 	if (localDataTime.wYear != 0) {
 		tvq->SetTimestamp(&localDataTime);
 	}
-	tvq->SetQuality(ODS::Tvq::QUALITY_GOOD);
+	unsigned int status = record.GetStatus();
+	if (StatusCode::isBad(status)) {
+		tvq->SetQuality(ODS::Tvq::QUALITY_BAD);
+	}
+	else if (StatusCode::isGood(status)) {
+		tvq->SetQuality(ODS::Tvq::QUALITY_GOOD);
+	}
+	else {
+		tvq->SetQuality(ODS::Tvq::QUALITY_UNCERTAIN);
+	}
+	
 	return tvq;
 }
 

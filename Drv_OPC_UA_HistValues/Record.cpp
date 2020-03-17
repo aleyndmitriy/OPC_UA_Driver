@@ -16,12 +16,12 @@ std::pair<typename DrvOPCUAHistValues::Record::const_iterator, bool> DrvOPCUAHis
 	return recordData.insert(rec);
 }
 
-int DrvOPCUAHistValues::Record::GetStatus() const
+unsigned int DrvOPCUAHistValues::Record::GetStatus() const
 {
 	return status;
 }
 
-void DrvOPCUAHistValues::Record::SetStatus(int iStatus)
+void DrvOPCUAHistValues::Record::SetStatus(unsigned int iStatus)
 {
 	status = iStatus;
 }

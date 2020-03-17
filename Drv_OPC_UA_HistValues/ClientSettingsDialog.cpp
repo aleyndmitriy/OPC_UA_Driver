@@ -49,6 +49,7 @@ void CClientSettingsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SPIN_INTERVAL, m_spinTimeInterval);
 	DDX_Control(pDX, IDC_COMBO_READ_TYPE, m_cmbReadType);
 	DDX_Control(pDX, IDC_EDIT_DATA_QUALITY, m_editDataQuality);
+	DDX_Control(pDX, IDC_BUTTON_CONFIGURATION, m_btnConfig);
 }
 
 
@@ -82,6 +83,7 @@ BEGIN_MESSAGE_MAP(CClientSettingsDialog, CDialogEx)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_INTERVAL, &CClientSettingsDialog::OnDeltaPosSpinInterval)
 	ON_CBN_SELCHANGE(IDC_COMBO_READ_TYPE, &CClientSettingsDialog::OnCbnSelChangeComboReadType)
 	ON_EN_UPDATE(IDC_EDIT_DATA_QUALITY, &CClientSettingsDialog::OnEnUpdateEditDataQuality)
+	ON_BN_CLICKED(IDC_BUTTON_CONFIGURATION, &CClientSettingsDialog::OnBtnClickedButtonConfiguration)
 END_MESSAGE_MAP()
 
 
@@ -351,11 +353,12 @@ void CClientSettingsDialog::OnBtnClickedButtonDiscoverServers()
 {
 	StartLoading();
 	ClearAggregateListView();
-	ReadAttributes();
 	m_cmbConfiguration.ResetContent();
 	m_cmbPolicyId.ResetContent();
 	m_cmbServerName.ResetContent();
 	m_lstPolicyType.DeleteAllItems();
+	ReadAttributes();
+	
 	if(m_pSoftingInteractor) {
 		m_pSoftingInteractor->GetServers();
 	}
@@ -640,10 +643,31 @@ void CClientSettingsDialog::OnBtnClickedServerPropertyButton()
 	m_endPointPolicyIds.clear();
 	m_lstPolicyType.DeleteAllItems();
 	m_cmbPolicyId.ResetContent();
-	if (m_pSoftingInteractor) {
-		m_pSoftingInteractor->GetServerPropertyByEndPoint(endPointName);
+	size_t urnPos = endPointName.find("urn:");
+	if (urnPos != std::string::npos && urnPos == 0) {
+		if (m_pSoftingInteractor) {
+			m_pSoftingInteractor->GetServerPropertyByUrn(endPointName);
+		}
+		return;
+	}
+
+	urnPos = endPointName.find("opc.");
+	if (urnPos != std::string::npos && urnPos == 0) {
+		if (m_pSoftingInteractor) {
+			m_pSoftingInteractor->GetServerPropertyByEndPoint(endPointName, false);
+		}
+	}
+	if (urnPos == std::string::npos) {
+		StopLoading();
+		WarningMessage(std::string("Enter correct endPoint name or Urn of server!"));
 	}
 }
+
+void CClientSettingsDialog::OnBtnClickedButtonConfiguration()
+{
+	// TODO: добавьте свой код обработчика уведомлений
+}
+
 
 void CClientSettingsDialog::OnBtnClickedCancel()
 {
@@ -692,11 +716,14 @@ void CClientSettingsDialog::ReadAttributes()
 	}
 	str.ReleaseBuffer();
 	str.Empty();
-	len = m_cmbServerName.GetWindowTextLengthA();
-	m_cmbServerName.GetWindowTextA(str);
-	m_connectAttributes->configuration.serverName = std::string(str.GetBuffer(len));
-	str.ReleaseBuffer();
-	str.Empty();
+	int curSel = m_cmbServerName.GetCurSel();
+	if (curSel > -1) {
+		len = m_cmbServerName.GetLBTextLen(curSel);
+		m_cmbServerName.GetLBText(curSel, str);
+		m_connectAttributes->configuration.serverName = std::string(str.GetBuffer(len));
+		str.ReleaseBuffer();
+		str.Empty();
+	}
 	len = m_editPort.GetWindowTextLengthA();
 	m_editPort.GetWindowTextA(str);
 	std::string port = std::string(str.GetBuffer(len));
@@ -705,23 +732,28 @@ void CClientSettingsDialog::ReadAttributes()
 	}
 	str.ReleaseBuffer();
 	str.Empty();
-	len = m_cmbConfiguration.GetWindowTextLengthA();
-	m_cmbConfiguration.GetWindowTextA(str);
-	std::string fullName = std::string(str.GetBuffer(len));
-	size_t posFirstPartOfName = fullName.find('#');
-	std::string servName = fullName.substr(0, posFirstPartOfName);
-	if (!servName.empty()) {
-		m_connectAttributes->configurationMode.serverSecurityName = servName;
+	
+	curSel = m_cmbConfiguration.GetCurSel();
+	if (curSel > -1) {
+		len = m_cmbConfiguration.GetLBTextLen(curSel);
+		m_cmbConfiguration.GetLBText(curSel, str);
+		std::string fullName = std::string(str.GetBuffer(len));
+		size_t posFirstPartOfName = fullName.find('#');
+		std::string servName = fullName.substr(0, posFirstPartOfName);
+		if (!servName.empty()) {
+			m_connectAttributes->configurationMode.serverSecurityName = servName;
+		}
+		if (posFirstPartOfName != std::string::npos) {
+			size_t posSecondPartOfName = fullName.rfind('#');
+			servName = fullName.substr(posSecondPartOfName + 1, fullName.size() - posSecondPartOfName);
+			m_connectAttributes->configurationMode.serverSecurityPolicy = servName;
+			servName = fullName.substr(posFirstPartOfName + 1, posSecondPartOfName - posFirstPartOfName - 1);
+			m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromString(servName);
+		}
+		str.ReleaseBuffer();
+		str.Empty();
 	}
-	if (posFirstPartOfName != std::string::npos) {
-		size_t posSecondPartOfName = fullName.rfind('#');
-		servName = fullName.substr(posSecondPartOfName + 1, fullName.size() - posSecondPartOfName);
-		m_connectAttributes->configurationMode.serverSecurityPolicy = servName;
-		servName = fullName.substr(posFirstPartOfName + 1, posSecondPartOfName - posFirstPartOfName - 1);
-		m_connectAttributes->configurationMode.securityMode = DrvOPCUAHistValues::GetModeFromString(servName);
-	}
-	str.ReleaseBuffer();
-	str.Empty();
+	
 	int type = m_lstPolicyType.GetItemData(0);
 	
 	m_connectAttributes->configurationAccess.m_policy.m_securityType = DrvOPCUAHistValues::GetTypeFromInt(type);
@@ -906,3 +938,6 @@ void CClientSettingsDialog::CloseConnectionWithGuide(std::string&& uuid)
 {
 	
 }
+
+
+
