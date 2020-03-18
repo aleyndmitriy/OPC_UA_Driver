@@ -63,6 +63,11 @@ void DrvOPCUAHistValues::ClientSettingsDialogWrapper::SelectFoundedServer(const 
 	m_pMFCdialog->SelectFoundedServer(compName,port, serverName);
 }
 
+void DrvOPCUAHistValues::ClientSettingsDialogWrapper::ChooseSecurityConfiguration()
+{
+	m_pMFCdialog->ChooseSecurityConfiguration();
+}
+
 void DrvOPCUAHistValues::ClientSettingsDialogWrapper::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_pMFCdialog->GetNewConnectionGuide(std::move(uuid));

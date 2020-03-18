@@ -129,6 +129,9 @@
     <ClCompile Include="TagInfo.cpp">
       <Filter>Исходные файлы\SoftingService</Filter>
     </ClCompile>
+    <ClCompile Include="SecuritySettingsDialog.cpp">
+      <Filter>Исходные файлы\Configurator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Drv_OPC_UA_HistValues.def">
@@ -234,6 +237,9 @@
     </ClInclude>
     <ClInclude Include="TagInfo.h">
       <Filter>Файлы заголовков\SoftingService</Filter>
+    </ClInclude>
+    <ClInclude Include="SecuritySettingsDialog.h">
+      <Filter>Файлы заголовков\Configurator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

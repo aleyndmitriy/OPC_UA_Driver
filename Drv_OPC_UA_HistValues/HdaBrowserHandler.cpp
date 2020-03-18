@@ -121,6 +121,11 @@ void DrvOPCUAHistValues::BrowserHandler::SelectFoundedServer(const std::string& 
 
 }
 
+void DrvOPCUAHistValues::BrowserHandler::ChooseSecurityConfiguration()
+{
+
+}
+
 void DrvOPCUAHistValues::BrowserHandler::GetNewConnectionGuide(std::string&& uuid)
 {
 	m_ConnectionId = uuid;

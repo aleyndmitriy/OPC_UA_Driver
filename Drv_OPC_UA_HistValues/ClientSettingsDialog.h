@@ -5,6 +5,7 @@
 #include"ConnectionAttributes.h"
 #include"SoftingServerInteractorOutput.h"
 #include"SoftingServerInteractor.h"
+#include "afxdialogex.h"
 // Диалоговое окно CClientSettingsDialog
 
 class CClientSettingsDialog : public CDialogEx
@@ -102,6 +103,7 @@ public:
 	void SendMessageInfo(std::string&& message);
 	void GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl);
 	void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName);
+	void ChooseSecurityConfiguration();
 	void GetEndPoints(std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration>&& endPoints);
 	void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds);
 	void GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates);

@@ -36,6 +36,7 @@ namespace DrvOPCUAHistValues
 		void GetPolicyIds(std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy>&& policyIds) override;
 		void GetAggregates(std::vector<std::pair<std::string, int> >&& aggregates) override;
 		void SelectFoundedServer(const std::string& compName, unsigned int port, const std::string& serverName) override;
+		void ChooseSecurityConfiguration() override;
 		void GetNewConnectionGuide(std::string&& uuid) override;
 		void CloseConnectionWithGuide(std::string&& uuid) override;
 		void CreateQueriesList(const std::map<int, std::vector<ODS::HdaFunction*> >& requestFunctions, std::map<int, std::vector<ParamValueList> >& paramList, std::set<std::string>& tagsForQuery);

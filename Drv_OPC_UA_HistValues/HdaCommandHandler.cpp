@@ -752,6 +752,12 @@ void DrvOPCUAHistValues::HdaCommandHandler::SelectFoundedServer(const std::strin
 
 }
 
+
+void DrvOPCUAHistValues::HdaCommandHandler::ChooseSecurityConfiguration()
+{
+
+}
+
 void DrvOPCUAHistValues::HdaCommandHandler::GetNewConnectionGuide(std::string&& uuid)
 {
 	if (uuid.empty() == false) {

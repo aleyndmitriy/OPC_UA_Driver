@@ -5,6 +5,7 @@
 #define IDD_CLIENT_SETTINGS_DLG         101
 #define IDD_DIALOG_SELECT_NODE          102
 #define IDB_FILE_TYPES                  103
+#define IDD_SECURITY_SETTINGS_DLG       106
 #define IDC_EDIT_COMPUTER_NAME          1000
 #define IDC_BUTTON_BROWSE_NETWORK       1001
 #define IDC_COMBO_SELECT_SERVER         1002
@@ -36,14 +37,16 @@
 #define IDC_STATIC_INTERVAL             1029
 #define IDC_STATIC_MS                   1030
 #define IDC_BUTTON_CONFIGURATION        1031
+#define IDC_STATIC_SECURITY_POLICY      1032
+#define IDC_STATIC_SECURITY_MODE        1033
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        106
+#define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1032
+#define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           1008
 #endif
 #endif

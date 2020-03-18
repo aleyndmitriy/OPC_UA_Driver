@@ -5,7 +5,7 @@
 #include "resource.h"	
 #include "ClientSettingsDialog.h"
 #include "BrowseNetworkServers.h"
-#include "afxdialogex.h"
+#include"SecuritySettingsDialog.h"
 #include"Log.h"
 #include "Utils.h"
 #include"Constants.h"
@@ -665,7 +665,32 @@ void CClientSettingsDialog::OnBtnClickedServerPropertyButton()
 
 void CClientSettingsDialog::OnBtnClickedButtonConfiguration()
 {
-	// TODO: добавьте свой код обработчика уведомлений
+	CString str;
+	int len = m_cmbConfiguration.GetWindowTextLengthA();
+	m_cmbConfiguration.GetWindowTextA(str);
+	str.Trim();
+	if (str.IsEmpty()) {
+		return;
+	}
+	StartLoading();
+
+	std::string endPointName = std::string(str.GetBuffer(str.GetLength()));
+	m_endPointsConfigurations.clear();
+	m_cmbConfiguration.ResetContent();
+	m_endPointPolicyIds.clear();
+	m_lstPolicyType.DeleteAllItems();
+	m_cmbPolicyId.ResetContent();
+
+	size_t pos = endPointName.find("opc.");
+	if (pos != std::string::npos && pos == 0) {
+		if (m_pSoftingInteractor) {
+			m_pSoftingInteractor->GetServerPropertyByEndPoint(endPointName, true);
+		}
+	}
+	if (pos == std::string::npos) {
+		StopLoading();
+		WarningMessage(std::string("Enter correct endPoint name!"));
+	}
 }
 
 
@@ -924,6 +949,25 @@ void CClientSettingsDialog::SelectFoundedServer(const std::string& compName, uns
 		m_cmbServerName.SetCurSel(0);
 	}
 	ReadAttributes();
+}
+
+void CClientSettingsDialog::ChooseSecurityConfiguration()
+{
+	
+	CSecuritySettingsDialog dlg = CSecuritySettingsDialog(m_endPointsConfigurations, this);
+	int response = dlg.DoModal();
+	if (response == IDOK) {
+		int index = dlg.GetSelectedIndex();
+		int itemCount = m_cmbConfiguration.GetCount();
+		if (index < 0 || index > itemCount - 1) {
+			return;
+		}
+		m_cmbConfiguration.SetCurSel(index);
+		ClearAggregateListView();
+		StartLoading();
+		ReadAttributes();
+		GetPolicyListForSelectedConfiguration();
+	}
 }
 
 void CClientSettingsDialog::GetNewConnectionGuide(std::string&& uuid)

@@ -227,6 +227,7 @@
     <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="Record.cpp" />
     <ClCompile Include="RegisterInfo.cpp" />
+    <ClCompile Include="SecuritySettingsDialog.cpp" />
     <ClCompile Include="ServerHdaItem.cpp" />
     <ClCompile Include="SoftingApplication.cpp" />
     <ClCompile Include="SoftingServerInteractor.cpp" />
@@ -245,6 +246,7 @@
     <ClInclude Include="ClientSettingsDialogWrapper.h" />
     <ClInclude Include="ConnectionAttributes.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="SecuritySettingsDialog.h" />
     <ClInclude Include="DConfigurator.h" />
     <ClInclude Include="DSource.h" />
     <ClInclude Include="Export.h" />
