@@ -550,6 +550,7 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			vValue.boolVal = bitVal;
 			tvq->SetValue(vValue);
 			::VariantClear(&vValue);
+			DrvOPCUAHistValues::Log::GetInstance()->WriteInfoDebug(_T("Bool result  %d !"), vValue.boolVal);
 			break;
 		case EnumNumericNodeId_SByte:
 		case EnumNumericNodeId_Int16:
@@ -559,7 +560,6 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			vValue.intVal = std::stoi(itr->second.second);
 			tvq->SetValue(vValue);
 			::VariantClear(&vValue);
-			DrvOPCUAHistValues::Log::GetInstance()->WriteInfoDebug(_T("Int32 result  %d !"), vValue.intVal);
 			break;
 		case EnumNumericNodeId_Int64:
 			::VariantInit(&vValue);
@@ -619,10 +619,11 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 				valDataTime.wMinute = timeStampStruct->wMinute;
 				valDataTime.wSecond = timeStampStruct->wSecond;
 				valDataTime.wMilliseconds = timeStampStruct->wMilliseconds;
-				ODS::TimeUtils::SysTimeUtcToLocal(valDataTime, &localValDataTime);
+				/*ODS::TimeUtils::SysTimeUtcToLocal(valDataTime, &localValDataTime);
 				if (localValDataTime.wYear != 0) {
 					tvq->SetValue(ODS::Data::Value(localValDataTime));
-				}
+				}*/
+				tvq->SetValue(ODS::Data::Value(valDataTime));
 			}
 			break;
 		case EnumNumericNodeId_LocalizedText:

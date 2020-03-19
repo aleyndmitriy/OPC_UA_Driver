@@ -1614,7 +1614,7 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	case EnumNumericNodeId_DateTime:
 	{
 		SYSTEMTIME valueDataTime = { 0 };
-		SoftingOPCToolbox5::DateTime dateTime = dataValue.getValue()->getDataType();
+		SoftingOPCToolbox5::DateTime dateTime = dataValue.getValue()->getDateTime();
 		valueDataTime.wYear = dateTime.yearGMT();
 		valueDataTime.wMonth = dateTime.monthGMT();
 		valueDataTime.wDay = dateTime.dayGMT();
