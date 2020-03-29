@@ -608,7 +608,7 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 				dataTime.wHour = timeStampStruct->wHour;
 				dataTime.wMinute = timeStampStruct->wMinute;
 				dataTime.wSecond = timeStampStruct->wSecond;
-				dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
+				//dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
 			}
 			else {
 				timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
@@ -724,7 +724,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::SendWarning(std::string&& message)
 
 void DrvOPCUAHistValues::HdaCommandHandler::SendMessageInfo(std::string&& message)
 {
-
+	Log::GetInstance()->WriteInfo(_T(message.c_str()));
 }
 
 void DrvOPCUAHistValues::HdaCommandHandler::GetServers(std::vector<std::string>&& servers, std::string&& discoveryUrl)

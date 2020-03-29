@@ -802,7 +802,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 					std::string message = std::string("Operation of the HistoryRead service call returned an unexpected status code ") + std::string(getEnumStatusCodeString(operationResult));
 					output->SendMessageInfo(std::move(message));
 				}
-				return;
+				//return;
 			}
 			std::vector<SoftingOPCToolbox5::DataValue> values;
 			OTUInt32 sizeOfData = historyReadResults.at(indexOfResult).getNumberOfValues();

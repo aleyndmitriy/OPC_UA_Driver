@@ -232,8 +232,8 @@ void CClientSettingsDialog::SetUpInitialState()
 	m_editProcessingInterval.Clear();
 	m_editDataQuality.SetSel(0, -1);
 	m_editDataQuality.Clear();
-	ShowDataReadTypeView(FALSE);
 	m_spinTimeInterval.SetBuddy(&m_editProcessingInterval);
+	ShowDataReadTypeView(FALSE);
 }
 
 void CClientSettingsDialog::ShowDataReadTypeView(BOOL bShow)
