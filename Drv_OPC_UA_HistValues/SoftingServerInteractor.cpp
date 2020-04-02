@@ -1554,7 +1554,6 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	case EnumNumericNodeId_Int32:
 	{
 		int intVal = dataValue.getValue()->getInt32();
-		DrvOPCUAHistValues::Log::GetInstance()->WriteInfoDebug(_T("Int32Value  %d !"), intVal);
 		valueStr = std::to_string(intVal);
 	}
 	break;

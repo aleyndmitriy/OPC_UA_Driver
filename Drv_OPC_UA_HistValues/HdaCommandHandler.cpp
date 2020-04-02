@@ -550,7 +550,6 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 			vValue.boolVal = bitVal;
 			tvq->SetValue(vValue);
 			::VariantClear(&vValue);
-			DrvOPCUAHistValues::Log::GetInstance()->WriteInfoDebug(_T("Bool result  %d !"), vValue.boolVal);
 			break;
 		case EnumNumericNodeId_SByte:
 		case EnumNumericNodeId_Int16:
