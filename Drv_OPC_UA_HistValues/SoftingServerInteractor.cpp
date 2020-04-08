@@ -772,13 +772,10 @@ bool DrvOPCUAHistValues::SoftingServerInteractor::findNode(const SoftingOPCToolb
 }
 
 void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
-	std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
+	std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
-	
-	std::vector<SoftingOPCToolbox5::NumericRange> indexRanges(nodesToRead.size(), SoftingOPCToolbox5::NumericRange());
 	std::vector<SoftingOPCToolbox5::HistoryReadValueId> historyReadValueIds;
-	std::vector<SoftingOPCToolbox5::ByteString> historyReadValueContinuationPoints(nodesToRead.size(), SoftingOPCToolbox5::ByteString());
 	std::transform(nodesToRead.cbegin(), nodesToRead.cend(), std::back_inserter(historyReadValueIds), [](const SoftingOPCToolbox5::NodeId& nodeId) {
 		SoftingOPCToolbox5::HistoryReadValueId historyReadValueId;
 		historyReadValueId.setNodeId(&nodeId);
@@ -787,11 +784,10 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 	readRawDetails.setStartTime(&startTime);
 	readRawDetails.setEndTime(&endTime);
 	readRawDetails.setMaxNumberOfValuesPerNode(0);
-	readRawDetails.setReturnBounds(false);
+	readRawDetails.setReturnBounds(true);
 	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
 	EnumStatusCode result = EnumStatusCode_Bad;
 	result = session->historyReadRaw(EnumTimestampsToReturn_Server, false, historyReadValueIds, &readRawDetails, historyReadResults);
-	historicalValuesOfNodes.clear();
 	if (StatusCode::isSUCCEEDED(result))
 	{
 		size_t resultSize = historyReadResults.size();
@@ -848,20 +844,34 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 				else {
 					lenOfContinuatinPoint = 0;
 				}
-			};
-			historicalValuesOfNodes.push_back(values);
+			}
+			std::string nodeId = historyReadValueIds.at(indexOfResult).getNodeId()->toString();
+			std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::iterator itr = historicalValuesOfNodes.find(nodeId);
+			if (itr != historicalValuesOfNodes.end()) {
+				itr->second.insert(itr->second.end(), values.begin(), values.end());
+			}
+			else {
+				historicalValuesOfNodes.insert(std::make_pair<std::string, std::vector<SoftingOPCToolbox5::DataValue> >(std::move(nodeId),std::move(values)));
+			}
 		}
 	}
 	else {
+		if (result == EnumStatusCode_BadEncodingLimitsExceeded) {
+			OTUInt64 duration = SoftingOPCToolbox5::DateTime::getDurationMilliseconds(startTime, endTime);
+			SoftingOPCToolbox5::DateTime middle = startTime;
+			middle.addMilliseconds(duration / 2);
+			getHistoricalValues(nodesToRead, startTime, middle, historicalValuesOfNodes, session);
+			getHistoricalValues(nodesToRead, middle, endTime, historicalValuesOfNodes, session);
+		}
 		if (output) {
-			std::string message = std::string("Can not find any values for nodes ");
+			std::string message = std::string("Can not find any values for nodes ") + std::string(getEnumStatusCodeString(result));
 			output->SendMessageInfo(std::move(message));
 		}
 	}
 }
 
 void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
-	std::vector< std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
+	std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	if (m_pDataAttributes->m_dProcessingInterval <= 0) {
@@ -906,8 +916,8 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(c
 	SoftingOPCToolbox5::AggregateConfiguration aggregateConfiguration;
 	aggregateConfiguration.setUseServerCapabilitiesDefaults(true);
 	aggregateConfiguration.setTreatUncertainAsBad(false);
-	aggregateConfiguration.setPercentDataBad(100);
-	aggregateConfiguration.setPercentDataGood(0);
+	//aggregateConfiguration.setPercentDataBad(100);
+	//aggregateConfiguration.setPercentDataGood(0);
 	aggregateConfiguration.setUseSlopedExtrapolation(true);
 	details.setAggregateConfiguration(aggregateConfiguration);
 	details.addAggregateType(&node);
@@ -970,11 +980,19 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(c
 				else {
 					lenOfContinuatinPoint = 0;
 				}
-			};
-			historicalValuesOfNodes.push_back(values);
+			}
+			std::string nodeId = historyReadValueIds.at(indexOfResult).getNodeId()->toString();
+			std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::iterator itr = historicalValuesOfNodes.find(nodeId);
+			if (itr != historicalValuesOfNodes.end()) {
+				itr->second.insert(itr->second.end(), values.begin(), values.end());
+			}
+			else {
+				historicalValuesOfNodes.insert(std::make_pair<std::string, std::vector<SoftingOPCToolbox5::DataValue> >(std::move(nodeId), std::move(values)));
+			}
 		}
 	}
 	else {
+
 		if (output) {
 			std::string message = std::string("Can not find any processed values for nodes ");
 			output->SendMessageInfo(std::move(message));
@@ -1034,7 +1052,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::strin
 			SoftingOPCToolbox5::DateTime softingEndTime;
 			softingEndTime.set(end);
 
-			std::vector< std::vector<SoftingOPCToolbox5::DataValue> > historicalValuesOfNodes;
+			std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> > historicalValuesOfNodes;
 			if (m_pDataAttributes->m_iProcessed) {
 				getProcessedHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes, iter->second);
 			}
@@ -1057,10 +1075,10 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::strin
 				return;
 			}
 			std::map<std::string, std::vector<std::string> >::const_iterator pathIterator = fullPaths.cbegin();
-			for (std::vector< std::vector<SoftingOPCToolbox5::DataValue> >::const_iterator historyResultsIterator = historicalValuesOfNodes.cbegin(); historyResultsIterator != historicalValuesOfNodes.cend();
+			for (std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::const_iterator historyResultsIterator = historicalValuesOfNodes.cbegin(); historyResultsIterator != historicalValuesOfNodes.cend();
 				++historyResultsIterator) {
 				std::pair<std::string, std::vector<DrvOPCUAHistValues::Record> > pair = std::make_pair<std::string, std::vector<DrvOPCUAHistValues::Record> >(std::string(pathIterator->first), std::vector<DrvOPCUAHistValues::Record>{});
-				std::transform(historyResultsIterator->cbegin(), historyResultsIterator->cend(), std::back_inserter(pair.second), mapRecordFromDataValue);
+				std::transform(historyResultsIterator->second.cbegin(), historyResultsIterator->second.cend(), std::back_inserter(pair.second), mapRecordFromDataValue);
 				++pathIterator;
 				tagsData.insert(pair);
 			}
