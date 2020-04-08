@@ -845,13 +845,15 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 					lenOfContinuatinPoint = 0;
 				}
 			}
-			std::string nodeId = historyReadValueIds.at(indexOfResult).getNodeId()->toString();
-			std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::iterator itr = historicalValuesOfNodes.find(nodeId);
-			if (itr != historicalValuesOfNodes.end()) {
-				itr->second.insert(itr->second.end(), values.begin(), values.end());
-			}
-			else {
-				historicalValuesOfNodes.insert(std::make_pair<std::string, std::vector<SoftingOPCToolbox5::DataValue> >(std::move(nodeId),std::move(values)));
+			if (!values.empty()) {
+				std::string nodeId = historyReadValueIds.at(indexOfResult).getNodeId()->toString();
+				std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::iterator itr = historicalValuesOfNodes.find(nodeId);
+				if (itr != historicalValuesOfNodes.end()) {
+					itr->second.insert(itr->second.end(), values.begin(), values.end());
+				}
+				else {
+					historicalValuesOfNodes.insert(std::make_pair<std::string, std::vector<SoftingOPCToolbox5::DataValue> >(std::move(nodeId), std::move(values)));
+				}
 			}
 		}
 	}
@@ -863,9 +865,11 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 			getHistoricalValues(nodesToRead, startTime, middle, historicalValuesOfNodes, session);
 			getHistoricalValues(nodesToRead, middle, endTime, historicalValuesOfNodes, session);
 		}
-		if (output) {
-			std::string message = std::string("Can not find any values for nodes ") + std::string(getEnumStatusCodeString(result));
-			output->SendMessageInfo(std::move(message));
+		else {
+			if (output) {
+				std::string message = std::string("Can not find any values for nodes ") + std::string(getEnumStatusCodeString(result));
+				output->SendMessageInfo(std::move(message));
+			}
 		}
 	}
 }
@@ -981,20 +985,21 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getProcessedHistoricalValues(c
 					lenOfContinuatinPoint = 0;
 				}
 			}
-			std::string nodeId = historyReadValueIds.at(indexOfResult).getNodeId()->toString();
-			std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::iterator itr = historicalValuesOfNodes.find(nodeId);
-			if (itr != historicalValuesOfNodes.end()) {
-				itr->second.insert(itr->second.end(), values.begin(), values.end());
-			}
-			else {
-				historicalValuesOfNodes.insert(std::make_pair<std::string, std::vector<SoftingOPCToolbox5::DataValue> >(std::move(nodeId), std::move(values)));
+			if (!values.empty()) {
+				std::string nodeId = historyReadValueIds.at(indexOfResult).getNodeId()->toString();
+				std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >::iterator itr = historicalValuesOfNodes.find(nodeId);
+				if (itr != historicalValuesOfNodes.end()) {
+					itr->second.insert(itr->second.end(), values.begin(), values.end());
+				}
+				else {
+					historicalValuesOfNodes.insert(std::make_pair<std::string, std::vector<SoftingOPCToolbox5::DataValue> >(std::move(nodeId), std::move(values)));
+				}
 			}
 		}
 	}
 	else {
-
 		if (output) {
-			std::string message = std::string("Can not find any processed values for nodes ");
+			std::string message = std::string("Can not find any processed values for nodes ") + std::string(getEnumStatusCodeString(result));
 			output->SendMessageInfo(std::move(message));
 		}
 	}

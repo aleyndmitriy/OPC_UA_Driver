@@ -607,7 +607,7 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 				dataTime.wHour = timeStampStruct->wHour;
 				dataTime.wMinute = timeStampStruct->wMinute;
 				dataTime.wSecond = timeStampStruct->wSecond;
-				//dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
+				dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
 			}
 			else {
 				timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
