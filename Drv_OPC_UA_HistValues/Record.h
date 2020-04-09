@@ -2,50 +2,33 @@
 #include<map>
 #include<string>
 #include"ParamValue.h"
-
+#include <any>
 namespace DrvOPCUAHistValues {
 
 	class Record {
 	public:
-		using FieldData = std::pair<short, std::string>;
-		using const_iterator = std::map<std::string, FieldData>::const_iterator;
-		Record();
+		Record() = delete;
+		Record(const std::any& val, short type, unsigned int status, const SYSTEMTIME& dataTime);
 		Record(const Record& src) = default;
 		Record& operator=(const Record& src) = default;
 		Record(Record&& src) noexcept = default;
-		Record& operator=(Record&& src) noexcept = default;
-		std::pair<const_iterator, bool> insert(std::string colName, short dataType, std::string value);
-		const FieldData& at(const std::string& key) const;
-		const_iterator cbegin() const;
-		const_iterator cend() const;
-		const_iterator findColumnValue(const std::string& key) const;
-		size_t GetColumnNumber() const;
+		const void* GetValue() const;
+		short GetType() const;
 		unsigned int GetStatus() const;
-		void SetStatus(unsigned int iStatus);
+		void GetDataTime(SYSTEMTIME& dataTime) const;
 		~Record();
-		friend bool operator==(const Record& lhs, const Record& rhs);
-		friend bool operator!=(const Record& lhs, const Record& rhs);
-		friend bool operator<(const Record& lhs, const Record& rhs);
-		friend bool operator<=(const Record& lhs, const Record& rhs);
-		friend bool operator>(const Record& lhs, const Record& rhs);
-		friend bool operator>=(const Record& lhs, const Record& rhs);
-	protected:
-		std::map<std::string, FieldData> recordData;
-		unsigned int status;
+	private:
+		std::any m_Value;
+		short m_Type;
+		unsigned int m_Status;
+		SYSTEMTIME m_DataTime;
 	};
 
-	bool operator==(const Record& lhs, const Record& rhs);
-	bool operator!=(const Record& lhs, const Record& rhs);
-	bool operator<(const Record& lhs, const Record& rhs);
-	bool operator<=(const Record& lhs, const Record& rhs);
-	bool operator>(const Record& lhs, const Record& rhs);
-	bool operator>=(const Record& lhs, const Record& rhs);
-	const SYSTEMTIME* GetTimeStampFromRecord(const Record& rec);
-	bool CompareRecordsValueLess(const Record& lhs, const Record& rhs);
-	bool CompareRecordsDataTimeLess(const Record& lhs, const Record& rhs);
-	bool CompareRecordsValue(const Record& lhs, const Record& rhs);
+	bool CompareRecordsValueLessMax(const Record& lhs, const Record& rhs);
+	bool CompareRecordsValueLessMin(const Record& lhs, const Record& rhs);
+	bool CompareRecordsDataTimeLessMax(const Record& lhs, const Record& rhs);
+	bool CompareRecordsDataTimeLessMin(const Record& lhs, const Record& rhs);
 	bool CompareRecordsDataTime(const Record& lhs, const Record& rhs);
-	bool CompareRecord(const Record& lhs, const std::string& val, ConditionType type);
 	Record RecordsSum(const Record& lhs, const Record& rhs);
 	Record RecordAvg(const Record& record, unsigned int quantity);
 }

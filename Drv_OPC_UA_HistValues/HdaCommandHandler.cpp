@@ -364,7 +364,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
-							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
+							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLessMax);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
@@ -377,8 +377,9 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
+
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
-							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLess);
+							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsDataTimeLessMin);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
@@ -390,7 +391,8 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
-						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
+						SYSTEMTIME sysTyme{ 0 };
+						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(std::any(), EnumNumericNodeId_Null, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTyme), RecordsSum);
 						Record avgRecord = RecordAvg(record, tagsIterator->second.size());
 						ODS::Tvq* tvq = CreateTvqFromRecord(avgRecord);
 						pFuncResult->AddTvq(tvq);
@@ -402,7 +404,8 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
-						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(), RecordsSum);
+						SYSTEMTIME sysTyme{ 0 };
+						Record record = std::accumulate(tagsIterator->second.cbegin(), tagsIterator->second.cend(), Record(std::any(), EnumNumericNodeId_Null, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTyme), RecordsSum);
 						ODS::Tvq* tvq = CreateTvqFromRecord(record);
 						pFuncResult->AddTvq(tvq);
 						pResultList->push_back(pFuncResult);
@@ -415,7 +418,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator minItr =
-							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
+							std::min_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLessMin);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*minItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
@@ -429,7 +432,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						std::vector<DrvOPCUAHistValues::Record>::const_iterator maxItr =
-							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLess);
+							std::max_element(tagsIterator->second.cbegin(), tagsIterator->second.cend(), CompareRecordsValueLessMax);
 						ODS::Tvq* tvq = CreateTvqFromRecord(*maxItr);
 						SYSTEMTIME tm = tvq->GetTimestampLoc();
 						pFuncResult->AddTvq(tvq);
@@ -524,117 +527,11 @@ bool DrvOPCUAHistValues::HdaCommandHandler::AdjustConditions(const std::vector<T
 ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Record& record) const
 {
 	VARIANT vValue;
-	std::string str;
-	const SYSTEMTIME* timeStampStruct = nullptr;
+	const void* val = record.GetValue();
 	SYSTEMTIME dataTime = { 0 };
+	record.GetDataTime(dataTime);
 	SYSTEMTIME localDataTime = { 0 };
-	SYSTEMTIME valDataTime = { 0 };
-	SYSTEMTIME localValDataTime = { 0 };
-	float val = 0.0;
-	bool bitVal = false;
 	ODS::Tvq* tvq = new ODS::Tvq();
-	for (Record::const_iterator itr = record.cbegin(); itr != record.cend(); ++itr) {
-		switch (itr->second.first)
-		{
-		case EnumNumericNodeId_Null:
-			break;
-		case EnumNumericNodeId_Boolean:
-			::VariantInit(&vValue);
-			vValue.vt = VT_BOOL;
-			if (std::stoi(itr->second.second) > 0) {
-				bitVal = true;
-			}
-			else {
-				bitVal = false;
-			}
-			vValue.boolVal = bitVal;
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_SByte:
-		case EnumNumericNodeId_Int16:
-		case EnumNumericNodeId_Int32:
-			::VariantInit(&vValue);
-			vValue.vt = VT_INT;
-			vValue.intVal = std::stoi(itr->second.second);
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_Int64:
-			::VariantInit(&vValue);
-			vValue.vt = VT_I8;
-			vValue.llVal = std::stoll(itr->second.second);
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_Byte:
-		case EnumNumericNodeId_UInt16:
-		case EnumNumericNodeId_UInt32:
-			::VariantInit(&vValue);
-			vValue.vt = VT_UINT;
-			vValue.ulVal = std::stoul(itr->second.second);
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_UInt64:
-			::VariantInit(&vValue);
-			vValue.vt = VT_UI8;
-			vValue.ullVal = std::stoull(itr->second.second);
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_Double:
-			::VariantInit(&vValue);
-			vValue.vt = VT_R8;
-			vValue.dblVal = std::stod(itr->second.second);
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_Float:
-			::VariantInit(&vValue);
-			vValue.vt = VT_R8;
-			val = std::stof(itr->second.second);
-			vValue.dblVal = val;
-			tvq->SetValue(vValue);
-			::VariantClear(&vValue);
-			break;
-		case EnumNumericNodeId_DateTime:
-			if (itr->first == std::string(OPC_UA_SERVER_TIMESTAMP)) {
-				timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
-				dataTime.wYear = timeStampStruct->wYear;
-				dataTime.wMonth = timeStampStruct->wMonth;
-				dataTime.wDay = timeStampStruct->wDay;
-				dataTime.wHour = timeStampStruct->wHour;
-				dataTime.wMinute = timeStampStruct->wMinute;
-				dataTime.wSecond = timeStampStruct->wSecond;
-				dataTime.wMilliseconds = timeStampStruct->wMilliseconds;
-			}
-			else {
-				timeStampStruct = reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
-				valDataTime.wYear = timeStampStruct->wYear;
-				valDataTime.wMonth = timeStampStruct->wMonth;
-				valDataTime.wDay = timeStampStruct->wDay;
-				valDataTime.wHour = timeStampStruct->wHour;
-				valDataTime.wMinute = timeStampStruct->wMinute;
-				valDataTime.wSecond = timeStampStruct->wSecond;
-				valDataTime.wMilliseconds = timeStampStruct->wMilliseconds;
-				/*ODS::TimeUtils::SysTimeUtcToLocal(valDataTime, &localValDataTime);
-				if (localValDataTime.wYear != 0) {
-					tvq->SetValue(ODS::Data::Value(localValDataTime));
-				}*/
-				tvq->SetValue(ODS::Data::Value(valDataTime));
-			}
-			break;
-		case EnumNumericNodeId_LocalizedText:
-			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
-		break;
-		case EnumNumericNodeId_String:
-			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
-		default:
-			tvq->SetValue(ODS::Data::Value(itr->second.second.c_str()));
-			break;
-		}
-	}
 	ODS::TimeUtils::SysTimeUtcToLocal(dataTime, &localDataTime);
 	if (localDataTime.wYear != 0) {
 		tvq->SetTimestamp(&localDataTime);
@@ -649,7 +546,138 @@ ODS::Tvq* DrvOPCUAHistValues::HdaCommandHandler::CreateTvqFromRecord(const Recor
 	else {
 		tvq->SetQuality(ODS::Tvq::QUALITY_UNCERTAIN);
 	}
-	
+	if (val == nullptr) {
+		return tvq;
+	}
+	switch (record.GetType())
+	{
+	case EnumNumericNodeId_Null:
+		break;
+	case EnumNumericNodeId_Boolean:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_BOOL;
+		bool boolVal = *(static_cast<const bool*>(val));
+		vValue.boolVal = boolVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_SByte:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_INT;
+		char charVal = *(static_cast<const char*>(val));
+		vValue.intVal = charVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_Int16:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_INT;
+		short shortVal = *(static_cast<const short*>(val));
+		vValue.intVal = shortVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_Int32:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_INT;
+		int intVal = *(static_cast<const int*>(val));
+		vValue.intVal = intVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_Int64:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_I8;
+		long long longVal = *(static_cast<const long long*>(val));
+		vValue.llVal = longVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}	
+	break;
+	case EnumNumericNodeId_Byte:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_UINT;
+		unsigned char charVal = *(static_cast<const unsigned char*>(val));
+		vValue.ulVal = charVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_UInt16:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_UINT;
+		unsigned short shortVal = *(static_cast<const unsigned short*>(val));
+		vValue.ulVal = shortVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_UInt32:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_UINT;
+		unsigned int intVal = *(static_cast<const unsigned int*>(val));
+		vValue.ulVal = intVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}		
+	break;
+	case EnumNumericNodeId_UInt64:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_UI8;
+		unsigned long long longVal = *(static_cast<const unsigned long long*>(val));
+		vValue.ullVal = longVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}	
+	break;
+	case EnumNumericNodeId_Double:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_R8;
+		double doubleVal = *(static_cast<const double*>(val));
+		vValue.dblVal = doubleVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}
+	break;
+	case EnumNumericNodeId_Float:
+	{
+		::VariantInit(&vValue);
+		vValue.vt = VT_R8;
+		float floatVal = *(static_cast<const float*>(val));
+		vValue.dblVal = floatVal;
+		tvq->SetValue(vValue);
+		::VariantClear(&vValue);
+	}	
+	break;
+	case EnumNumericNodeId_DateTime:
+	{
+		const SYSTEMTIME* sysTime = static_cast<const SYSTEMTIME*>(val);
+		tvq->SetValue(ODS::Data::Value(*sysTime));
+	}		
+	break;
+	case EnumNumericNodeId_LocalizedText:
+	case EnumNumericNodeId_String:
+	default:
+	{
+		const std::string* str = static_cast<const std::string*>(val);
+		tvq->SetValue(ODS::Data::Value(str->c_str()));
+	}
+	break;
+	}
 	return tvq;
 }
 

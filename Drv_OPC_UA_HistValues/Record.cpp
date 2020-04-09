@@ -3,512 +3,928 @@
 #include"Constants.h"
 #include<OdsCoreLib/TimeUtils.h>
 
-
-DrvOPCUAHistValues::Record::Record():recordData(),status(0)
+DrvOPCUAHistValues::Record::Record(const std::any& val, short type, unsigned int status, const SYSTEMTIME& dataTime):
+	m_Value(val), m_Type(type), m_Status(status), m_DataTime{ 0 }
 {
-
-}
-
-std::pair<typename DrvOPCUAHistValues::Record::const_iterator, bool> DrvOPCUAHistValues::Record::insert(std::string colName, short dataType, std::string value)
-{
-	typename DrvOPCUAHistValues::Record::FieldData val = std::make_pair(dataType, value);
-	std::pair<std::string, typename DrvOPCUAHistValues::Record::FieldData> rec = std::make_pair(colName, val);
-	return recordData.insert(rec);
-}
-
-unsigned int DrvOPCUAHistValues::Record::GetStatus() const
-{
-	return status;
-}
-
-void DrvOPCUAHistValues::Record::SetStatus(unsigned int iStatus)
-{
-	status = iStatus;
-}
-
-const typename DrvOPCUAHistValues::Record::FieldData& DrvOPCUAHistValues::Record::at(const std::string& key) const
-{
-	return recordData.at(key);
-}
-
-typename DrvOPCUAHistValues::Record::const_iterator DrvOPCUAHistValues::Record::cbegin() const
-{
-	return recordData.cbegin();
-}
-
-typename DrvOPCUAHistValues::Record::const_iterator DrvOPCUAHistValues::Record::cend() const
-{
-	return recordData.cend();
-}
-
-typename DrvOPCUAHistValues::Record::const_iterator DrvOPCUAHistValues::Record::findColumnValue(const std::string& key) const
-{
-	return recordData.find(key);
-}
-
-size_t DrvOPCUAHistValues::Record::GetColumnNumber() const
-{
-	return recordData.size();
+	m_DataTime.wYear = dataTime.wYear;
+	m_DataTime.wMonth = dataTime.wMonth;
+	m_DataTime.wDay = dataTime.wDay;
+	m_DataTime.wDayOfWeek = dataTime.wDayOfWeek;
+	m_DataTime.wHour = dataTime.wHour;
+	m_DataTime.wMinute = dataTime.wMinute;
+	m_DataTime.wSecond = dataTime.wSecond;
+	m_DataTime.wMilliseconds = dataTime.wMilliseconds;
 }
 
 DrvOPCUAHistValues::Record::~Record()
 {
-	recordData.clear();
+	m_Value.reset();
 }
 
-bool DrvOPCUAHistValues::operator==(const DrvOPCUAHistValues::Record& lhs, const DrvOPCUAHistValues::Record& rhs)
+const void* DrvOPCUAHistValues::Record::GetValue() const
 {
-	return lhs.recordData == rhs.recordData;
-}
-
-bool DrvOPCUAHistValues::operator!=(const DrvOPCUAHistValues::Record& lhs, const DrvOPCUAHistValues::Record& rhs)
-{
-	return lhs.recordData != rhs.recordData;
-}
-
-bool DrvOPCUAHistValues::operator<(const DrvOPCUAHistValues::Record& lhs, const DrvOPCUAHistValues::Record& rhs)
-{
-	return lhs.recordData < rhs.recordData;
-}
-
-bool DrvOPCUAHistValues::operator<=(const DrvOPCUAHistValues::Record& lhs, const DrvOPCUAHistValues::Record& rhs)
-{
-	return lhs.recordData <= rhs.recordData;
-}
-
-bool DrvOPCUAHistValues::operator>(const DrvOPCUAHistValues::Record& lhs, const DrvOPCUAHistValues::Record& rhs)
-{
-	return lhs.recordData > rhs.recordData;
-}
-
-bool DrvOPCUAHistValues::operator>=(const DrvOPCUAHistValues::Record& lhs, const DrvOPCUAHistValues::Record& rhs)
-{
-	return lhs.recordData >= rhs.recordData;
-}
-
-bool DrvOPCUAHistValues::CompareRecordsValueLess(const Record& lhs, const Record& rhs)
-{
-	const SYSTEMTIME* timeStampStructLeft = nullptr;
-	const SYSTEMTIME* timeStampStructRight = nullptr;
-	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
-	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_VALUE);
-	if (itrLhs == lhs.cend() || itrRhs == rhs.cend()) {
-		return false;
-	}
-	if (itrLhs->second.first != itrRhs->second.first) {
-		return false;
-	}
-	switch (itrLhs->second.first)
-	{
-	case EnumNumericNodeId_Null:
-		return false;
-		break;
-	case EnumNumericNodeId_Boolean:
-	case EnumNumericNodeId_SByte:
-	case EnumNumericNodeId_Int16:
-	case EnumNumericNodeId_Int32:
-		return std::stoi(itrLhs->second.second) < std::stoi(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Int64:
-		return std::stoll(itrLhs->second.second) < std::stoll(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Byte:
-	case EnumNumericNodeId_UInt16:
-	case EnumNumericNodeId_UInt32:
-		return std::stoul(itrLhs->second.second) < std::stoul(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_UInt64:
-		return std::stoull(itrLhs->second.second) < std::stoull(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Double:
-		return std::stod(itrLhs->second.second) < std::stod(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Float:
-		return std::stof(itrLhs->second.second) < std::stof(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_DateTime:
-		timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
-		timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(itrRhs->second.second.c_str());
-		return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) < 0;
-		break;
-	default:
-		return itrLhs->second.second < itrRhs->second.second;
-		break;
-	}
-}
-
-bool DrvOPCUAHistValues::CompareRecordsValue(const Record& lhs, const Record& rhs)
-{
-	const SYSTEMTIME* timeStampStructLeft = nullptr;
-	const SYSTEMTIME* timeStampStructRight = nullptr;
-	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
-	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_VALUE);
-	if (itrLhs == lhs.cend() || itrRhs == rhs.cend()) {
-		return false;
-	}
-	if (itrLhs->second.first != itrRhs->second.first) {
-		return false;
-	}
-	switch (itrLhs->second.first)
-	{
-	case EnumNumericNodeId_Null:
-		return true;
-		break;
-	case EnumNumericNodeId_Boolean:
-	case EnumNumericNodeId_SByte:
-	case EnumNumericNodeId_Int16:
-	case EnumNumericNodeId_Int32:
-		return std::stoi(itrLhs->second.second) == std::stoi(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Int64:
-		return std::stoll(itrLhs->second.second) == std::stoll(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Byte:
-	case EnumNumericNodeId_UInt16:
-	case EnumNumericNodeId_UInt32:
-		return std::stoul(itrLhs->second.second) == std::stoul(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_UInt64:
-		return std::stoull(itrLhs->second.second) == std::stoull(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Double:
-		return std::stod(itrLhs->second.second) == std::stod(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_Float:
-		return std::stof(itrLhs->second.second) == std::stof(itrRhs->second.second);
-		break;
-	case EnumNumericNodeId_DateTime:
-		timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
-		timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(itrRhs->second.second.c_str());
-		return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) < 0;
-		break;
-	default:
-		return itrLhs->second.second == itrRhs->second.second;
-		break;
-	}
-}
-
-const SYSTEMTIME* DrvOPCUAHistValues::GetTimeStampFromRecord(const Record& rec)
-{
-	Record::const_iterator itr = rec.findColumnValue(OPC_UA_SERVER_TIMESTAMP);
-	if (itr == rec.cend()) {
+	if (!m_Value.has_value()) {
 		return nullptr;
 	}
-	if (itr->second.first != EnumNumericNodeId_DateTime) {
-		return nullptr;
+	else {
+		if (m_Value.type() == typeid(bool)) {
+			return std::any_cast<bool>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(char)) {
+			return std::any_cast<char>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(short)) {
+			return std::any_cast<short>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(int)) {
+			return std::any_cast<int>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(long long)) {
+			return std::any_cast<long long>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(unsigned char)) {
+			return std::any_cast<unsigned char>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(unsigned short)) {
+			return std::any_cast<unsigned short>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(unsigned int)) {
+			return std::any_cast<unsigned int>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(unsigned long long)) {
+			return std::any_cast<unsigned long long>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(double)) {
+			return std::any_cast<double>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(float)) {
+			return std::any_cast<float>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(SYSTEMTIME)) {
+			return std::any_cast<SYSTEMTIME>(&m_Value);
+		}
+		else if (m_Value.type() == typeid(std::string)) {
+			return std::any_cast<std::string>(&m_Value);
+		}
+		else {
+			return nullptr;
+		}
 	}
-	return reinterpret_cast<const SYSTEMTIME*>(itr->second.second.c_str());
 }
 
-bool DrvOPCUAHistValues::CompareRecordsDataTimeLess(const Record& lhs, const Record& rhs)
+short DrvOPCUAHistValues::Record::GetType() const
 {
-	const SYSTEMTIME* timeStampStructLeft = GetTimeStampFromRecord(lhs);
-	const SYSTEMTIME* timeStampStructRight = GetTimeStampFromRecord(rhs);
-	if (timeStampStructLeft == nullptr || timeStampStructRight == nullptr) {
+	return m_Type;
+}
+
+unsigned int DrvOPCUAHistValues::Record::GetStatus() const
+{
+	return m_Status;
+}
+
+void DrvOPCUAHistValues::Record::GetDataTime(SYSTEMTIME& dataTime) const
+{
+	dataTime.wYear = m_DataTime.wYear;
+	dataTime.wMonth = m_DataTime.wMonth;
+	dataTime.wDay = m_DataTime.wDay;
+	dataTime.wDayOfWeek = m_DataTime.wDayOfWeek;
+	dataTime.wHour = m_DataTime.wHour;
+	dataTime.wMinute = m_DataTime.wMinute;
+	dataTime.wSecond = m_DataTime.wSecond;
+	dataTime.wMilliseconds = m_DataTime.wMilliseconds;
+}
+
+bool DrvOPCUAHistValues::CompareRecordsValueLessMax(const Record& lhs, const Record& rhs)
+{
+	short lType = lhs.GetType();
+	short rType = rhs.GetType();
+	const void* lVal = lhs.GetValue();
+	const void* rVal = rhs.GetValue();
+	switch (lType)
+	{
+	case EnumNumericNodeId_Null:
+		if (rType != EnumNumericNodeId_Null) {
+			return true;
+		}
+		else {
+			return false;
+		}
+		break;
+	case EnumNumericNodeId_Boolean:
+	{
+		const bool* boollVal = static_cast<const bool*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const bool* boolrVal = static_cast<const bool*>(rVal);
+			return *boollVal < *boolrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_SByte:
+	{
+		const char* charlVal = static_cast<const char*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const char* charrVal = static_cast<const char*>(rVal);
+			return *charlVal < *charrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Int16:
+	{
+		const short* shortlVal = static_cast<const short*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const short* shortrVal = static_cast<const short*>(rVal);
+			return *shortlVal < *shortrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Int32:
+	{
+		const int* intlVal = static_cast<const int*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const int* intrVal = static_cast<const int*>(rVal);
+			return *intlVal < *intrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Int64:
+	{
+		const long long* longlVal = static_cast<const long long*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const long long* longrVal = static_cast<const long long*>(rVal);
+			return *longlVal < *longrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Byte:
+	{
+		const unsigned char* charlVal = static_cast<const unsigned char*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned char* charrVal = static_cast<const unsigned char*>(rVal);
+			return *charlVal < *charrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_UInt16:
+	{
+		const unsigned short* shortlVal = static_cast<const unsigned short*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned short* shortrVal = static_cast<const unsigned short*>(rVal);
+			return *shortlVal < *shortrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_UInt32:
+	{
+		const unsigned int* intlVal = static_cast<const unsigned int*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned int* intrVal = static_cast<const unsigned int*>(rVal);
+			return *intlVal < *intrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_UInt64:
+	{
+		const unsigned long long* longlVal = static_cast<const unsigned long long*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned long long* longrVal = static_cast<const unsigned long long*>(rVal);
+			return *longlVal < *longrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Double:
+	{
+		const double* doublelVal = static_cast<const double*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const double* doublerVal = static_cast<const double*>(rVal);
+			return *doublelVal < *doublerVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Float:
+	{
+		const float* doublelVal = static_cast<const float*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const float* doublerVal = static_cast<const float*>(rVal);
+			return *doublelVal < *doublerVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	case EnumNumericNodeId_DateTime:
+	{
+		const SYSTEMTIME* strlVal = static_cast<const SYSTEMTIME*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const SYSTEMTIME* strrVal = static_cast<const SYSTEMTIME*>(rVal);
+			return ODS::TimeUtils::SysTimeCompare(*strlVal, *strrVal) < 0;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	default:
+	{
+		const std::string* strlVal = static_cast<const std::string*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const std::string* strrVal = static_cast<const std::string*>(rVal);
+			return *strlVal < *strrVal;
+		}
+		else {
+			return false;
+		}
+	}
+	break;
+	}
+}
+
+bool DrvOPCUAHistValues::CompareRecordsValueLessMin(const Record& lhs, const Record& rhs)
+{
+	short lType = lhs.GetType();
+	short rType = rhs.GetType();
+	const void* lVal = lhs.GetValue();
+	const void* rVal = rhs.GetValue();
+	switch (lType)
+	{
+	case EnumNumericNodeId_Null:
+		if (rType != EnumNumericNodeId_Null) {
+			return false;
+		}
+		else {
+			return true;
+		}
+		break;
+	case EnumNumericNodeId_Boolean:
+	{
+		const bool* boollVal = static_cast<const bool*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const bool* boolrVal = static_cast<const bool*>(rVal);
+			return *boollVal < *boolrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_SByte:
+	{
+		const char* charlVal = static_cast<const char*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const char* charrVal = static_cast<const char*>(rVal);
+			return *charlVal < *charrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Int16:
+	{
+		const short* shortlVal = static_cast<const short*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const short* shortrVal = static_cast<const short*>(rVal);
+			return *shortlVal < *shortrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Int32:
+	{
+		const int* intlVal = static_cast<const int*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const int* intrVal = static_cast<const int*>(rVal);
+			return *intlVal < *intrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Int64:
+	{
+		const long long* longlVal = static_cast<const long long*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const long long* longrVal = static_cast<const long long*>(rVal);
+			return *longlVal < *longrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Byte:
+	{
+		const unsigned char* charlVal = static_cast<const unsigned char*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned char* charrVal = static_cast<const unsigned char*>(rVal);
+			return *charlVal < *charrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_UInt16:
+	{
+		const unsigned short* shortlVal = static_cast<const unsigned short*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned short* shortrVal = static_cast<const unsigned short*>(rVal);
+			return *shortlVal < *shortrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_UInt32:
+	{
+		const unsigned int* intlVal = static_cast<const unsigned int*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned int* intrVal = static_cast<const unsigned int*>(rVal);
+			return *intlVal < *intrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_UInt64:
+	{
+		const unsigned long long* longlVal = static_cast<const unsigned long long*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const unsigned long long* longrVal = static_cast<const unsigned long long*>(rVal);
+			return *longlVal < *longrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Double:
+	{
+		const double* doublelVal = static_cast<const double*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const double* doublerVal = static_cast<const double*>(rVal);
+			return *doublelVal < *doublerVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_Float:
+	{
+		const float* doublelVal = static_cast<const float*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const float* doublerVal = static_cast<const float*>(rVal);
+			return *doublelVal < *doublerVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	case EnumNumericNodeId_DateTime:
+	{
+		const SYSTEMTIME* strlVal = static_cast<const SYSTEMTIME*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const SYSTEMTIME* strrVal = static_cast<const SYSTEMTIME*>(rVal);
+			return ODS::TimeUtils::SysTimeCompare(*strlVal, *strrVal) < 0;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	default:
+	{
+		const std::string* strlVal = static_cast<const std::string*>(lVal);
+		if (rType != EnumNumericNodeId_Null) {
+			const std::string* strrVal = static_cast<const std::string*>(rVal);
+			return *strlVal < *strrVal;
+		}
+		else {
+			return true;
+		}
+	}
+	break;
+	}
+}
+
+
+bool DrvOPCUAHistValues::CompareRecordsDataTimeLessMax(const Record& lhs, const Record& rhs)
+{
+	short lType = lhs.GetType();
+	short rType = rhs.GetType();
+	if (lType == EnumNumericNodeId_Null) {
+		if (rType != EnumNumericNodeId_Null) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	else {
+		if (rType == EnumNumericNodeId_Null) {
+			return false;
+		}
+	}
+	SYSTEMTIME timeStampStructLeft;
+	lhs.GetDataTime(timeStampStructLeft);
+	SYSTEMTIME timeStampStructRight;
+	rhs.GetDataTime(timeStampStructRight);
+	return ODS::TimeUtils::SysTimeCompare(timeStampStructLeft, timeStampStructRight) < 0;
+}
+
+bool DrvOPCUAHistValues::CompareRecordsDataTimeLessMin(const Record& lhs, const Record& rhs)
+{
+	short lType = lhs.GetType();
+	short rType = rhs.GetType();
+	if (lType == EnumNumericNodeId_Null) {
 		return false;
 	}
-	return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) < 0;
+	else {
+		if (rType == EnumNumericNodeId_Null) {
+			return true;
+		}
+	}
+	SYSTEMTIME timeStampStructLeft;
+	lhs.GetDataTime(timeStampStructLeft);
+	SYSTEMTIME timeStampStructRight;
+	rhs.GetDataTime(timeStampStructRight);
+	return ODS::TimeUtils::SysTimeCompare(timeStampStructLeft, timeStampStructRight) < 0;
 }
+
 
 bool DrvOPCUAHistValues::CompareRecordsDataTime(const Record& lhs, const Record& rhs)
 {
-	const SYSTEMTIME* timeStampStructLeft = GetTimeStampFromRecord(lhs);
-	const SYSTEMTIME* timeStampStructRight = GetTimeStampFromRecord(rhs);
-	if (timeStampStructLeft == nullptr || timeStampStructRight == nullptr) {
-		return false;
-	}
-	return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) == 0;
+	SYSTEMTIME timeStampStructLeft;
+	lhs.GetDataTime(timeStampStructLeft);
+	SYSTEMTIME timeStampStructRight;
+	rhs.GetDataTime(timeStampStructRight);
+	return ODS::TimeUtils::SysTimeCompare(timeStampStructLeft, timeStampStructRight) == 0;
 }
 
-bool DrvOPCUAHistValues::CompareRecord(const Record& lhs, const std::string& val, ConditionType type)
-{
-	const SYSTEMTIME* timeStampStructLeft = nullptr;
-	const SYSTEMTIME* timeStampStructRight = nullptr;
-	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
-	if (itrLhs == lhs.cend()) {
-		return false;
-	}
-	if (val.empty()) {
-		if (itrLhs->second.first == EnumNumericNodeId_Null) {
-			return true;
-		}
-		return false;
-	}
-	switch (itrLhs->second.first)
-	{
-	case EnumNumericNodeId_Boolean:
-	case EnumNumericNodeId_SByte:
-	case EnumNumericNodeId_Int16:
-	case EnumNumericNodeId_Int32:
-		switch (type) {
-		case ConditionType::CONDTYPE_LESS:
-			return std::stoi(itrLhs->second.second) < std::stoi(val);
-			break;
-		case ConditionType::CONDTYPE_GREATER:
-			return std::stoi(itrLhs->second.second) > std::stoi(val);
-			break;
-		case ConditionType::CONDTYPE_LESSEQUAL:
-			return std::stoi(itrLhs->second.second) <= std::stoi(val);
-			break;
-		case ConditionType::CONDTYPE_GREATEREQUAL:
-			return std::stoi(itrLhs->second.second) >= std::stoi(val);
-			break;
-		case ConditionType::CONDTYPE_NOTEQUAL:
-			return std::stoi(itrLhs->second.second) != std::stoi(val);
-			break;
-		default:
-			return std::stoi(itrLhs->second.second) == std::stoi(val);
-			break;
-		}
-	case EnumNumericNodeId_Int64:
-		switch (type) {
-		case ConditionType::CONDTYPE_LESS:
-			return std::stoll(itrLhs->second.second) < std::stoll(val);
-			break;
-		case ConditionType::CONDTYPE_GREATER:
-			return std::stoll(itrLhs->second.second) > std::stoll(val);
-			break;
-		case ConditionType::CONDTYPE_LESSEQUAL:
-			return std::stoll(itrLhs->second.second) <= std::stoll(val);
-			break;
-		case ConditionType::CONDTYPE_GREATEREQUAL:
-			return std::stoll(itrLhs->second.second) >= std::stoll(val);
-			break;
-		case ConditionType::CONDTYPE_NOTEQUAL:
-			return std::stoll(itrLhs->second.second) != std::stoll(val);
-			break;
-		default:
-			return std::stoll(itrLhs->second.second) == std::stoll(val);
-			break;
-		}
-	case EnumNumericNodeId_Byte:
-	case EnumNumericNodeId_UInt16:
-	case EnumNumericNodeId_UInt32:
-		switch (type) {
-		case ConditionType::CONDTYPE_LESS:
-			return std::stoul(itrLhs->second.second) < std::stoul(val);
-			break;
-		case ConditionType::CONDTYPE_GREATER:
-			return std::stoul(itrLhs->second.second) > std::stoul(val);
-			break;
-		case ConditionType::CONDTYPE_LESSEQUAL:
-			return std::stoul(itrLhs->second.second) <= std::stoul(val);
-			break;
-		case ConditionType::CONDTYPE_GREATEREQUAL:
-			return std::stoul(itrLhs->second.second) >= std::stoul(val);
-			break;
-		case ConditionType::CONDTYPE_NOTEQUAL:
-			return std::stoul(itrLhs->second.second) != std::stoul(val);
-			break;
-		default:
-			return std::stoul(itrLhs->second.second) == std::stoul(val);
-			break;
-		}
-	case EnumNumericNodeId_UInt64:
-		switch (type) {
-		case ConditionType::CONDTYPE_LESS:
-			return std::stoull(itrLhs->second.second) < std::stoull(val);
-			break;
-		case ConditionType::CONDTYPE_GREATER:
-			return std::stoull(itrLhs->second.second) > std::stoull(val);
-			break;
-		case ConditionType::CONDTYPE_LESSEQUAL:
-			return std::stoull(itrLhs->second.second) <= std::stoull(val);
-			break;
-		case ConditionType::CONDTYPE_GREATEREQUAL:
-			return std::stoull(itrLhs->second.second) >= std::stoull(val);
-			break;
-		case ConditionType::CONDTYPE_NOTEQUAL:
-			return std::stoull(itrLhs->second.second) != std::stoull(val);
-			break;
-		default:
-			return std::stoull(itrLhs->second.second) == std::stoull(val);
-			break;
-		}
-	case EnumNumericNodeId_Double:
-		switch (type) {
-		case ConditionType::CONDTYPE_LESS:
-			return std::stod(itrLhs->second.second) < std::stod(val);
-			break;
-		case ConditionType::CONDTYPE_GREATER:
-			return std::stod(itrLhs->second.second) > std::stod(val);
-			break;
-		case ConditionType::CONDTYPE_LESSEQUAL:
-			return std::stod(itrLhs->second.second) <= std::stod(val);
-			break;
-		case ConditionType::CONDTYPE_GREATEREQUAL:
-			return std::stod(itrLhs->second.second) >= std::stod(val);
-			break;
-		case ConditionType::CONDTYPE_NOTEQUAL:
-			return std::stod(itrLhs->second.second) != std::stod(val);
-			break;
-		default:
-			return std::stod(itrLhs->second.second) == std::stod(val);
-			break;
-		}
-	case EnumNumericNodeId_Float:
-		switch (type) {
-		case ConditionType::CONDTYPE_LESS:
-			return std::stof(itrLhs->second.second) < std::stof(val);
-			break;
-		case ConditionType::CONDTYPE_GREATER:
-			return std::stof(itrLhs->second.second) > std::stof(val);
-			break;
-		case ConditionType::CONDTYPE_LESSEQUAL:
-			return std::stof(itrLhs->second.second) <= std::stof(val);
-			break;
-		case ConditionType::CONDTYPE_GREATEREQUAL:
-			return std::stof(itrLhs->second.second) >= std::stof(val);
-			break;
-		case ConditionType::CONDTYPE_NOTEQUAL:
-			return std::stof(itrLhs->second.second) != std::stof(val);
-			break;
-		default:
-			return std::stof(itrLhs->second.second) == std::stof(val);
-			break;
-		}
-	case EnumNumericNodeId_DateTime:
-		timeStampStructLeft = reinterpret_cast<const SYSTEMTIME*>(itrLhs->second.second.c_str());
-		timeStampStructRight = reinterpret_cast<const SYSTEMTIME*>(val.c_str());
-		return ODS::TimeUtils::SysTimeCompare(*timeStampStructLeft, *timeStampStructRight) == 0;
-		break;
-	default:
-		return itrLhs->second.second == val;
-		break;
-	}
-}
 
 DrvOPCUAHistValues::Record DrvOPCUAHistValues::RecordsSum(const Record& lhs, const Record& rhs)
 {
-	DrvOPCUAHistValues::Record record;
-	Record::const_iterator itrLhs = lhs.findColumnValue(OPC_UA_VALUE);
-	Record::const_iterator itrRhs = rhs.findColumnValue(OPC_UA_VALUE);
-	if (itrLhs == lhs.cend() || itrLhs->second.first < EnumNumericNodeId_SByte || itrLhs->second.first > EnumNumericNodeId_Double) {
-		if (itrRhs != rhs.cend() && itrRhs->second.first > EnumNumericNodeId_Boolean&& itrRhs->second.first < EnumNumericNodeId_String) {
-			record.insert(OPC_UA_VALUE, itrRhs->second.first, itrRhs->second.second);
-			return record;
+	short lType = lhs.GetType();
+	short rType = rhs.GetType();
+	const void* lVal = lhs.GetValue();
+	const void* rVal = rhs.GetValue();
+	SYSTEMTIME sysTime { 0 };
+		switch (rType) {
+		case EnumNumericNodeId_SByte:
+		{
+			const char* charVal = static_cast<const char*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*charVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*charVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*charVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				long long sum = static_cast<long long>(*charVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
 		}
-		else {
-			record.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
-			return record;
-		}
-	}
-	if (itrRhs == rhs.cend() || itrRhs->second.first < EnumNumericNodeId_SByte || itrRhs->second.first > EnumNumericNodeId_Double) {
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, itrLhs->second.second);
-		return record;
-	}
-	switch (itrLhs->second.first)
-	{
-	case EnumNumericNodeId_SByte:
-	case EnumNumericNodeId_Int16:
-	case EnumNumericNodeId_Int32:
-	{
-		int res = std::stoi(itrLhs->second.second) + std::stoi(itrRhs->second.second);
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
-		return record;
-	}
-	break;
-	case EnumNumericNodeId_Int64:
-	{
-		long long res = std::stoll(itrLhs->second.second) + std::stoll(itrRhs->second.second);
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
-		return record;
-	}
-	break;
-	case EnumNumericNodeId_Byte:
-	case EnumNumericNodeId_UInt16:
-	case EnumNumericNodeId_UInt32:
-	{
-		unsigned long res = std::stoul(itrLhs->second.second) + std::stoul(itrRhs->second.second);
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
-		return record;
-	}
-	break;
-	case EnumNumericNodeId_UInt64:
-	{
-		unsigned long long res = std::stoull(itrLhs->second.second) + std::stoull(itrRhs->second.second);
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
-		return record;
-	}
-	break;
-	case EnumNumericNodeId_Double:
-	{
-		double res = std::stod(itrLhs->second.second) + std::stod(itrRhs->second.second);
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
-		return record;
-	}
-	break;
-	case EnumNumericNodeId_Float:
-	{
-		float res = std::stof(itrLhs->second.second) + std::stof(itrRhs->second.second);
-		record.insert(OPC_UA_VALUE, itrLhs->second.first, std::to_string(res));
-		return record;
-	}
-	break;
-	default:
-		record.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
-		return record;
 		break;
-	}
+		case EnumNumericNodeId_Int16:
+		{
+			const short* shortVal = static_cast<const short*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*shortVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*shortVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*shortVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				long long sum = static_cast<long long>(*shortVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_Int32:
+		{
+			const int* intVal = static_cast<const int*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*intVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				long long sum = static_cast<long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_Int64:
+		{
+			const long long* longVal = static_cast<const long long*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += *longVal;
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*longVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*longVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				long long sum = static_cast<long long>(*longVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_Byte:
+		{
+			const unsigned char* charVal = static_cast<const unsigned char*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*charVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*charVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*charVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				unsigned long long sum = static_cast<unsigned long long>(*charVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_UInt16:
+		{
+			const unsigned short* shortVal = static_cast<const unsigned short*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*shortVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*shortVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*shortVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				unsigned long long sum = static_cast<unsigned long long>(*shortVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_UInt32:
+		{
+			const unsigned int* intVal = static_cast<const unsigned int*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += static_cast<unsigned long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*intVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				unsigned long long sum = static_cast<unsigned long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_UInt64:
+		{
+			const unsigned long long* intVal = static_cast<const unsigned long long*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				sum += static_cast<long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_Int64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				sum += *intVal;
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				sum += static_cast<double>(*intVal);
+				return Record(sum, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				unsigned long long sum = static_cast<unsigned long long>(*intVal);
+				return Record(sum, EnumNumericNodeId_UInt64, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_Double:
+		{
+			const double* doubleVal = static_cast<const double*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				double res = *doubleVal + static_cast<double>(sum);
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				double res = *doubleVal + static_cast<double>(sum);
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				double res = *doubleVal + sum;
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				double res = *doubleVal;
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		case EnumNumericNodeId_Float:
+		{
+			const float* doubleVal = static_cast<const float*>(rVal);
+			switch (lType) {
+			case EnumNumericNodeId_Int64:
+			{
+				long long sum = *(static_cast<const long long*>(lVal));
+				double res = static_cast<double>(*doubleVal) + static_cast<double>(sum);
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_UInt64:
+			{
+				unsigned long long sum = *(static_cast<const unsigned long long*>(lVal));
+				double res = static_cast<double>(*doubleVal) + static_cast<double>(sum);
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			case EnumNumericNodeId_Double:
+			{
+				double sum = *(static_cast<const double*>(lVal));
+				double res = static_cast<double>(*doubleVal) + sum;
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			default:
+			{
+				double res = static_cast<double>(*doubleVal);
+				return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
+			}
+			break;
+			}
+		}
+		break;
+		default:
+			return Record(lhs);
+			break;
+		}
 }
 
 DrvOPCUAHistValues::Record DrvOPCUAHistValues::RecordAvg(const Record& record, unsigned int quantity)
 {
-	DrvOPCUAHistValues::Record avgRecord;
-	Record::const_iterator itr = record.findColumnValue(OPC_UA_VALUE);
-	if (itr == record.cend()) {
-		avgRecord.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
-		return avgRecord;
-	}
+	const void* val = record.GetValue();
+	SYSTEMTIME sysTime{ 0 };
 	double res = 0.0;
-	switch (itr->second.first)
-	{
+	switch (record.GetType())
+	{	
 	case EnumNumericNodeId_SByte:
+	{
+		char charVal = *(static_cast<const char*>(val));
+		res = static_cast<double>(charVal) / static_cast<double>(quantity);
+	}
+	break;
 	case EnumNumericNodeId_Int16:
+	{
+		short shortVal = *(static_cast<const short*>(val));
+		res = static_cast<double>(shortVal) / static_cast<double>(quantity);
+	}
+	break;
 	case EnumNumericNodeId_Int32:
 	{
-		int val = std::stoi(itr->second.second);
-		res = (double)val / (double)quantity;
-
+		int intVal = *(static_cast<const int*>(val));
+		res = static_cast<double>(intVal) / static_cast<double>(quantity);
 	}
 	break;
 	case EnumNumericNodeId_Int64:
 	{
-		long long val = std::stoll(itr->second.second);
-		res = (double)val / (double)quantity;
+		long long longVal = *(static_cast<const long long*>(val));
+		res = static_cast<double>(longVal) / static_cast<double>(quantity);
 	}
 	break;
 	case EnumNumericNodeId_Byte:
+	{
+		unsigned char charVal = *(static_cast<const unsigned char*>(val));
+		res = static_cast<double>(charVal) / static_cast<double>(quantity);
+	}
+	break;
 	case EnumNumericNodeId_UInt16:
+	{
+		unsigned short shortVal = *(static_cast<const unsigned short*>(val));
+		res = static_cast<double>(shortVal) / static_cast<double>(quantity);
+	}
+	break;
 	case EnumNumericNodeId_UInt32:
 	{
-		unsigned long val = std::stoul(itr->second.second);
-		res = (double)val / (double)quantity;
+		unsigned int intVal = *(static_cast<const unsigned int*>(val));
+		res = static_cast<double>(intVal) / static_cast<double>(quantity);
 	}
 	break;
 	case EnumNumericNodeId_UInt64:
 	{
-		unsigned long long val = std::stoull(itr->second.second);
-		res = (double)val / (double)quantity;
+		unsigned long long longVal = *(static_cast<const unsigned long long*>(val));
+		res = static_cast<double>(longVal) / static_cast<double>(quantity);
 	}
 	break;
 	case EnumNumericNodeId_Double:
 	{
-		double val = std::stod(itr->second.second);
-		res = val / (double)quantity;
+		double doubleVal = *(static_cast<const double*>(val));
+		res = doubleVal / static_cast<double>(quantity);
 	}
 	break;
 	case EnumNumericNodeId_Float:
 	{
-		float val = std::stof(itr->second.second);
-		res = (double)val / (double)quantity;
+		float floatVal = *(static_cast<const float*>(val));
+		res = static_cast<double>(floatVal) / static_cast<double>(quantity);
 	}
 	break;
 	default:
-		avgRecord.insert(OPC_UA_VALUE, EnumNumericNodeId_Null, std::string());
-		return avgRecord;
-		break;
+	{
+		return Record(std::any(), EnumNumericNodeId_Null, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
 	}
-	avgRecord.insert(OPC_UA_VALUE, EnumNumericNodeId_Double, std::to_string(res));
-	return avgRecord;
+	break;
+	}
+	return Record(res, EnumNumericNodeId_Double, (unsigned int)EnumStatusCode::EnumStatusCode_Good, sysTime);
 }

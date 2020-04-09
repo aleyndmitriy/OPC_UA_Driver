@@ -1522,10 +1522,9 @@ DrvOPCUAHistValues::SecurityUserTokenPolicy mapEndPointTokenFromPolicy(const Sof
 
 DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::DataValue& dataValue)
 {
-	DrvOPCUAHistValues::Record record;
+	std::any val;
 	EnumDataTypeId type = dataValue.getValue()->getDataType();
-	EnumStatusCode status = dataValue.getValue()->getStatusCode();
-	record.SetStatus((unsigned int)status);
+	EnumStatusCode status = dataValue.getStatusCode();
 	SYSTEMTIME serverDataTime = { 0 };
 	serverDataTime.wYear = dataValue.getServerTimestamp()->yearGMT();
 	serverDataTime.wMonth = dataValue.getServerTimestamp()->monthGMT();
@@ -1534,103 +1533,84 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 	serverDataTime.wMinute = dataValue.getServerTimestamp()->minuteGMT();
 	serverDataTime.wSecond = dataValue.getServerTimestamp()->secondGMT();
 	serverDataTime.wMilliseconds = dataValue.getServerTimestamp()->milliSecondGMT();
-	char* strPtr = reinterpret_cast<char*>(&serverDataTime);
-	record.insert(OPC_UA_SERVER_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr,sizeof(SYSTEMTIME)));
-	/*SYSTEMTIME clientDataTime = { 0 };
-	clientDataTime.wYear = dataValue.getSourceTimestamp()->yearGMT();
-	clientDataTime.wMonth = dataValue.getSourceTimestamp()->monthGMT();
-	clientDataTime.wDay = dataValue.getSourceTimestamp()->dayGMT();
-	clientDataTime.wHour = dataValue.getSourceTimestamp()->hourGMT();
-	clientDataTime.wMinute = dataValue.getSourceTimestamp()->minuteGMT();
-	clientDataTime.wSecond = dataValue.getSourceTimestamp()->secondGMT();
-	clientDataTime.wMilliseconds = dataValue.getSourceTimestamp()->milliSecondGMT();
-	strPtr = reinterpret_cast<char*>(&clientDataTime);
-	record.insert(OPC_UA_CLIENT_TIMESTAMP, EnumNumericNodeId_DateTime, std::string(strPtr, sizeof(SYSTEMTIME)));*/
-	std::string valueStr;
 	switch (type) {
 	case EnumNumericNodeId_Null:
-		valueStr.clear();
+		val.reset();
 		break;
 	case EnumNumericNodeId_Boolean:
 	{
 		OTBoolean boolVal = dataValue.getValue()->getBoolean();
-		if (boolVal) {
-			valueStr = std::to_string(1);
-		}
-		else {
-			valueStr = std::to_string(0);
-		}
+		val = boolVal;
 	}
 		break;
 	case EnumNumericNodeId_SByte:
 	{
-		char intVal = dataValue.getValue()->getInt8();
-		valueStr = std::to_string(intVal);
+		char charVal = dataValue.getValue()->getInt8();
+		val = charVal;
 	}
 	break;
 	case EnumNumericNodeId_Int16:
 	{
-		short intVal = dataValue.getValue()->getInt16();
-		valueStr = std::to_string(intVal);
+		short shortVal = dataValue.getValue()->getInt16();
+		val = shortVal;
 	}
 	break;
 	case EnumNumericNodeId_Int32:
 	{
 		int intVal = dataValue.getValue()->getInt32();
-		valueStr = std::to_string(intVal);
+		val = intVal;
 	}
 	break;
 	case EnumNumericNodeId_Int64:
 	{
 		long long longVal = dataValue.getValue()->getInt64();
-		valueStr = std::to_string(longVal);
+		val = longVal;
 	}
 	break;
 	case EnumNumericNodeId_Byte:
 	{
-		unsigned char intVal = dataValue.getValue()->getUInt8();
-		valueStr = std::to_string(intVal);
+		unsigned char ucharVal = dataValue.getValue()->getUInt8();
+		val = ucharVal;
 	}
 	break;
 	case EnumNumericNodeId_UInt16:
 	{
-		unsigned short intVal = dataValue.getValue()->getUInt16();
-		valueStr = std::to_string(intVal);
+		unsigned short ushortVal = dataValue.getValue()->getUInt16();
+		val = ushortVal;
 	}
 	break;
 	case EnumNumericNodeId_UInt32:
 	{
-		valueStr = dataValue.getValue()->toString();
-		unsigned int intVal = dataValue.getValue()->getUInt32();
-		valueStr = std::to_string(intVal);
+		unsigned int uintVal = dataValue.getValue()->getUInt32();
+		val = uintVal;
 	}
 	break;
 	case EnumNumericNodeId_UInt64:
 	{
-		unsigned long long longVal = dataValue.getValue()->getUInt64();
-		valueStr = std::to_string(longVal);
+		unsigned long long ulongVal = dataValue.getValue()->getUInt64();
+		val = ulongVal;
 	}
 	break;
 	case EnumNumericNodeId_Double:
 	{
 		double doubleVale = dataValue.getValue()->getDouble();
-		valueStr = std::to_string(doubleVale);
+		val = doubleVale;
 	}
 	break;
 	case EnumNumericNodeId_Float:
 	{
 		float floatVale = dataValue.getValue()->getFloat();
-		valueStr = std::to_string(floatVale);
+		val = floatVale;
 	}
 	break;
 	case EnumNumericNodeId_LocalizedText:
 	{
-		valueStr = dataValue.getValue()->getLocalizedText().getText();
+		val = dataValue.getValue()->getLocalizedText().getText();
 	}
 	break;
 	case EnumNumericNodeId_String:
 	{
-		valueStr = dataValue.getValue()->getString();
+		val = dataValue.getValue()->getString();
 	}
 	break;
 	case EnumNumericNodeId_DateTime:
@@ -1644,15 +1624,14 @@ DrvOPCUAHistValues::Record mapRecordFromDataValue(const SoftingOPCToolbox5::Data
 		valueDataTime.wMinute = dateTime.minuteGMT();
 		valueDataTime.wSecond = dateTime.secondGMT();
 		valueDataTime.wMilliseconds = dateTime.milliSecondGMT();
-		char* strValPtr = reinterpret_cast<char*>(&valueDataTime);
-		valueStr = std::string(strValPtr, sizeof(SYSTEMTIME));
+		val = valueDataTime;
 	}
 	break;
 	default:
-		valueStr = dataValue.getValue()->toString();
+		val = dataValue.getValue()->toString();
 		break;
 	}
-	record.insert(OPC_UA_VALUE, (short)type, valueStr);
 
+	DrvOPCUAHistValues::Record record(val, (short)type, (unsigned int)status, serverDataTime);
 	return record;
 }
