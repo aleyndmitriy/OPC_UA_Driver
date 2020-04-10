@@ -273,6 +273,11 @@ DrvOPCUAHistValues::SecurityUserTokenPolicy::SecurityUserTokenPolicy(const std::
 
 }
 
+DrvOPCUAHistValues::SecurityUserTokenPolicy::SecurityUserTokenPolicy(): SecurityUserTokenPolicy(std::string(),std::string(), ConfigurationSecurityType::ANONYMOUS)
+{
+
+}
+
 DrvOPCUAHistValues::SecurityUserTokenPolicy::~SecurityUserTokenPolicy()
 {
 

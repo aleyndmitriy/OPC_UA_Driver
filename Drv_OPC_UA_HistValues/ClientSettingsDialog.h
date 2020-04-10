@@ -33,6 +33,8 @@ private:
 	std::vector<DrvOPCUAHistValues::ServerSecurityModeConfiguration> m_endPointsConfigurations;
 	std::vector<DrvOPCUAHistValues::SecurityUserTokenPolicy> m_endPointPolicyIds;
 	std::vector<std::pair<std::string, int> > m_aggregates;
+	DrvOPCUAHistValues::ServerSecurityModeConfiguration m_currentConfiguration;
+	DrvOPCUAHistValues::SecurityUserTokenPolicy m_currentPolicyId;
 	CEdit m_editComputerName;
 	CComboBox m_cmbServerName;
 	CEdit m_editPort;

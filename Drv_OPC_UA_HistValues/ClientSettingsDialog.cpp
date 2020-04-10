@@ -665,6 +665,26 @@ void CClientSettingsDialog::OnBtnClickedServerPropertyButton()
 
 void CClientSettingsDialog::OnBtnClickedButtonConfiguration()
 {
+	int index = m_cmbConfiguration.GetCurSel();
+	int itemCount = m_endPointsConfigurations.size();
+	if (index >= 0 && index < itemCount) {
+		m_currentConfiguration = m_endPointsConfigurations.at(index);
+	}
+	else {
+		m_currentConfiguration.serverSecurityName.clear();
+		m_currentConfiguration.serverSecurityPolicy.clear();
+		m_currentConfiguration.securityMode = DrvOPCUAHistValues::ConfigurationSecurityMode::INVALID;
+	}
+	index = m_cmbPolicyId.GetCurSel();
+	itemCount = m_endPointPolicyIds.size();
+	if (index >= 0 && index < itemCount) {
+		m_currentPolicyId = m_endPointPolicyIds.at(index);
+	}
+	else {
+		m_currentPolicyId.m_policyId.clear();
+		m_currentPolicyId.m_securityPolicyUri.clear();
+		m_currentPolicyId.m_securityType = DrvOPCUAHistValues::ConfigurationSecurityType::ANONYMOUS;
+	}
 	CString str;
 	int len = m_cmbConfiguration.GetWindowTextLengthA();
 	m_cmbConfiguration.GetWindowTextA(str);
@@ -967,6 +987,37 @@ void CClientSettingsDialog::ChooseSecurityConfiguration()
 		StartLoading();
 		ReadAttributes();
 		GetPolicyListForSelectedConfiguration();
+	}
+	else {
+		if (!m_currentConfiguration.serverSecurityName.empty() && !m_currentConfiguration.serverSecurityPolicy.empty()) {
+			int itemComboCount = m_cmbConfiguration.GetCount();
+			int itemConfigCount = m_endPointsConfigurations.size();
+			if (itemComboCount == itemConfigCount) {
+				for (int index = 0; index < itemConfigCount; ++index) {
+					if (m_endPointsConfigurations.at(index) == m_currentConfiguration) {
+						m_cmbConfiguration.SetCurSel(index);
+						ClearAggregateListView();
+						StartLoading();
+						ReadAttributes();
+						GetPolicyListForSelectedConfiguration();
+						break;
+					}
+				}
+			}
+			if (!m_currentPolicyId.m_policyId.empty()) {
+				itemComboCount = m_cmbPolicyId.GetCount();
+				int itemPolicyCount = m_endPointPolicyIds.size();
+				if (itemComboCount == itemPolicyCount) {
+					for (int index = 0; index < itemPolicyCount; ++index) {
+						if (m_currentPolicyId == m_endPointPolicyIds.at(index)) {
+							m_cmbPolicyId.SetCurSel(index);
+							OnCbnSelChangeComboPolicyId();
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 }
 

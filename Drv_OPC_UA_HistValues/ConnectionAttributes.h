@@ -95,7 +95,7 @@ namespace DrvOPCUAHistValues
 	struct SecurityUserTokenPolicy {
 		SecurityUserTokenPolicy(const std::string& policyId, const std::string& securityPolicyUri, int type);
 		SecurityUserTokenPolicy(const std::string& policyId, const std::string& securityPolicyUri, ConfigurationSecurityType type);
-		SecurityUserTokenPolicy() = default;
+		SecurityUserTokenPolicy();
 		SecurityUserTokenPolicy(const SecurityUserTokenPolicy& src) = default;
 		SecurityUserTokenPolicy& operator=(const SecurityUserTokenPolicy& src) = default;
 		SecurityUserTokenPolicy(SecurityUserTokenPolicy&& src) = default;
