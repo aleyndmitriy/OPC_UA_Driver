@@ -772,7 +772,7 @@ bool DrvOPCUAHistValues::SoftingServerInteractor::findNode(const SoftingOPCToolb
 }
 
 void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std::vector<SoftingOPCToolbox5::NodeId>& nodesToRead, const SoftingOPCToolbox5::DateTime& startTime, const SoftingOPCToolbox5::DateTime& endTime,
-	std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
+	bool returnBounds, std::map<std::string, std::vector<SoftingOPCToolbox5::DataValue> >& historicalValuesOfNodes, SoftingOPCToolbox5::Client::SessionPtr session)
 {
 	std::shared_ptr<SoftingServerInteractorOutput> output = m_pOutput.lock();
 	std::vector<SoftingOPCToolbox5::HistoryReadValueId> historyReadValueIds;
@@ -784,7 +784,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 	readRawDetails.setStartTime(&startTime);
 	readRawDetails.setEndTime(&endTime);
 	readRawDetails.setMaxNumberOfValuesPerNode(0);
-	readRawDetails.setReturnBounds(true);
+	readRawDetails.setReturnBounds(returnBounds);
 	std::vector<SoftingOPCToolbox5::HistoryReadDataResult> historyReadResults;
 	EnumStatusCode result = EnumStatusCode_Bad;
 	result = session->historyReadRaw(EnumTimestampsToReturn_Server, false, historyReadValueIds, &readRawDetails, historyReadResults);
@@ -862,8 +862,8 @@ void DrvOPCUAHistValues::SoftingServerInteractor::getHistoricalValues(const std:
 			OTUInt64 duration = SoftingOPCToolbox5::DateTime::getDurationMilliseconds(startTime, endTime);
 			SoftingOPCToolbox5::DateTime middle = startTime;
 			middle.addMilliseconds(duration / 2);
-			getHistoricalValues(nodesToRead, startTime, middle, historicalValuesOfNodes, session);
-			getHistoricalValues(nodesToRead, middle, endTime, historicalValuesOfNodes, session);
+			getHistoricalValues(nodesToRead, startTime, middle, false, historicalValuesOfNodes, session);
+			getHistoricalValues(nodesToRead, middle, endTime, true, historicalValuesOfNodes, session);
 		}
 		else {
 			if (output) {
@@ -1062,7 +1062,7 @@ void DrvOPCUAHistValues::SoftingServerInteractor::GetRecords(std::map<std::strin
 				getProcessedHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes, iter->second);
 			}
 			else {
-				getHistoricalValues(nodesToRead, softingStartTime, softingEndTime, historicalValuesOfNodes, iter->second);
+				getHistoricalValues(nodesToRead, softingStartTime, softingEndTime, false, historicalValuesOfNodes, iter->second);
 			}
 
 			if (historicalValuesOfNodes.empty()) {

@@ -290,9 +290,6 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 	std::chrono::time_point<std::chrono::steady_clock> endReceivingRecords = std::chrono::high_resolution_clock::now();
 	std::chrono::microseconds durationLoadingRecords = std::chrono::duration_cast<std::chrono::microseconds>(endReceivingRecords - startReceivingRecords);
 	Log::GetInstance()->WriteInfo(_T("Records have been received in %d mcsec"), durationLoadingRecords.count());
-	if (tagsData.empty()) {
-		return;
-	}
 	startReceivingRecords = std::chrono::high_resolution_clock::now();
 	Log::GetInstance()->WriteInfo(_T("Start processing records..."));
 	for (std::map<int, std::vector<ParamValueList> >::const_iterator queriesIterator = queriesList.cbegin(); queriesIterator != queriesList.cend(); ++queriesIterator) {
@@ -309,6 +306,7 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 					case ODS::HdaFunctionType::VALUE_LIST_CONDITION:
 					{
 						ODS::HdaFunctionResultVLC* pFuncResult = new ODS::HdaFunctionResultVLC;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
 						std::vector<bool> conditions;
 						std::vector<ODS::TvqListElementDescription> listDesc;
 						for (std::vector<Record>::const_iterator itr = tagsIterator->second.cbegin(); itr != tagsIterator->second.cend(); ++itr) {
@@ -484,6 +482,18 @@ void DrvOPCUAHistValues::HdaCommandHandler::ExecuteQueriesList(const std::map<in
 						break;
 					default:
 						break;
+					}
+				}
+				else {
+					if (queriesIterator->first == ODS::HdaFunctionType::VALUE_LIST_CONDITION) {
+						ODS::HdaFunctionResultVLC* pFuncResult = new ODS::HdaFunctionResultVLC;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						pResultList->push_back(pFuncResult);
+					}
+					else {
+						ODS::HdaFunctionResultValueList* pFuncResult = new ODS::HdaFunctionResultValueList;
+						pFuncResult->SetContext(funcIterator->second.at(index)->GetContext());
+						pResultList->push_back(pFuncResult);
 					}
 				}
 			}
